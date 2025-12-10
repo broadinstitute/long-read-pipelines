@@ -1,0 +1,7 @@
+// SplitMultiSampleVCF
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-SplitMultiSampleVCFTask" [label=SplitMultiSampleVCFTask shape=cds]
+}

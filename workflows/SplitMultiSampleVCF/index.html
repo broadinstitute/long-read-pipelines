@@ -5,15 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Broad Institute" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>SRWholeGenome_Pf_Niare_VETS - Broad Institute Long Read Pipelines</title>
+    <title>SplitMultiSampleVCF - Broad Institute Long Read Pipelines</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "SRWholeGenome_Pf_Niare_VETS";
-        var mkdocs_page_input_path = "workflows/SRWholeGenome_Pf_Niare_VETS.md";
+        var mkdocs_page_name = "SplitMultiSampleVCF";
+        var mkdocs_page_input_path = "workflows/SplitMultiSampleVCF.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -271,9 +271,17 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../SRWholeGenome/">SRWholeGenome</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="./">SRWholeGenome_Pf_Niare_VETS</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRWholeGenome_Pf_Niare_VETS/">SRWholeGenome_Pf_Niare_VETS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRWholeGenome_Pf_Niare_VQSR/">SRWholeGenome_Pf_Niare_VQSR</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SampleLevelAlignedMetrics/">SampleLevelAlignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Sniffles2/">Sniffles2</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">SplitMultiSampleVCF</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#srwholegenome_pf_niare_vets_1">SRWholeGenome_Pf_Niare_VETS</a>
+    <li class="toctree-l2"><a class="reference internal" href="#splitmultisamplevcf_1">SplitMultiSampleVCF</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
         <ul>
@@ -292,14 +300,6 @@
         </ul>
     </li>
     </ul>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../SRWholeGenome_Pf_Niare_VQSR/">SRWholeGenome_Pf_Niare_VQSR</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../SampleLevelAlignedMetrics/">SampleLevelAlignedMetrics</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../Sniffles2/">Sniffles2</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../SplitMultiSampleVCF/">SplitMultiSampleVCF</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../SvQCPlots/">SvQCPlots</a>
                   </li>
@@ -325,9 +325,9 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a> &raquo;</li>
           <li>Workflows &raquo;</li>
-      <li>SRWholeGenome_Pf_Niare_VETS</li>
+      <li>SplitMultiSampleVCF</li>
     <li class="wy-breadcrumbs-aside">
-          <a href="https://github.com/broadinstitute/long-read-pipelines/edit/master/docs/workflows/SRWholeGenome_Pf_Niare_VETS.md" class="icon icon-github"> Edit on GitHub</a>
+          <a href="https://github.com/broadinstitute/long-read-pipelines/edit/master/docs/workflows/SplitMultiSampleVCF.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
   </ul>
   <hr/>
@@ -335,113 +335,41 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="srwholegenome_pf_niare_vets">SRWholeGenome_Pf_Niare_VETS</h1>
-<h2 id="srwholegenome_pf_niare_vets_1">SRWholeGenome_Pf_Niare_VETS</h2>
+                <h1 id="splitmultisamplevcf">SplitMultiSampleVCF</h1>
+<h2 id="splitmultisamplevcf_1">SplitMultiSampleVCF</h2>
 <dl>
+<dt>description</dt>
+<dd>Split a multi-sample VCF into individual compressed VCF files, one per sample, with corresponding index files.</dd>
 <dt>author</dt>
 <dd>Jonn Smith</dd>
-<dt>description</dt>
-<dd>This workflow implements a modified version of the single-sample pipeline from Niare et al. (https://doi.org/10.1186/s12936-023-04632-0) using LRMA conventions.  The modification is that this pipeline uses VETS instead of VQSR.</dd>
 </dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
-<li><code>aligned_bais</code> (Array[File], <strong>required</strong>): Array of aligned bam indices to process.  Order must correspond to <code>aligned_bams</code>.</li>
-<li><code>aligned_bams</code> (Array[File], <strong>required</strong>): Array of aligned bam files to process.</li>
-<li><code>gcs_out_root_dir</code> (String, <strong>required</strong>): GCS Bucket into which to finalize outputs.</li>
-<li><code>genotype_gvcfs_intervals</code> (File, <strong>required</strong>): Intervals over which to batch Joint Genotyping.</li>
-<li><code>indel_is_calibration</code> (Array[Boolean], <strong>required</strong>): Array of booleans indicating which files in <code>indel_known_reference_variants</code> should be used as calibration sets.  True -&gt;calibration set.  False -&gt; NOT a calibration set.</li>
-<li><code>indel_is_training</code> (Array[Boolean], <strong>required</strong>): Array of booleans indicating which files in <code>indel_known_reference_variants</code> should be used as training sets.  True -&gt; training set.  False -&gt; NOT a training set.</li>
-<li><code>indel_known_reference_variants</code> (Array[File], <strong>required</strong>): Array of VCF files to use as input reference variants for INDELs.  Each can be designated as either calibration or training using <code>indel_is_training</code> and <code>indel_is_calibration</code>.</li>
-<li><code>indel_known_reference_variants_identifier</code> (Array[File], <strong>required</strong>): Array of names to give to the VCF files given in <code>indel_known_reference_variants</code>.  Order should correspond to that in <code>indel_known_reference_variants</code>.</li>
-<li><code>indel_known_reference_variants_index</code> (Array[File], <strong>required</strong>): Array of VCF index files for <code>indel_known_reference_variants</code>.  Order should correspond to that in <code>indel_known_reference_variants</code>.</li>
-<li><code>participant_name</code> (String, <strong>required</strong>): The unique identifier of this sample being processed.</li>
-<li><code>ref_map_file</code> (File, <strong>required</strong>): Reference map file indicating reference sequence and auxillary file locations</li>
-<li><code>snp_is_calibration</code> (Array[Boolean], <strong>required</strong>): Array of booleans indicating which files in <code>snp_known_reference_variants</code> should be used as calibration sets.  True -&gt;calibration set.  False -&gt; NOT a calibration set.</li>
-<li><code>snp_is_training</code> (Array[Boolean], <strong>required</strong>): Array of booleans indicating which files in <code>snp_known_reference_variants</code> should be used as training sets.  True -&gt; training set.  False -&gt; NOT a training set.</li>
-<li><code>snp_known_reference_variants</code> (Array[File], <strong>required</strong>): Array of VCF files to use as input reference variants for SNPs.  Each can be designated as either calibration or training using <code>snp_is_training</code> and <code>snp_is_calibration</code>.</li>
-<li><code>snp_known_reference_variants_identifier</code> (Array[File], <strong>required</strong>): Array of names to give to the VCF files given in <code>snp_known_reference_variants</code>.  Order should correspond to that in <code>snp_known_reference_variants</code>.</li>
-<li><code>snp_known_reference_variants_index</code> (Array[File], <strong>required</strong>): Array of VCF index files for <code>snp_known_reference_variants</code>.  Order should correspond to that in <code>snp_known_reference_variants</code>.</li>
-<li><code>vcf_calling_interval_list</code> (File, <strong>required</strong>): Intervals over which to call variants.</li>
+<li><code>input_vcf</code> (File, <strong>required</strong>): Multi-sample VCF file (can be compressed or uncompressed)</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
-<li><code>bed_to_compute_coverage</code> (File?): Bed file to use as regions over which to measure coverage.</li>
-<li><code>ExtractIndelVariantAnnotations.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>ExtractSnpVariantAnnotations.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeHCBaiOut.name</code> (String?)</li>
-<li><code>FinalizeHCBaiOut.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeHCBamOut.name</code> (String?)</li>
-<li><code>FinalizeHCBamOut.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeHCGTbi.name</code> (String?)</li>
-<li><code>FinalizeHCGTbi.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeHCGVcf.name</code> (String?)</li>
-<li><code>FinalizeHCGVcf.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeHCRescoredTbi.name</code> (String?)</li>
-<li><code>FinalizeHCRescoredTbi.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeHCRescoredVcf.name</code> (String?)</li>
-<li><code>FinalizeHCRescoredVcf.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeRawHCTbi.name</code> (String?)</li>
-<li><code>FinalizeRawHCTbi.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>FinalizeRawHCVcf.name</code> (String?)</li>
-<li><code>FinalizeRawHCVcf.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>MergeAllReads.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>RemoveFilteredVariants.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>RenameRawHcGvcf.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>RenameRawHcVcf.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>ScoreIndelVariantAnnotations.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>ScoreSnpVariantAnnotations.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>TrainIndelVariantAnnotationsModel.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>TrainIndelVariantAnnotationsModel.unlabeled_annotation_hdf5</code> (File?)</li>
-<li><code>TrainSnpVariantAnnotationsModel.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>TrainSnpVariantAnnotationsModel.unlabeled_annotation_hdf5</code> (File?)</li>
-<li><code>CallVariantsWithHaplotypeCaller.CallVariantsWithHC.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>CallVariantsWithHaplotypeCaller.CollapseGVCFtoVCF.dbsnp_vcf</code> (String?)</li>
-<li><code>CallVariantsWithHaplotypeCaller.CollapseGVCFtoVCF.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>CallVariantsWithHaplotypeCaller.IndexBamout.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>CallVariantsWithHaplotypeCaller.MergeGVCFs.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>CallVariantsWithHaplotypeCaller.MergeVariantCalledBamOuts.runtime_attr_override</code> (RuntimeAttr?)</li>
-<li><code>CallVariantsWithHaplotypeCaller.SmallVariantsScatterPrep.runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>input_vcf_index</code> (File?): Index file for the input VCF (required if VCF is compressed)</li>
+<li><code>SplitMultiSampleVCFTask.runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
 <h4 id="defaults">Defaults</h4>
 <ul>
-<li><code>contigs_names_to_ignore</code> (Array[String], default=["RANDOM_PLACEHOLDER_VALUE"]): Array of names of contigs to ignore for the purposes of reporting variants.</li>
-<li><code>indel_calibration_sensitivity</code> (Float, default=0.99): VETS (ScoreVariantAnnotations) parameter - score below which INDEL variants will be filtered.</li>
-<li><code>indel_max_unlabeled_variants</code> (Int, default=0): VETS (ExtractVariantAnnotations) parameter - maximum number of unlabeled INDEL variants/alleles to randomly sample with reservoir sampling.  If nonzero, annotations will also be extracted from unlabeled sites.</li>
-<li><code>indel_recalibration_annotation_values</code> (Array[String], default=["BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP"]): VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the INDEL variant scoring model and over which to score INDEL variants.</li>
-<li><code>snp_calibration_sensitivity</code> (Float, default=0.99): VETS (ScoreVariantAnnotations) parameter - score below which SNP variants will be filtered.</li>
-<li><code>snp_max_unlabeled_variants</code> (Int, default=0): VETS (ExtractVariantAnnotations) parameter - maximum number of unlabeled SNP variants/alleles to randomly sample with reservoir sampling.  If nonzero, annotations will also be extracted from unlabeled sites.</li>
-<li><code>snp_recalibration_annotation_values</code> (Array[String], default=["BaseQRankSum", "ExcessHet", "FS", "HAPCOMP", "HAPDOM", "HEC", "MQ", "MQRankSum", "QD", "ReadPosRankSum", "SOR", "DP"]): VETS (ScoreSnpVariantAnnotations/ScoreVariantAnnotations) parameter - Array of annotation names to use to create the SNP variant scoring model and over which to score SNP variants.</li>
-<li><code>CallVariantsWithHaplotypeCaller.call_vars_on_mitochondria</code> (Boolean, default=false)</li>
-<li><code>RenameRawHcVcf.is_gvcf</code> (Boolean, default=false)</li>
-<li><code>TrainIndelVariantAnnotationsModel.calibration_sensitivity_threshold</code> (Float, default=0.95)</li>
-<li><code>TrainSnpVariantAnnotationsModel.calibration_sensitivity_threshold</code> (Float, default=0.95)</li>
-<li><code>CallVariantsWithHaplotypeCaller.CollapseGVCFtoVCF.heterozygosity</code> (Float, default=0.001)</li>
-<li><code>CallVariantsWithHaplotypeCaller.CollapseGVCFtoVCF.heterozygosity_stdev</code> (Float, default=0.01)</li>
-<li><code>CallVariantsWithHaplotypeCaller.CollapseGVCFtoVCF.indel_heterozygosity</code> (Float, default=0.000125)</li>
-<li><code>CallVariantsWithHaplotypeCaller.CollapseGVCFtoVCF.keep_combined_raw_annotations</code> (Boolean, default=false)</li>
-<li><code>CallVariantsWithHaplotypeCaller.MergeGVCFs.is_gvcf</code> (Boolean, default=false)</li>
+<li><code>num_samples</code> (Int, default=100): Number of samples in the input VCF (optional; default: 100)</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
-<li><code>successfully_processed</code> (Boolean)</li>
-<li><code>hc_g_vcf</code> (File?)</li>
-<li><code>hc_g_tbi</code> (File?)</li>
-<li><code>hc_bamout</code> (File?)</li>
-<li><code>hc_baiout</code> (File?)</li>
-<li><code>hc_raw_vcf</code> (File?)</li>
-<li><code>hc_raw_tbi</code> (File?)</li>
-<li><code>hc_rescored_vcf</code> (File?)</li>
-<li><code>hc_rescored_tbi</code> (File?)</li>
+<li><code>sample_vcfs</code> (Array[File])</li>
+<li><code>sample_vcf_indices</code> (Array[File])</li>
 </ul>
 <h3 id="dot-diagram">Dot Diagram</h3>
-<p><img alt="SRWholeGenome_Pf_Niare_VETS" src="../../dot/SRWholeGenome_Pf_Niare_VETS.dot.png" /></p>
+<p><img alt="SplitMultiSampleVCF" src="../../dot/SplitMultiSampleVCF.dot.png" /></p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../SRWholeGenome/" class="btn btn-neutral float-left" title="SRWholeGenome"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../SRWholeGenome_Pf_Niare_VQSR/" class="btn btn-neutral float-right" title="SRWholeGenome_Pf_Niare_VQSR">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../Sniffles2/" class="btn btn-neutral float-left" title="Sniffles2"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../SvQCPlots/" class="btn btn-neutral float-right" title="SvQCPlots">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -469,10 +397,10 @@
         </span>
     
     
-      <span><a href="../SRWholeGenome/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../Sniffles2/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../SRWholeGenome_Pf_Niare_VQSR/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../SvQCPlots/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

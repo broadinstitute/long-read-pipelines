@@ -11,10 +11,10 @@ digraph {
 	"call-SummarizeAlignedQ15PBI" [label=SummarizeAlignedQ15PBI shape=cds]
 	"call-NanoPlotFromBam" [label=NanoPlotFromBam shape=cds]
 	"call-CustomMetricsSummaryToFile" [label=CustomMetricsSummaryToFile shape=cds]
-	"call-SummarizeAlignedQ12PBI" -> "call-CustomMetricsSummaryToFile"
-	"call-SummarizeAlignedQ10PBI" -> "call-CustomMetricsSummaryToFile"
-	"call-NanoPlotFromBam" -> "call-CustomMetricsSummaryToFile"
-	"call-SummarizeAlignedQ5PBI" -> "call-CustomMetricsSummaryToFile"
 	"call-SummarizeAlignedQ15PBI" -> "call-CustomMetricsSummaryToFile"
 	"call-SummarizeAlignedQ7PBI" -> "call-CustomMetricsSummaryToFile"
+	"call-SummarizeAlignedQ12PBI" -> "call-CustomMetricsSummaryToFile"
+	"call-SummarizeAlignedQ5PBI" -> "call-CustomMetricsSummaryToFile"
+	"call-SummarizeAlignedQ10PBI" -> "call-CustomMetricsSummaryToFile"
+	"call-NanoPlotFromBam" -> "call-CustomMetricsSummaryToFile"
 }

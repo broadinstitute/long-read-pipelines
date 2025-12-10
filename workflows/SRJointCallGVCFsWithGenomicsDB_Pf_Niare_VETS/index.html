@@ -267,7 +267,7 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="./">SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#srjointcallgvcfswithgenomicsdb_pf_niare_vqsr">SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR</a>
+    <li class="toctree-l2"><a class="reference internal" href="#srjointcallgvcfswithgenomicsdb_pf_niare_vets_1">SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a>
         <ul>
@@ -298,6 +298,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../SampleLevelAlignedMetrics/">SampleLevelAlignedMetrics</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Sniffles2/">Sniffles2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SplitMultiSampleVCF/">SplitMultiSampleVCF</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../SvQCPlots/">SvQCPlots</a>
                   </li>
@@ -334,7 +336,7 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="srjointcallgvcfswithgenomicsdb_pf_niare_vets">SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS</h1>
-<h2 id="srjointcallgvcfswithgenomicsdb_pf_niare_vqsr">SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR</h2>
+<h2 id="srjointcallgvcfswithgenomicsdb_pf_niare_vets_1">SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS</h2>
 <dl>
 <dt>author</dt>
 <dd>Jonn Smith</dd>
@@ -359,9 +361,6 @@
 <li><code>snp_known_reference_variants</code> (Array[File], <strong>required</strong>): Array of VCF files to use as input reference variants for SNPs.  Each can be designated as either calibration or training using <code>snp_is_training</code> and <code>snp_is_calibration</code>.</li>
 <li><code>snp_known_reference_variants_identifier</code> (Array[File], <strong>required</strong>): Array of names to give to the VCF files given in <code>snp_known_reference_variants</code>.  Order should correspond to that in <code>snp_known_reference_variants</code>.</li>
 <li><code>snp_known_reference_variants_index</code> (Array[File], <strong>required</strong>): Array of VCF index files for <code>snp_known_reference_variants</code>.  Order should correspond to that in <code>snp_known_reference_variants</code>.</li>
-<li><code>SplitContigToIntervals.prefix</code> (String, <strong>required</strong>): Prefix to use for output files.</li>
-<li><code>SplitContigToIntervals.ref_fasta</code> (File, <strong>required</strong>)</li>
-<li><code>SplitContigToIntervals.ref_fasta_fai</code> (File, <strong>required</strong>)</li>
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>

@@ -22,8 +22,8 @@ digraph {
 		"scatter-L85C5-i" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"call-ConcatBCFs" [label=ConcatBCFs shape=cds]
-	"decl-final_gvcfs" -> "scatter-L80C5-p" [lhead="cluster-scatter-L80C5-p"]
 	"decl-final_tbis" -> "scatter-L80C5-p" [lhead="cluster-scatter-L80C5-p"]
+	"decl-final_gvcfs" -> "scatter-L80C5-p" [lhead="cluster-scatter-L80C5-p"]
 	"call-GetRanges" -> "call-ShardVCFByRanges"
 	"call-ShardVCFByRanges" -> "scatter-L85C5-i" [lhead="cluster-scatter-L85C5-i"]
 	"call-ShardVCFByRanges" -> "decl-per_contig_gvcfs"
