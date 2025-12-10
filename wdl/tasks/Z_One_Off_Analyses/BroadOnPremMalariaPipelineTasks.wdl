@@ -142,7 +142,7 @@ task SortCompressIndexVcf {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 10 + 10*ceil(2*size(input_vcf, "GB"))
+    Int disk_size = 10 + 10*ceil(3*size(input_vcf, "GB"))
 
     String output_vcf = basename(input_vcf) + ".gz"
 
@@ -161,11 +161,13 @@ task SortCompressIndexVcf {
         tot_mem_mb=$(free -m | grep '^Mem' | awk '{print $2}')
 
         ################################
-         
-        # First we need to fix the integer values in the floating point INFO fields.
-        # Without this fix / hack, downstream GATK3 tools will fail (specifically GenotypeGVCFs)
         
-        awk -f - "~{input_vcf}" > tmp.vcf << 'AWK_CODE'
+        # Sort first because otherwise we'll end up with integers in the INFO fields again.
+        bcftools sort -m$((tot_mem_mb-2048))M -o tmp.vcf ~{input_vcf}
+
+        # Then we need to fix the integer values in the floating point INFO fields.
+        # Without this fix / hack, downstream GATK3 tools will fail (specifically GenotypeGVCFs)
+        awk -f - "tmp.vcf" > tmp2.vcf << 'AWK_CODE'
             BEGIN {
                 FS = "\t"; OFS = "\t"
 
@@ -229,9 +231,12 @@ task SortCompressIndexVcf {
 AWK_CODE
          
         ################################
+        
+        # Zip it:
+        bgzip -c -l2 tmp2.vcf > ~{output_vcf}
 
-        bcftools sort -m$((tot_mem_mb-2048))M -Oz2 -o ~{output_vcf} tmp.vcf
-        bcftools index --threads ${np} --tbi  ~{output_vcf}
+        # Index the output:
+        bcftools index --threads ${np} --tbi ~{output_vcf}
     >>>
 
     output {
