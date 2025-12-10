@@ -30,18 +30,18 @@ workflow BroadOnPremMalariaPipeline_2_JointVariantCalling {
             prefix = sample_name,
             input_vcfs = vcf_files,
             input_vcf_indices = vcf_index_files,
-            reference_fasta = ref_map["reference_fasta"],
-            reference_fai = ref_map["reference_fai"],
-            reference_dict = ref_map["reference_dict"]
+            reference_fasta = ref_map["fasta"],
+            reference_fai = ref_map["fai"],
+            reference_dict = ref_map["dict"]
     }
 
     call BroadOnPremMalariaPipelineTasks.VariantRecalibrator as t_002_VariantRecalibrator {
         input:
             prefix = sample_name,
             input_vcf = t_001_GenotypeGVCFs.vcf,
-            reference_fasta = ref_map["reference_fasta"],
-            reference_fai = ref_map["reference_fai"],
-            reference_dict = ref_map["reference_dict"],
+            reference_fasta = ref_map["fasta"],
+            reference_fai = ref_map["fai"],
+            reference_dict = ref_map["dict"],
             resource_vcf_7g8_gb4 = resource_vcf_7g8_gb4,
             resource_vcf_hb3_dd2 = resource_vcf_hb3_dd2,
             resource_vcf_3d7_hb3 = resource_vcf_3d7_hb3
@@ -73,7 +73,13 @@ task GenotypeGVCFs {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 10*ceil(size([input_vcfs, reference_fasta], "GB"))
+    Int disk_size = 1 + 10*ceil(
+        size(input_vcfs, "GB")
+        + size(input_vcf_indices, "GB")
+        + size(reference_fasta, "GB")
+        + size(reference_fai, "GB")
+        + size(reference_dict, "GB")
+    )
 
     command <<<
         ################################
@@ -108,7 +114,7 @@ task GenotypeGVCFs {
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             16,
-        disk_gb:            disk_size,
+        disk_gb:            disk_size, # This uses the variable calculated above
         boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
