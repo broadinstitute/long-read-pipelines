@@ -235,7 +235,7 @@ task HaplotypeCaller_GATK4_VCF {
        mem_gb:             16,
        disk_gb:            disk_size,
        boot_disk_gb:       25,
-       preemptible_tries:  1,
+       preemptible_tries:  2,
        max_retries:        1,
        docker:             "us.gcr.io/broad-gatk/gatk:4.5.0.0"
     }
