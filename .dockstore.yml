@@ -186,3 +186,6 @@ workflows:
 - name: SRFlowcell_Simplified
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ILMN/Alignment/SRFlowcell_Simplified.wdl
+- name: SRJointCallGVCFsWithGenomicsDB_simplified
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/SRJointCallGVCFsWithGenomicsDB_simplified.wdl
