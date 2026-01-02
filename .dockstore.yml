@@ -180,3 +180,9 @@ workflows:
 - name: RemoveSingleOrganismContamination
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/RemoveSingleOrganismContamination.wdl
+- name: SRWholeGenome_Simplified
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ILMN/VariantCalling/SRWholeGenome_Simplified.wdl
+- name: SRFlowcell_Simplified
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ILMN/Alignment/SRFlowcell_Simplified.wdl
