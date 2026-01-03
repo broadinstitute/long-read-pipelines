@@ -574,8 +574,9 @@ task MarkDuplicatesAndSort {
             SORT_ORDER=coordinate \
             CREATE_INDEX=true
 
-        # DEBUGGING:
-        ls -lah
+        # Rename bam index to .bam.bai (rather than .bai)
+        # to better conform to our naming conventions:
+        mv ~{prefix}.bai ~{prefix}.bam.bai
     >>>
 
     output {
