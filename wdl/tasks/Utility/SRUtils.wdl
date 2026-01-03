@@ -571,7 +571,7 @@ task MarkDuplicatesAndSort {
         java -jar /usr/picard/picard.jar SortSam \
             INPUT=/dev/stdin \
             OUTPUT=~{prefix}.bam \
-            --SORT_ORDER coordinate \
+            SORT_ORDER=coordinate \
             CREATE_INDEX=true
     >>>
 
