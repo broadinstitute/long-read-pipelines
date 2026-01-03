@@ -573,6 +573,9 @@ task MarkDuplicatesAndSort {
             OUTPUT=~{prefix}.bam \
             SORT_ORDER=coordinate \
             CREATE_INDEX=true
+
+        # DEBUGGING:
+        ls -lah
     >>>
 
     output {
