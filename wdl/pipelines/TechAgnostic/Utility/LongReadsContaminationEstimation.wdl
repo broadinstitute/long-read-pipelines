@@ -28,8 +28,10 @@ workflow LongReadsContaminationEstimation {
     input {
         File bam
         File bai
+        Float bam_sz
         String tech
         File ref_map_file
+        File standard_hg38_sq_header
 
         File gt_sites_bed
         Boolean is_hgdp_sites
@@ -67,11 +69,17 @@ workflow LongReadsContaminationEstimation {
         # quickly change to pileup
         Map[String, String] ref_map = read_map(ref_map_file)
 
-        Int scaleup_factor = 20
+        call ReheaderBam { input:
+            bam = bam,
+            bai = bai,
+            standard_hg38_sq_header = standard_hg38_sq_header,
+            bam_sz = bam_sz,
+            hack_readgroup_header = false
+        }
         call BU.BamToRelevantPileup as Pileup {
             input:
-                bam = bam,
-                bai = bai,
+                bam = ReheaderBam.reheadered_bam,
+                bai = ReheaderBam.reheadered_bai,
                 bed = gt_sites_bed,
                 ref_fasta = ref_map['fasta'],
                 disable_baq = disable_baq,
@@ -86,5 +94,81 @@ workflow LongReadsContaminationEstimation {
 
     output {
         Float contamination_est = select_first([VerifyBamID.contamination_est, extreme_low_cov_val])
+    }
+}
+
+# re-using a task to standardize BAM @SQ header
+task ReheaderBam {
+    meta {
+        description: "Reheader a BAM file (the @SQ part) to facilitate downstream somalier fingerprinting."
+    }
+    parameter_meta {
+        hack_readgroup_header:
+        "If true, and there are no @RG lines in the input BAM header, a fake read group line will be added with sample name from sample_name_hack_hint."
+    }
+    input {
+        File bam
+        File bai
+        Float bam_sz
+        File standard_hg38_sq_header
+
+        Boolean hack_readgroup_header = false
+        String? sample_name_hack_hint
+    }
+    String prefix = basename(bam, ".bam")
+    String out_prefix = "~{prefix}.sq_reheadered"
+
+    output {
+        File reheadered_bam = "~{out_prefix}.bam"
+        File reheadered_bai = "~{out_prefix}.bam.bai"
+    }
+
+    Boolean fail = hack_readgroup_header && (!defined(sample_name_hack_hint))
+    String use_this_sample_name = if (defined(sample_name_hack_hint)) then sample_name_hack_hint else "Null"
+    command <<<
+    set -eu
+        if ~{fail}; then
+            echo "You set hack_readgroup_header to true but did not provide sample_name_hack_hint" && exit 1
+        fi
+
+        # swap out the @SQ lines in the header
+        samtools view -H ~{bam} \
+        > old.header.txt
+
+        start_line=$(grep -n "^@SQ" old.header.txt | head -1 | cut -d: -f1)
+        end_line=$(grep -n "^@SQ" old.header.txt | tail -1 | cut -d: -f1)
+        head -n $((start_line - 1)) old.header.txt > new.header.txt
+        cat ~{standard_hg38_sq_header} >> new.header.txt
+        tail -n +$((end_line + 1)) old.header.txt >> new.header.txt
+
+        if ~{hack_readgroup_header}; then
+            if grep -q "^@RG" old.header.txt; then
+                echo "You asked for hack_readgroup_header but @RG lines exist in the header" && exit 1
+            else
+                echo ""
+                printf "@RG\tID:FAKE_HACK\tSM:%s\tPL:LONGREAD" "~{use_this_sample_name}\n" \
+                >> new.header.txt
+                tail +1 new.header.txt
+            fi
+        fi
+
+        diff new.header.txt old.header.txt || true
+
+    set -x
+        samtools reheader \
+            new.header.txt \
+            ~{bam} \
+        > "~{out_prefix}.bam"
+
+        samtools index -@1 "~{out_prefix}.bam"
+    >>>
+    #########################
+    Int local_ssd_sz = if (bam_sz > 120) then 1500 else 375
+    runtime {
+        cpu:            2
+        memory:         "8 GiB"
+        disks:          "local-disk ~{local_ssd_sz} LOCAL"
+        preemptible:    1
+        docker:         "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.20"
     }
 }
