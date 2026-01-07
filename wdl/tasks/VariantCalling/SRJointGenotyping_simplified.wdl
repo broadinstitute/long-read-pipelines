@@ -173,7 +173,14 @@ task ImportGVCFs {
     Int ref_size = ceil(size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(ref_dict, "GB"))
     Int existing_genomicsdb_size = if defined(existing_genomicsdb_tar) then ceil(size(select_first([existing_genomicsdb_tar]), "GB")) else 0
 
-    Int disk_size = 1 + 4*ref_size + 2*existing_genomicsdb_size
+    # We need _at least_ 4x the genomicsdb size:
+    #   1x = original tar
+    #   2x = untarred directory
+    #   3x = final genomicsdb directory
+    #   4x = final tarred genomicsdb directory
+    # We need to account for adding the new samples to a genomicsDB instance.
+    # So let's add some more padding just in case:
+    Int disk_size_gb = 1 + 4*ref_size + 4*existing_genomicsdb_size + 1024
 
     Boolean has_existing_genomicsdb_tar = defined(existing_genomicsdb_tar)
     String genomicsdb_name = if has_existing_genomicsdb_tar then basename(select_first([existing_genomicsdb_tar]), ".tar") else "~{prefix}.genomicsDB"
@@ -221,7 +228,7 @@ task ImportGVCFs {
         echo "Input sizes:" >&2
         echo "Reference size: ~{ref_size} GB" >&2
         echo "Existing GenomicsDB size: ~{existing_genomicsdb_size} GB" >&2
-        echo "Total disk space requested: ~{disk_size} GB" >&2
+        echo "Total disk space requested: ~{disk_size_gb} GB" >&2
         echo "" >&2
         echo "" >&2
 
@@ -251,7 +258,7 @@ task ImportGVCFs {
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
         mem_gb:             32 + extra_mem_gb,
-        disk_gb:            disk_size,
+        disk_gb:            disk_size_gb,
         boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        1,
