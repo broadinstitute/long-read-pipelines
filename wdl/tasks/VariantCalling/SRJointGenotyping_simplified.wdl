@@ -170,9 +170,10 @@ task ImportGVCFs {
         Int extra_mem_gb = 0
     }
 
-    Int ref_size = ceil(size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(ref_dict, "GB")) + 2*ceil(size(existing_genomicsdb_tar, "GB"))
+    Int ref_size = ceil(size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(ref_dict, "GB"))
+    Int existing_genomicsdb_size = if defined(existing_genomicsdb_tar) then ceil(size(select_first([existing_genomicsdb_tar]), "GB")) else 0
 
-    Int disk_size = 1 + 4*ref_size
+    Int disk_size = 1 + 4*ref_size + 2*existing_genomicsdb_size
 
     Boolean has_existing_genomicsdb_tar = defined(existing_genomicsdb_tar)
     String genomicsdb_name = if has_existing_genomicsdb_tar then basename(select_first([existing_genomicsdb_tar]), ".tar") else "~{prefix}.genomicsDB"
@@ -209,9 +210,20 @@ task ImportGVCFs {
         
         let java_memory_size_mb=$((available_memory_mb-off_heap_memory_mb))
 
+        echo "--------------------------------" >&2
+        echo "Memoy info:" >&2
         echo Total available memory: ${available_memory_mb} MB >&2
         echo Memory reserved for Java: ${java_memory_size_mb} MB >&2
         echo Memory reserved for non-Java processes: ${off_heap_memory_mb} MB >&2
+        echo "" >&2
+        echo "" >&2
+        echo "--------------------------------" >&2
+        echo "Input sizes:" >&2
+        echo "Reference size: ~{ref_size} GB" >&2
+        echo "Existing GenomicsDB size: ~{existing_genomicsdb_size} GB" >&2
+        echo "Total disk space requested: ~{disk_size} GB" >&2
+        echo "" >&2
+        echo "" >&2
 
         if [[ ~{has_existing_genomicsdb_tar} == "true" ]] ; then
             echo "Untarring existing GenomicsDB workspace: ~{existing_genomicsdb_tar}..."
