@@ -218,7 +218,7 @@ task ImportGVCFs {
         let java_memory_size_mb=$((available_memory_mb-off_heap_memory_mb))
 
         echo "--------------------------------" >&2
-        echo "Memoy info:" >&2
+        echo "Memory info:" >&2
         echo Total available memory: ${available_memory_mb} MB >&2
         echo Memory reserved for Java: ${java_memory_size_mb} MB >&2
         echo Memory reserved for non-Java processes: ${off_heap_memory_mb} MB >&2
@@ -231,6 +231,14 @@ task ImportGVCFs {
         echo "Total disk space requested: ~{disk_size_gb} GB" >&2
         echo "" >&2
         echo "" >&2
+        echo "--------------------------------" >&2
+        echo "Disk space allocated:" >&2
+        df -h >&2
+        echo "" >&2
+        df -h . >&2
+        echo "" >&2
+        echo "" >&2
+        echo "--------------------------------" >&2
 
         if [[ ~{has_existing_genomicsdb_tar} == "true" ]] ; then
             echo "Untarring existing GenomicsDB workspace: ~{existing_genomicsdb_tar}..."
