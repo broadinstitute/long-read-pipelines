@@ -121,7 +121,7 @@ task CreateSampleNameMap {
         # We include an additional GB in case we have a very small dataset:
         awk '{s += $1}END{print int(1+s/(1024*1024*1024))}' ${size_file} > ~{size_file_gb}
 
-        echo "Total GVCF file size: ~{read_int(size_file_gb)} GB"
+        echo "Total GVCF file size: $(cat ~{size_file_gb}) GB"
     >>>
 
     #########################
