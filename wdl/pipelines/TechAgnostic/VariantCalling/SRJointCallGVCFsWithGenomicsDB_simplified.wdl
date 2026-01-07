@@ -173,6 +173,7 @@ workflow SRJointCallGVCFsWithGenomicsDB_simplified {
                 ref_dict        = ref_map['dict'],
                 prefix          = prefix + "." + interval_name,
                 batch_size      = 50,
+                total_gvcf_size_gb = CreateSampleNameMap.total_gvcf_size_gb,
                 runtime_attr_override = object {preemptible_tries: 0}
         }
 

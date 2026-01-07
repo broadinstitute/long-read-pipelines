@@ -120,6 +120,8 @@ task CreateSampleNameMap {
         # Now calculate the final file size in GB:
         # We include an additional GB in case we have a very small dataset:
         awk '{s += $1}END{print int(1+s/(1024*1024*1024))}' ${size_file} > ~{size_file_gb}
+
+        echo "Total GVCF file size: ~{read_int(size_file_gb)} GB"
     >>>
 
     #########################
@@ -166,6 +168,8 @@ task ImportGVCFs {
 
         Int batch_size = 50
 
+        Int? total_gvcf_size_gb
+
         RuntimeAttr? runtime_attr_override
         Int extra_mem_gb = 0
     }
@@ -173,14 +177,16 @@ task ImportGVCFs {
     Int ref_size = ceil(size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(ref_dict, "GB"))
     Int existing_genomicsdb_size = if defined(existing_genomicsdb_tar) then ceil(size(select_first([existing_genomicsdb_tar]), "GB")) else 0
 
+    # Create a default of 1TB if no total GVCF file size is provided:
+    Int gvcf_file_size_gb = if defined(total_gvcf_size_gb) then select_first([total_gvcf_size_gb]) else 1024
+
     # We need _at least_ 4x the genomicsdb size:
     #   1x = original tar
     #   2x = untarred directory
     #   3x = final genomicsdb directory
     #   4x = final tarred genomicsdb directory
-    # We need to account for adding the new samples to a genomicsDB instance.
-    # So let's add some more padding just in case:
-    Int disk_size_gb = 1 + 4*ref_size + 4*existing_genomicsdb_size + 1024
+    # We need to account for the GVCF file size, so we add it to the total:
+    Int disk_size_gb = 1 + 4*ref_size + 4*existing_genomicsdb_size + gvcf_file_size_gb
 
     Boolean has_existing_genomicsdb_tar = defined(existing_genomicsdb_tar)
     String genomicsdb_name = if has_existing_genomicsdb_tar then basename(select_first([existing_genomicsdb_tar]), ".tar") else "~{prefix}.genomicsDB"
