@@ -435,7 +435,7 @@ workflow SRFlowcell_Simplified {
     output {
         # Unaligned reads
         File fq1 = select_first([fq1_o, fq_e1])
-        File fq2 = select_first([fq2_o, fq_e1])
+        File fq2 = select_first([fq2_o, fq_e2])
         File? fq_unpaired = fqboup
 
         # Unaligned BAM file
