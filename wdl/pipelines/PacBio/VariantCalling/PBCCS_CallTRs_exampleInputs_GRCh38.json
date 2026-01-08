@@ -1,0 +1,9 @@
+{
+  "runTRGT.input_bam": "gs://fc-7891e5cf-0a7a-4c2f-8a18-0d05b27c53ab/T2T/PBCCSWholeGenome/NA19240/alignments/NA19240.bam",
+  "runTRGT.input_bam_bai": "gs://fc-7891e5cf-0a7a-4c2f-8a18-0d05b27c53ab/T2T/PBCCSWholeGenome/NA19240/alignments/NA19240.bam.bai",
+  "runTRGT.output_gs_path": "gs://fc-c1de2dd5-0f83-49c8-84ee-0f153c4d0a59/TRGT/GRCh38/",
+  "runTRGT.ref_fasta": "gs://fc-c1de2dd5-0f83-49c8-84ee-0f153c4d0a59/resources/GRCh38_full_analysis_set_plus_decoy_hla.fa",
+  "runTRGT.ref_fasta_index": "gs://fc-c1de2dd5-0f83-49c8-84ee-0f153c4d0a59/resources/GRCh38_full_analysis_set_plus_decoy_hla.fa.fai",
+  "runTRGT.repeatCatalog": "/GRCh38.adotto_TRregions_TRGTFormatWithFlankingSeq_v1.0_under1kb.bed",
+  "runTRGT.is_female": 1
+}
