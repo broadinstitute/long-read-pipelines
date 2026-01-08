@@ -263,7 +263,6 @@ task MosDepthWGS {
         description: "Collects WGS coverage of the bam. Optionally, collects coverage number for each region in the provided BED (this avoids extra localizations)."
     }
     parameter_meta {
-        bam: {localization_optional: true}
         bed_descriptor: "A short description on the BED file provided. It will be used in naming the regions output, so be careful what you provide here."
         regions: "When bed is provided, this gets generated, which holds the coverage over the regions defined in the bed file."
     }
@@ -288,19 +287,14 @@ task MosDepthWGS {
 
     Boolean collect_over_bed = defined(bed)
 
-    String local_bam = "/cromwell_root/~{basename}.bam"
-
     command <<<
-        set -euxo pipefail
-
-        time gcloud storage cp ~{bam} ~{local_bam}
-        mv ~{bai} "~{local_bam}.bai"
+    set -euxo pipefail
 
         mosdepth \
             -t 2 \
             -x -n -Q1 \
             ~{prefix} \
-            ~{local_bam} &
+            ~{bam} &
 
         if ~{collect_over_bed}; then
             mosdepth \
@@ -308,7 +302,7 @@ task MosDepthWGS {
                 -b ~{bed} \
                 -x -n -Q 1 \
                 "~{prefix}.coverage_over_bed.~{bed_descriptor}" \
-                ~{local_bam} &
+                ~{bam} &
         fi
 
         wait && ls

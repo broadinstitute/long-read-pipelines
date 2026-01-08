@@ -185,10 +185,6 @@ task NanoPlotFromBam {
         description: "Use NanoPlot to generate plots from a bam file"
     }
 
-    parameter_meta {
-        bam: {localization_optional: true}
-    }
-
     input {
         File bam
         File bai
@@ -198,21 +194,13 @@ task NanoPlotFromBam {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int pd_disk_size = 50 + ceil(size(bam, "GiB"))
-    Int local_disk_size = if(size(bam, "GiB")>300) then 750 else 375
+    Int bam_sz = ceil(size(bam, "GiB"))
+    Int pd_disk_size = 50 + bam_sz
+    Int local_disk_size = if(bam_sz > 300) then 750 else 375
     Int disk_size = if('LOCAL'==disk_type) then local_disk_size else pd_disk_size
 
-    String base = basename(bam)
-    String local_bam = "/cromwell_root/~{base}"
-
     command <<<
-        set -euxo pipefail
-
-        time \
-        gcloud storage cp ~{bam} ~{local_bam}
-
-        touch ~{bai} # avoid the warning bai is older than bam
-        mv ~{bai} "~{local_bam}.bai"
+    set -euxo pipefail
 
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
@@ -222,7 +210,7 @@ task NanoPlotFromBam {
                  --tsv_stats \
                  --no_supplementary \
                  --verbose \
-                 --bam "~{local_bam}"
+                 --bam "~{bam}"
 
         cat NanoStats.txt | \
             grep -v -e '^Metrics' -e '^highest' -e '^longest' | \
@@ -244,8 +232,8 @@ task NanoPlotFromBam {
         cpu_cores:          8,
         mem_gb:             12,
         disk_gb:            disk_size,
-        preemptible_tries:  0,
-        max_retries:        1,
+        preemptible_tries:  if (bam_sz > 100) then 0 else 1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-nanoplot:1.40.0-1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])

@@ -331,7 +331,6 @@ task SamtoolsFlagStats {
         description: "Collect SAM flag stats of an aligned BAM"
     }
     parameter_meta {
-        bam: {localization_optional: true}
         output_format: "argument passed on to '-O' of `samtools flagstats` "
     }
 
@@ -348,8 +347,6 @@ task SamtoolsFlagStats {
 
     String base = basename(bam, ".bam")
 
-    String local_bam = "/mnt/disks/cromwell_root/~{base}"
-
     Map[String, String] reformat_user_input = {'JSON': 'json',       'json': 'json',
                                                "TSV": 'tsv',         'tsv': 'tsv',
                                                'DEFAULT': 'defalt',  'default': 'defalt'}
@@ -360,15 +357,12 @@ task SamtoolsFlagStats {
     String output_name = "~{base}.flag_stats.~{o_ext}"
 
     command <<<
-        set -euxo pipefail
-
-        time \
-        gcloud storage cp ~{bam} ~{local_bam}
+    set -euxo pipefail
 
         time \
         samtools flagstat \
             -O ~{o_f} \
-            ~{local_bam} \
+            ~{bam} \
         > "~{output_name}"
     >>>
 
@@ -442,7 +436,6 @@ task CountMethylCallReads {
     }
 
     parameter_meta {
-        bam: {localization_optional: true}
         disk_type: "must be one of [HDD, SSD, LOCAL]. SSD is recommended"
 
         raw_count: "number of records in input BAM"
@@ -463,34 +456,29 @@ task CountMethylCallReads {
         Int non_2304_bean_count = read_int("non_2304_bean_count.txt")
     }
 
-    String base = basename(bam, '.bam')
-    String local_bam = "/mnt/disks/cromwell_root/~{base}.bam"
-
     command <<<
-        set -euxo pipefail
-        time \
-        gcloud storage cp ~{bam} ~{local_bam}
+    set -euxo pipefail
 
-        samtools view -@1 -c         ~{local_bam} >      raw_count.txt &
-        samtools view -@1 -c -F 2304 ~{local_bam} > non_2304_count.txt &
+        samtools view -@1 -c         ~{bam} >      raw_count.txt &
+        samtools view -@1 -c -F 2304 ~{bam} > non_2304_count.txt &
 
-        samtools view -h         --tag "MM" ~{local_bam} | samtools view -c --tag "ML" >          bean_count.txt &
-        samtools view -h -F 2304 --tag "MM" ~{local_bam} | samtools view -c --tag "ML" > non_2304_bean_count.txt &
+        samtools view -h         --tag "MM" ~{bam} | samtools view -c --tag "ML" >          bean_count.txt &
+        samtools view -h -F 2304 --tag "MM" ~{bam} | samtools view -c --tag "ML" > non_2304_bean_count.txt &
 
         wait
 
         tail ./*_count.txt
     >>>
-
-    Int local_ssd_sz = if size(bam, "GiB") > 300 then 750 else 375
-    Int pd_sz = 50 + ceil(size(bam, "GiB"))
+    Int bam_sz = ceil(size(bam, "GiB"))
+    Int local_ssd_sz = if bam_sz > 300 then 750 else 375
+    Int pd_sz = 50 + bam_sz
     Int disk_size = if "LOCAL" == disk_type then local_ssd_sz else pd_sz
     runtime {
         cpu:            10
         memory:         "20 GiB"
         disks:          "local-disk ~{disk_size} ~{disk_type}"
-        preemptible:    2
-        maxRetries:     1
+        preemptible:    1
+        maxRetries:     0
         docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
 }
@@ -961,7 +949,6 @@ task GatherReadsWithoutMethylCalls {
         desciption: "Collect records in the bam without the ML & MM tags"
     }
     parameter_meta {
-        bam: {localization_optional: true}
         disk_type: "must be one of [HDD, SSD, LOCAL]. SSD is recommended"
     }
 
@@ -980,20 +967,17 @@ task GatherReadsWithoutMethylCalls {
     }
 
     String p = basename(bam, ".bam")
-    String local_bam = "/mnt/disks/cromwell_root/~{p}.bam"
 
     command <<<
-        set -euxo pipefail
-        time \
-        gcloud storage cp ~{bam} ~{local_bam}
+    set -euxo pipefail
 
         export LC_ALL=C  # attempt to make grep faster
-        samtools view -@1 -h ~{local_bam} \
+        samtools view -@1 -h ~{bam} \
             | grep -vF "ML:B:C" \
             | samtools view -@1 -bh \
             -o "~{p}.no_ML.bam" &
 
-        samtools view -@1 -h ~{local_bam} \
+        samtools view -@1 -h ~{bam} \
             | grep -vF "MM:Z:" \
             | samtools view -@1 -bh \
             -o "~{p}.no_MM.bam" &
@@ -1018,8 +1002,9 @@ task GatherReadsWithoutMethylCalls {
     # here, we are a little "brave", given that the task generates some bams
     # however, if the output bams are large enough, then the input definitely has issues (too many without MM/ML)
     # hence the run will fail and we'll be warned by an OoD (or PAPI 10)
-    Int local_ssd_sz = if size(bam, "GiB") > 300 then 750 else 375
-    Int pd_sz = 50 + ceil(size(bam, "GiB"))
+    Int bam_sz = ceil(size(bam, "GiB"))
+    Int local_ssd_sz = if bam_sz > 300 then 750 else 375
+    Int pd_sz = 50 + bam_sz
     Int disk_size = if "LOCAL" == disk_type then local_ssd_sz else pd_sz
     runtime {
         cpu:            10

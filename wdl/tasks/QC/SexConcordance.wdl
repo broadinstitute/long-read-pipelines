@@ -43,7 +43,7 @@ task MakeACall {
         String expected_sex_type
     }
 
-    Map[String, Int] sex_codec = {'F':2,'M':1,'NA':0,'na':0}
+    Map[String, Int] sex_codec = {'F':2,'M':1,'NA':0,'na':0, 'U':0}
     Int expected_sex_code = sex_codec[expected_sex_type]
 
     command <<<
