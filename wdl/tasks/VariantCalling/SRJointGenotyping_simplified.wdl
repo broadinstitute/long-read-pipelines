@@ -224,6 +224,8 @@ task ImportGVCFs {
         let java_memory_size_mb=$((available_memory_mb-off_heap_memory_mb))
 
         echo "--------------------------------" >&2
+        date >&2
+        echo "--------------------------------" >&2
         echo "Memory info:" >&2
         echo Total available memory: ${available_memory_mb} MB >&2
         echo Memory reserved for Java: ${java_memory_size_mb} MB >&2
@@ -247,8 +249,13 @@ task ImportGVCFs {
         echo "--------------------------------" >&2
 
         if [[ ~{has_existing_genomicsdb_tar} == "true" ]] ; then
+            t_start=$(date +%s)
+            date
             echo "Untarring existing GenomicsDB workspace: ~{existing_genomicsdb_tar}..."
             tar -xf ~{existing_genomicsdb_tar}
+            date
+            t_end=$(date +%s)
+            echo "Untarring existing GenomicsDB workspace: ~{existing_genomicsdb_tar} took $((t_end - t_start)) seconds"
         fi
 
         gatk --java-options "-Xms8192m -Xmx${java_memory_size_mb}m" \
