@@ -290,11 +290,13 @@ task MosDepthWGS {
     command <<<
     set -euxo pipefail
 
+        mv ~{bam} aligned.bam
+        mv ~{bai} aligned.bam.bai
         mosdepth \
             -t 2 \
             -x -n -Q1 \
             ~{prefix} \
-            ~{bam} &
+            aligned.bam &
 
         if ~{collect_over_bed}; then
             mosdepth \
@@ -302,7 +304,7 @@ task MosDepthWGS {
                 -b ~{bed} \
                 -x -n -Q 1 \
                 "~{prefix}.coverage_over_bed.~{bed_descriptor}" \
-                ~{bam} &
+                aligned.bam &
         fi
 
         wait && ls
