@@ -314,13 +314,13 @@ task MosDepthWGS {
     >>>
 
     #########################
-    Int pd_disk_size = 10 + ceil(size(bam, "GiB"))
+    Int pd_disk_size = 100 + ceil(size(bam, "GiB"))
     Int local_disk_size = if(size(bam, "GiB")>300) then 750 else 375
     Int disk_size = if('LOCAL'==disk_type) then local_disk_size else pd_disk_size
 
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
-        mem_gb:             8,
+        mem_gb:             16,
         disk_gb:            disk_size,
         preemptible_tries:  2,
         max_retries:        1,
