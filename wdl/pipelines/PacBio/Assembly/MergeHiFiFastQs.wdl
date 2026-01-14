@@ -94,11 +94,12 @@ workflow Work {
     # save files
     String dummy = basename(ccs_fq)
     String dummy_b = sub(dummy, ".gz$", "")
+    String sample_outdir = sub(outdir, "/+$", "") + '/sample_fastq'
     if (dummy != dummy_b) {
-        call FF.FinalizeToFile as FinalizeMergedFQ { input: outdir = outdir, file = ccs_fq, name = prefix + ".fq.gz" }
+        call FF.FinalizeToFile as FinalizeMergedFQ { input: outdir = sample_outdir, file = ccs_fq, name = prefix + ".fq.gz" }
     }
     if (dummy == dummy_b) {
-        call FF.CompressAndFinalize as CompressAndFinalizeMergedFQ { input: outdir = outdir, file = ccs_fq, name = prefix + ".fq.gz" }
+        call FF.CompressAndFinalize as CompressAndFinalizeMergedFQ { input: outdir = sample_outdir, file = ccs_fq, name = prefix + ".fq.gz" }
     }
     String finalized_merged_fq_path = select_first([FinalizeMergedFQ.gcs_path, CompressAndFinalizeMergedFQ.gcs_path])
 
@@ -110,7 +111,7 @@ workflow Work {
         FinalizationManifestLine a = object
                                     {files_to_save: flatten([[NanoPlotFromFastqs.stats], NanoPlotFromFastqs.plots]),
                                     is_singleton_file: false,
-                                    destination: outdir + "/nanoplot",
+                                    destination: sub(outdir, "/+$", "") + "/nanoplot",
                                     output_attribute_name: "nanoplot"}
     }
     ##########
