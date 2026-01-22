@@ -570,6 +570,73 @@ task CountAlignmentRecords {
     }
 }
 
+task CountMolecules {
+    meta {
+        description: "Count the number of molecules in a long-read BAM file."
+        warn: "This task is subject to network instabilities and may also timeout, so use with caution when you set localize_bam to false."
+    }
+    parameter_meta {
+        bam: {localization_optional: true}
+        localize_bam: "If false, the BAM is streamed in from the bucket instead of localized, but the operation is subject to network instabilities and may also timeout"
+    }
+
+    input {
+        File bam
+        Boolean localize_bam = false
+        RuntimeAttr? runtime_attr_override
+    }
+
+    output {
+        Int number = read_int("count.txt")
+    }
+
+    command <<<
+    set -euxo pipefail
+
+        if ~{localize_bam}; then
+            time \
+            gcloud storage cp \
+                --billing-project=$(gcloud config get-value project) \
+                ~{bam} input_bam.bam
+            use_this_bam="input_bam.bam"
+        else
+            export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+            export GCS_REQUESTER_PAYS_PROJECT=$(gcloud config get-value project)
+            use_this_bam="~{bam}"
+        fi
+
+        time \
+        samtools view "${use_this_bam}" \
+        | cut -f1 \
+        | sort \
+        | uniq \
+        | wc -l \
+        | awk '{print $1}' \
+        > count.txt
+    >>>
+
+    #########################
+    Int disk_size = 20 + ceil(size(bam, "GiB"))
+
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task StreamingBamErrored {
     meta {
         desciption:
