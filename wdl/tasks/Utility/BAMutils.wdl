@@ -31,9 +31,10 @@ task GetReadGroupInfo {
     }
 
     command <<<
-        set -eux
+    set -eux
 
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        export GCS_REQUESTER_PAYS_PROJECT=$(gcloud config get-value project)
         samtools view -H ~{bam} | grep "^@RG" > one_rg_per_line.txt
         num_rgs=$(wc -l one_rg_per_line.txt | awk '{print $1}')
         if [[ ${num_rgs} -gt 1 ]]; then exit 1; fi
@@ -78,10 +79,18 @@ task GetReadGroupLines {
     }
 
     command <<<
-        set -eux
+    set -eux
 
         export GCS_OAUTH_TOKEN=`gcloud auth application-default print-access-token`
-        samtools view -H ~{bam} | grep "^@RG" > read_groups.txt
+        export GCS_REQUESTER_PAYS_PROJECT=$(gcloud config get-value project)
+        samtools view -H ~{bam} | grep "^@RG" > read_groups.txt || true
+        touch read_groups.txt
+        if [[ ! -s read_groups.txt ]]; then
+            echo "No RG lines found"
+            touch rgids.txt
+            touch read_groups.txt
+            exit 0
+        fi
 
         rm -f rgids.txt
         while IFS= read -r line
@@ -122,9 +131,10 @@ task GatherBamMetadata {
     }
 
     command <<<
-        set -eux
+    set -eux
 
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        export GCS_REQUESTER_PAYS_PROJECT=$(gcloud config get-value project)
         samtools view -H ~{bam} > header.txt
 
         grep -F "@HD" header.txt | tr '\t' '\n' > hd.line.txt
@@ -143,6 +153,7 @@ task GatherBamMetadata {
         if grep -q "@SQ" "header.txt";
         then
             export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+            export GCS_REQUESTER_PAYS_PROJECT=$(gcloud config get-value project)
             if [[ 1 -le $(samtools view -F 4 ~{bam} | head | wc -l | awk '{print $1}') ]];
             then
                 mapped_bool='true'
@@ -180,9 +191,10 @@ task CountReadGroups {
     }
 
     command <<<
-        set -eux
+    set -eux
 
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        export GCS_REQUESTER_PAYS_PROJECT=$(gcloud config get-value project)
         samtools view -H ~{bam} | grep -c "^@RG" > "rg_cnt.txt"
     >>>
 
@@ -216,9 +228,10 @@ task InferSampleName {
     }
 
     command <<<
-        set -euxo pipefail
+    set -euxo pipefail
 
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        export GCS_REQUESTER_PAYS_PROJECT=$(gcloud config get-value project)
         samtools view -H ~{bam} > header.txt
         if ! grep -q '^@RG' header.txt; then echo "No read group line found!" && exit 1; fi
 
@@ -248,9 +261,6 @@ task ValidateSamFile {
     parameter_meta {
         validation_mode: "Desired valiation mode; see Picard documentation for the supproted values."
         disk_type: "Type of disk to use for the computation; SSD for persistent SSD disks, LOCAL for local SSDs."
-        bam: {
-            localization_optional : true
-        }
     }
 
     input {
@@ -285,16 +295,11 @@ task ValidateSamFile {
     String output_basename = basename(basename(bam, ".bam"), ".cram")
     String output_name = "${output_basename}_${validation_mode}.txt"
 
-    String base = basename(bam, ".bam")
-    String local_bam = "/cromwell_root/~{base}.bam"
-
     command <<<
-        set -eux
-
-        time gcloud storage cp ~{bam} ~{local_bam}
+    set -eux
 
         gatk ValidateSamFile \
-            --INPUT ~{local_bam} \
+            --INPUT ~{bam} \
             --OUTPUT ~{output_name} \
             --MODE ~{validation_mode} \
             ~{true="--IGNORE " false="" 0<length(validation_errs_to_ignore)} \
@@ -313,8 +318,8 @@ task ValidateSamFile {
         cpu_cores:          2,
         mem_gb:             4,
         disk_gb:            disk_size,
-        preemptible_tries:  2,
-        max_retries:        1,
+        preemptible_tries:  1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-custom-gatk:4.4.0.0-samtools1.18"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -333,7 +338,6 @@ task SamtoolsFlagStats {
         description: "Collect SAM flag stats of an aligned BAM"
     }
     parameter_meta {
-        bam: {localization_optional: true}
         output_format: "argument passed on to '-O' of `samtools flagstats` "
     }
 
@@ -348,9 +352,6 @@ task SamtoolsFlagStats {
         File flag_stats = "~{output_name}"
     }
 
-    String base = basename(bam, ".bam")
-
-    String local_bam = "/cromwell_root/~{base}"
 
     Map[String, String] reformat_user_input = {'JSON': 'json',       'json': 'json',
                                                "TSV": 'tsv',         'tsv': 'tsv',
@@ -359,18 +360,16 @@ task SamtoolsFlagStats {
     Map[String, String] reformat_output_format = {'default': 'txt', 'json': 'json', 'tsv': 'tsv'}
     String o_ext = reformat_output_format[o_f]
 
+    String base = basename(bam, ".bam")
     String output_name = "~{base}.flag_stats.~{o_ext}"
 
     command <<<
-        set -euxo pipefail
-
-        time \
-        gcloud storage cp ~{bam} ~{local_bam}
+    set -euxo pipefail
 
         time \
         samtools flagstat \
             -O ~{o_f} \
-            ~{local_bam} \
+            ~{bam} \
         > "~{output_name}"
     >>>
 
@@ -382,7 +381,7 @@ task SamtoolsFlagStats {
         mem_gb:             8,
         disk_gb:            disk_size,
         preemptible_tries:  1,
-        max_retries:        1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -465,19 +464,14 @@ task CountMethylCallReads {
         Int non_2304_bean_count = read_int("non_2304_bean_count.txt")
     }
 
-    String base = basename(bam, '.bam')
-    String local_bam = "/cromwell_root/~{base}.bam"
-
     command <<<
-        set -euxo pipefail
-        time \
-        gcloud storage cp ~{bam} ~{local_bam}
+    set -euxo pipefail
 
-        samtools view -@1 -c         ~{local_bam} >      raw_count.txt &
-        samtools view -@1 -c -F 2304 ~{local_bam} > non_2304_count.txt &
+        samtools view -@1 -c         ~{bam} >      raw_count.txt &
+        samtools view -@1 -c -F 2304 ~{bam} > non_2304_count.txt &
 
-        samtools view -h         --tag "MM" ~{local_bam} | samtools view -c --tag "ML" >          bean_count.txt &
-        samtools view -h -F 2304 --tag "MM" ~{local_bam} | samtools view -c --tag "ML" > non_2304_bean_count.txt &
+        samtools view -h         --tag "MM" ~{bam} | samtools view -c --tag "ML" >          bean_count.txt &
+        samtools view -h -F 2304 --tag "MM" ~{bam} | samtools view -c --tag "ML" > non_2304_bean_count.txt &
 
         wait
 
@@ -492,7 +486,7 @@ task CountMethylCallReads {
         memory:         "20 GiB"
         disks:          "local-disk ~{disk_size} ~{disk_type}"
         preemptible:    2
-        maxRetries:     1
+        maxRetries:     0
         docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
 }
@@ -529,7 +523,7 @@ task CountAlignmentRecords {
     }
 
     command <<<
-        set -eux
+    set -eux
 
         touch "error.log"
 
@@ -544,7 +538,9 @@ task CountAlignmentRecords {
         fi
         if ~{localize_bam}; then
             time \
-            gcloud storage cp ~{aligned_bam} input_bam.bam
+            gcloud storage cp \
+                --billing-project=$(gcloud config get-value project) \
+                ~{aligned_bam} input_bam.bam
             mv ~{aligned_bai} input_bam.bam.bai
 
             samtools view -c \
@@ -553,6 +549,7 @@ task CountAlignmentRecords {
                 > "count.txt"
         else
             export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+            export GCS_REQUESTER_PAYS_PROJECT=$(gcloud config get-value project)
             samtools view -c \
                 "${filter_op}" ~{select_first([decimal_flag, " "])} \
                 ~{aligned_bam} \
@@ -568,7 +565,7 @@ task CountAlignmentRecords {
         memory:         "4 GiB"
         disks:          "local-disk ~{disk_size} ~{disk_type}"
         preemptible:    1
-        maxRetries:     1
+        maxRetries:     0
         docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
 }
@@ -614,10 +611,6 @@ task CountAlignmentRecordsByFlag {
 
     parameter_meta {
         names_and_decimal_flags: "The SAM flags, in decimal (as opposed to hexadecimal.), with their (appropriate) names."
-
-        aligned_bam: {
-            localization_optional: true
-        }
     }
 
     input {
@@ -625,16 +618,10 @@ task CountAlignmentRecordsByFlag {
         File aligned_bai
 
         Map[String, Int] names_and_decimal_flags
-
-        Int num_local_ssds
     }
 
-    # Int n = length(names_and_decimal_flags)
-
-    String base = basename(aligned_bam, ".bam")
-    String local_bam = "/cromwell_root/~{base}.bam"
     command <<<
-        set -eux
+    set -eux
 
         two_col_tsv=~{write_map(names_and_decimal_flags)}
         cat "${two_col_tsv}"
@@ -650,9 +637,6 @@ task CountAlignmentRecordsByFlag {
         # '
         wc -l "${two_col_tsv}"
 
-        time \
-            gcloud storage cp ~{aligned_bam} ~{local_bam}
-        mv ~{aligned_bai} ~{local_bam}.bai
 
         # iterate through each requested SAM flag
         while IFS=$'\t' read -r -a line
@@ -661,17 +645,17 @@ task CountAlignmentRecordsByFlag {
             flag="${line[1]}"
             samtools view -c \
                 -f "${flag}" \
-                ~{local_bam} \
+                ~{aligned_bam} \
                 > "asdfxyz_${name}.txt" &
         done < "${two_col_tsv}"
 
         # overall
-        samtools view -c ~{local_bam} \
+        samtools view -c ~{aligned_bam} \
         > "total_cnt.txt" &
         # primary (2308=4+256+2048)
         samtools view -c \
             -F 2308 \
-            ~{local_bam} \
+            ~{aligned_bam} \
         > "primary_count.txt" &
         wait
         total_count=$(cat total_cnt.txt)
@@ -707,7 +691,7 @@ task CountAlignmentRecordsByFlag {
         memory:         "32 GiB"
         disks:          "local-disk " + local_ssd_sz + " LOCAL"
         preemptible:    1
-        maxRetries:     1
+        maxRetries:     0
         docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
 }
@@ -789,7 +773,7 @@ task GetDuplicateReadnamesInQnameSortedBam {
         memory:         "4 GiB"
         disks:          "local-disk ~{disk_size} ~{disk_type}"
         preemptible:    2
-        maxRetries:     1
+        maxRetries:     0
         docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
 }
@@ -804,10 +788,6 @@ task ResetSamplename {
         "Reset the SM entry in the input bam's readgroup lines."
     }
 
-    parameter_meta {
-        bam: {localization_optional: true}
-    }
-
     input {
         File bam
         File? bai
@@ -820,17 +800,14 @@ task ResetSamplename {
     }
 
     String prefix = basename(bam, ".bam")
-    String local_bam = "/cromwell_root/~{prefix}.bam"
     String out_prefix = "~{prefix}.ResetSamplename"
-    command <<<
-        set -euxo pipefail
 
-        time \
-        gcloud storage cp ~{bam} ~{local_bam}
-        if ~{defined(bai)}; then touch ~{bai}; mv ~{bai} ~{local_bam}.bai; fi
+    command <<<
+    set -euxo pipefail
+
 
         ###### cleanup the header
-        samtools view --no-PG -H ~{local_bam} > header.txt
+        samtools view --no-PG -H ~{bam} > header.txt
         grep -v "^@SQ" header.txt
 
         # fix SM in the RG lines
@@ -849,7 +826,7 @@ task ResetSamplename {
 
         ###### samtools reheader
         time \
-        samtools reheader fixed_header.txt ~{local_bam} \
+        samtools reheader fixed_header.txt ~{bam} \
         > "~{out_prefix}.bam"
         if ~{defined(bai)}; then
             time \
@@ -863,7 +840,7 @@ task ResetSamplename {
         memory:         "8 GiB"
         disks:          "local-disk ~{disk_size} SSD"
         preemptible:    2
-        maxRetries:     1
+        maxRetries:     0
         docker:         "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
 }
@@ -880,7 +857,6 @@ task FilterBamByLen {
 
     parameter_meta {
         len_threshold_inclusive: "Reads longer than or equal to this length will be included."
-        bam : { localization_optional: true }
     }
 
     input {
@@ -907,21 +883,15 @@ task FilterBamByLen {
 
     Boolean is_aligned = defined(bai)
 
-    String local_bam = "/cromwell_root/~{base}.bam"
-
     command <<<
-        set -euxo pipefail
-
-        time \
-        gcloud storage cp ~{bam} ~{local_bam}
-        if ~{defined(bai)}; then mv ~{bai} "~{local_bam}.bai"; touch "~{local_bam}.bai"; fi
+    set -euxo pipefail
 
         # get total yield in the background
         if ~{compute_yield}; then
             # simply get the length of the sequence, excluding 2304 reads
             samtools view -@1 \
                 ~{true='-F2304' false=' ' is_aligned} \
-                ~{local_bam} \
+                ~{bam} \
             | awk -F '\t' '{print length($10)}' \
             > all.read.lengths.txt &
         fi
@@ -935,12 +905,12 @@ task FilterBamByLen {
                 --write-index \
                 -e "length(seq)>=~{len_threshold_inclusive}" \
                 -o "~{out_prefx}.bam##idx##~{out_prefx}.bam.bai" \
-                ~{local_bam}
+                ~{bam}
         else
             samtools view -@1 -h \
                 -e "length(seq)>=~{len_threshold_inclusive}" \
                 -o "~{out_prefx}.bam" \
-                ~{local_bam}
+                ~{bam}
         fi
 
         if ~{compute_yield}; then
@@ -959,6 +929,7 @@ task FilterBamByLen {
             > all.yield.txt
         fi
     >>>
+
     ###################
     Int disk_size = 20 + 2 * ceil(size(bam, "GiB"))
 
@@ -967,7 +938,7 @@ task FilterBamByLen {
         mem_gb:                16,
         disk_gb:               disk_size,
         preemptible_tries:     1,
-        max_retries:           1,
+        max_retries:           0,
         docker:                "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -986,7 +957,6 @@ task GatherReadsWithoutMethylCalls {
         desciption: "Collect records in the bam without the ML & MM tags"
     }
     parameter_meta {
-        bam: {localization_optional: true}
         disk_type: "must be one of [HDD, SSD, LOCAL]. SSD is recommended"
     }
 
@@ -1005,20 +975,17 @@ task GatherReadsWithoutMethylCalls {
     }
 
     String p = basename(bam, ".bam")
-    String local_bam = "/cromwell_root/~{p}.bam"
 
     command <<<
-        set -euxo pipefail
-        time \
-        gcloud storage cp ~{bam} ~{local_bam}
+    set -euxo pipefail
 
         export LC_ALL=C  # attempt to make grep faster
-        samtools view -@1 -h ~{local_bam} \
+        samtools view -@1 -h ~{bam} \
             | grep -vF "ML:B:C" \
             | samtools view -@1 -bh \
             -o "~{p}.no_ML.bam" &
 
-        samtools view -@1 -h ~{local_bam} \
+        samtools view -@1 -h ~{bam} \
             | grep -vF "MM:Z:" \
             | samtools view -@1 -bh \
             -o "~{p}.no_MM.bam" &
@@ -1051,7 +1018,7 @@ task GatherReadsWithoutMethylCalls {
         memory:         "20 GiB"
         disks:          "local-disk ~{disk_size} ~{disk_type}"
         preemptible:    2
-        maxRetries:     1
+        maxRetries:     0
         docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
 }
@@ -1066,7 +1033,6 @@ task SubsetBamToLocusLocal {
         interval_list_file:  "a Picard-style interval list file to subset reads with"
         interval_id:         "an ID string for representing the intervals in the interval list file"
         prefix: "prefix for output bam and bai file names"
-        bam: {localization_optional: true}
     }
 
     input {
@@ -1086,13 +1052,8 @@ task SubsetBamToLocusLocal {
 
     String subset_prefix = prefix + "." + interval_id
 
-    String local_bam = "/cromwell_root/~{basename(bam)}"
-
     command <<<
-        set -euxo pipefail
-
-        time gcloud storage cp ~{bam} ~{local_bam}
-        mv ~{bai} "~{local_bam}.bai" && touch "~{local_bam}.bai"
+    set -euxo pipefail
 
         # see man page for what '-M' means
         samtools view \
@@ -1101,7 +1062,7 @@ task SubsetBamToLocusLocal {
             -@ 1 \
             --write-index \
             -o "~{subset_prefix}.bam##idx##~{subset_prefix}.bam.bai" \
-            ~{local_bam} "~{local_bam}.bai" \
+            ~{bam} ~{bai} \
             ~{sep=" " intervals}
     >>>
 
@@ -1135,10 +1096,7 @@ task DeduplicateQuerynameSortedBam {
         desciption: "De-duplicate a queryname sorted bam. The queryname sort can be done either in natural order, or ascii order."
     }
     parameter_meta {
-        qnorder_bam: {
-            desciption: "queryname sorted BAM",
-            localization_optional: true
-        }
+        qnorder_bam: "queryname sorted BAM"
     }
     input {
         File qnorder_bam
@@ -1150,29 +1108,24 @@ task DeduplicateQuerynameSortedBam {
     }
 
     String base = basename(qnorder_bam, ".bam")
-    String local_bam = "/cromwell_root/~{base}.bam"
-
-    Int disk_size = 3 * ceil(size(qnorder_bam, "GB"))
 
     command <<<
-        set -eux
-
-        time gcloud storage cp ~{qnorder_bam} ~{local_bam}
+    set -eux
 
         # if no duplicate at all, why bother
-        time samtools view ~{local_bam} | awk -F '\t' '{print $1}' | sort | uniq -d > duplicated.readnames.txt
+        time samtools view ~{qnorder_bam} | awk -F '\t' '{print $1}' | sort | uniq -d > duplicated.readnames.txt
         touch duplicated.readnames.txt
         cat duplicated.readnames.txt
         cnt=$(wc -l duplicated.readnames.txt | awk '{print $1}')
         if [[ ${cnt} -eq 0 ]]; then
             echo "No duplicates found in the unmapped reads"
-            mv ~{local_bam} "~{base}.dedup.bam"
+            mv ~{qnorder_bam} "~{base}.dedup.bam"
         else
             time \
             python3 /opt/remove_duplicate_ont_namesorted_unaligned.py \
                 -p "~{base}.dedup" \
                 -q "duplicated.readnames.bypython.txt" \
-                ~{local_bam}
+                ~{qnorder_bam}
 
             cat "duplicated.readnames.bypython.txt"
 
@@ -1181,12 +1134,14 @@ task DeduplicateQuerynameSortedBam {
     >>>
 
     #########################
+    Int disk_size = 3 * ceil(size(qnorder_bam, "GB"))
+
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             4,
         disk_gb:            disk_size,
         preemptible_tries:  1,
-        max_retries:        1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-bam-dedup:0.1.2"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -1211,7 +1166,6 @@ task BamToFastq {
     }
 
     parameter_meta {
-        bam: {localization_optional: true}
         prefix: "Prefix for the output fastq file."
 
         save_all_tags:
@@ -1239,8 +1193,6 @@ task BamToFastq {
 
     Boolean custom_tags_to_preserve = 0<length(tags_to_preserve)
 
-    String base = basename(bam)
-    String local_bam = "/cromwell_root/~{base}"
     command <<<
         set -euxo pipefail
 
@@ -1254,11 +1206,6 @@ task BamToFastq {
             fi
         done
 
-        # localize
-        time \
-        gcloud storage cp ~{bam} ~{local_bam}
-
-
         # when saving all tags, the list can be empty as instructed by samtools doc
         time \
         samtools fastq \
@@ -1267,7 +1214,7 @@ task BamToFastq {
             ~{true='-T ' false =' ' save_all_tags} ~{true="' '" false =' ' save_all_tags} \
             ~{true='-T ' false =' ' custom_tags_to_preserve} ~{sep=',' tags_to_preserve} \
             -0 ~{prefix}.fq.gz \
-            ~{local_bam}
+            ~{bam}
     >>>
 
     #########################
@@ -1278,7 +1225,7 @@ task BamToFastq {
         mem_gb:             4,
         disk_gb:            disk_size,
         preemptible_tries:  2,
-        max_retries:        1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -1301,7 +1248,6 @@ task GetPileup {
     }
 
     parameter_meta {
-        bam: {localization_optional: true}
         disable_baq: "User choice to diable BAQ computation or not (see doc for samtools mpileup for detail)"
     }
 
@@ -1319,13 +1265,8 @@ task GetPileup {
 
     String baq_option = if disable_baq then '-B' else '-E'
 
-    String base = basename(bam)
-    String local_bam = "/cromwell_root/~{base}"
-
     command <<<
-        set -euxo pipefail
-
-        time gcloud storage cp ~{bam} ~{local_bam}
+    set -euxo pipefail
 
         samtools mpileup \
             ~{baq_option} \
@@ -1334,7 +1275,7 @@ task GetPileup {
             -q 1 \
             -f ~{ref_fasta} \
             -o ~{prefix}.mpileup \
-            ~{local_bam}
+            ~{bam}
     >>>
 
     runtime {
@@ -1342,7 +1283,7 @@ task GetPileup {
         memory:         "4 GiB"
         disks:          "local-disk 100 HDD"
         preemptible:    2
-        maxRetries:     1
+        maxRetries:     0
         docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
 }
@@ -1356,7 +1297,6 @@ task BamToRelevantPileup {
     }
 
     parameter_meta {
-        bam: {localization_optional: true}
         bed: "sites where pileup is needed"
 
         max_retries: "Because of the strange samtools failures reading from NAS storage, we should make multiple attempts to get away from the trasient errors. If after the max retries, we still get those failures, this task will fail."
@@ -1384,11 +1324,7 @@ task BamToRelevantPileup {
     String local_bam = "/cromwell_root/~{base}"
 
     command <<<
-        set -euxo pipefail
-
-        time \
-        gcloud storage cp ~{bam} ~{local_bam}
-        mv ~{bai} "~{local_bam}.bai"
+    set -euxo pipefail
 
         # generate bed for parallel conversion
         set +e
@@ -1405,11 +1341,11 @@ task BamToRelevantPileup {
         cnt=0
         for bed in $(ls chr*.bed | sort -V); do
 
-            if [[ ! -s ${bed} ]] ; then rm "${bed}" && continue; fi
+            if [[ ! -s "${bed}" ]] ; then rm "${bed}" && continue; fi
 
             bash /opt/convert.2.pileup.sh \
-                ~{local_bam} ~{ref_fasta} ~{baq_option} \
-                ${bed} \
+                ~{bam} ~{ref_fasta} ~{baq_option} \
+                "${bed}" \
                 &
 
             cnt=$((cnt + 1))
@@ -1450,12 +1386,8 @@ task SamtoolsReset {
     meta {
         description: "Use samtools reset to drop alignment information from the input bam."
     }
-
     parameter_meta {
-        bam: {
-            desciption: "aligned BAM to operate on",
-            localization_optional: true
-        }
+        bam: "aligned BAM to operate on"
         addtional_tags_to_drop: "tags in each alignment record to be dropped; usually these are tags produced by the mapper/aligner that generated the original alignment"
     }
     input {
@@ -1473,7 +1405,6 @@ task SamtoolsReset {
         Int? num_ssds
         RuntimeAttr? runtime_attr_override
     }
-
     output {
         File res = "~{prefix}.unaligned.bam"
         File original_sam_flag_stats = "orignal.SAM-flag.stats.txt"
@@ -1484,20 +1415,20 @@ task SamtoolsReset {
 
     String prefix = basename(bam, ".bam")
 
-    String base = basename(bam, ".bam")
-    String local_bam = "/cromwell_root/~{base}.bam"
-
     command <<<
-        set -eux
+    set -eux
 
-        time gcloud storage cp ~{bam} ~{local_bam}
-
-        samtools view ~{local_bam} | grep -v "^@" | awk -F '\t' '{print $2}' | sort | uniq -c > orignal.SAM-flag.stats.txt &
+        samtools view ~{bam} \
+        | grep -v "^@" \
+        | awk -F '\t' '{print $2}' \
+        | sort \
+        | uniq -c \
+        > orignal.SAM-flag.stats.txt &
 
         samtools reset -@4 \
             --remove-tag ~{sep=',' tags_to_drop} \
             -o ~{prefix}.unaligned.bam \
-            ~{local_bam}
+            ~{bam}
         wait
     >>>
 
@@ -1509,7 +1440,7 @@ task SamtoolsReset {
         mem_gb:             10,
         disk_gb:            disk_size,
         preemptible_tries:  2,
-        max_retries:        1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -1548,9 +1479,6 @@ task QuerynameSortBamWithSamtools {
 
     String prefix = basename(bam, ".bam")
 
-    Int disk_size = if defined(num_ssds) then 375*select_first([num_ssds]) else 1+4*ceil(size([bam], "GB"))
-    String disk_type = if defined(num_ssds) then " LOCAL" else " SSD"
-
     command <<<
 
         echo "don't use me yet; see if your version of samtools has this ticket resolved https://github.com/samtools/samtools/issues/1500"; exit 1
@@ -1575,12 +1503,15 @@ task QuerynameSortBamWithSamtools {
     >>>
 
     #########################
+    Int disk_size = if defined(num_ssds) then 375*select_first([num_ssds]) else 1+4*ceil(size([bam], "GB"))
+    String disk_type = if defined(num_ssds) then " LOCAL" else " SSD"
+
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
         mem_gb:             16,
         disk_gb:            disk_size,
         preemptible_tries:  2,
-        max_retries:        1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -1616,16 +1547,8 @@ task QuerynameSortBamWithPicard {
 
     String outbam = basename(bam, ".bam") + "picard-queryname-sorted.bam"
 
-    String disk_type = if defined(num_ssds) then " LOCAL" else " SSD"
-
-    Float N = size(bam, "GiB")
-    Int scaleup_factor = if (N > 100) then 6 else 4
-    Int persistend_disk_size = 20 + ceil(scaleup_factor * N)
-
-    Int disk_size = if defined(num_ssds) then 375*select_first([num_ssds]) else persistend_disk_size
-
     command <<<
-        set -eux
+    set -eux
 
         # higher memory, also lower # of reads in memory given ~100 longer reads (1.5E4 bp vs 1.5E2 bp)
         gatk SortSam \
@@ -1638,13 +1561,21 @@ task QuerynameSortBamWithPicard {
     >>>
 
     #########################
+    String disk_type = if defined(num_ssds) then " LOCAL" else " SSD"
+
+    Float N = size(bam, "GiB")
+    Int scaleup_factor = if (N > 100) then 6 else 4
+    Int persistend_disk_size = 20 + ceil(scaleup_factor * N)
+
+    Int disk_size = if defined(num_ssds) then 375*select_first([num_ssds]) else persistend_disk_size
+
     RuntimeAttr default_attr = object {
         cpu_cores:          6,
         mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  2,
-        max_retries:        1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-gatk/gatk:4.4.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -1670,7 +1601,6 @@ task SplitNameSortedUbam {
         read_cnt: "number of reads in the uBAM; providing this will reduce run time."
         n_reads: "desired number of reads per split; mutually exclusive with n_files"
         n_files: "desired number of split files; mutually exclusive with n_reads"
-        uBAM: { localization_optional: true }
     }
     input {
         File uBAM
@@ -1690,16 +1620,12 @@ task SplitNameSortedUbam {
     String split_arg = if defined(n_reads) then "--SPLIT_TO_N_READS ~{X}" else "--SPLIT_TO_N_FILES ~{X}"
     String helper_arg = if (defined(read_cnt)) then "--TOTAL_READS_IN_INPUT ~{read_cnt}" else " "
 
-    String base = basename(uBAM, ".bam")
-    String local_bam = "/cromwell_root/~{base}.bam"
-
     command <<<
-        set -eux
+    set -eux
 
         if ~{fail}; then echo "one and only one of [n_reads, n_files] must be specified" && exit 1; fi
 
         # prep
-        time gcloud storage cp ~{uBAM} ~{local_bam}
         mkdir -p split_outputs
 
         # higher memory, also lower # of reads in memory given ~100 longer reads (1.5E4 bp vs 1.5E2 bp)
@@ -1707,7 +1633,7 @@ task SplitNameSortedUbam {
             --java-options "-Xmx28G -Xms24G" \
             -use_jdk_deflater -use_jdk_inflater \
             --MAX_RECORDS_IN_RAM 5000 \
-            -I ~{local_bam} \
+            -I ~{uBAM} \
             -O split_outputs \
             ~{split_arg} \
             ~{helper_arg}
@@ -1721,7 +1647,7 @@ task SplitNameSortedUbam {
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  2,
-        max_retries:        1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-gatk/gatk:4.4.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -1740,6 +1666,15 @@ task SplitByRG {
     meta {
         description: "Split a BAM file that was aggregated, for the same sample, into pieces by read group."
     }
+    parameter_meta {
+        out_prefix: "prefix for output bam and bai file names"
+        retain_rgless_records: "flag to save the reads that have no RG tag"
+        sort_and_index: "if the user wants to (pos-)sort and index the resulting BAMs; this indicates the input BAM is mapped"
+
+        split_bam: "the resuling BAMs, each having reads only in a single read group"
+        split_bai: "the accompanying BAIs, if possible and explicit requested"
+    }
+
     input {
         File bam
 
@@ -1752,35 +1687,19 @@ task SplitByRG {
         RuntimeAttr? runtime_attr_override
     }
 
-    parameter_meta {
-        bam: {
-            desciption: "BAM to be split",
-            localization_optional: true
-        }
-        out_prefix: "prefix for output bam and bai file names"
-        retain_rgless_records: "flag to save the reads that have no RG tag"
-        sort_and_index: "if the user wants to (pos-)sort and index the resulting BAMs; this indicates the input BAM is mapped"
-
-        split_bam: "the resuling BAMs, each having reads only in a single read group"
-        split_bai: "the accompanying BAIs, if possible and explicit requested"
-    }
-
     Array[String] extra_args = if (retain_rgless_records) then ["-u", "~{out_prefix}_noRG.bam"] else [""]
 
-    String local_bam = basename(bam)
     command <<<
-        set -eux
-        time \
-        gcloud storage cp ~{bam} ~{local_bam}
+    set -eux
 
-        samtools view -H ~{local_bam} | grep "^@RG" > "read_groups_header.txt"
+        samtools view -H ~{bam} | grep "^@RG" > "read_groups_header.txt"
         cat "read_groups_header.txt" | tr '\t' '\n' | grep "^ID:"  | awk -F ':' '{print $2}' > "RG_ids.txt"
 
         samtools split -@3 \
             -f "~{out_prefix}_%#.bam" \
             ~{sep=" " extra_args} \
-            ~{local_bam}
-        rm ~{local_bam}
+            ~{bam}
+        rm ~{bam}
 
         if ~{sort_and_index} ;
         then
@@ -1812,7 +1731,7 @@ task SplitByRG {
         mem_gb:             16,
         disk_gb:            disk_size,
         preemptible_tries:  2,
-        max_retries:        1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -1831,10 +1750,7 @@ task ShardAlignedBam {
         desciption: "Split an WGS BAM based on a provided scatter scheme."
     }
     parameter_meta {
-        aligned_bam: {
-            localization_optional: true,
-            description: "input BAM file (must be coordinate sorted)."
-        }
+        aligned_bam: "input BAM file (must be coordinate sorted)."
         aligned_bai: "input BAM index file"
 
         scatter_scheme: "A txt file holding how to scatter the WGS bam. Example (this example size-balance among the shards): ...\nchr5,chr19\nchr6,chrY,chrM\n..."
@@ -1856,36 +1772,28 @@ task ShardAlignedBam {
         Array[File] split_bams  = glob("~{base}.shard-*.bam")
     }
 
-    Int disk_size = 3 * ceil(size(aligned_bam, "GB"))
-
     String base = basename(aligned_bam, ".bam")
 
-    String local_bam = "/cromwell_root/~{base}.bam"
-    String local_bai = "/cromwell_root/~{base}.bam.bai"
-
-    Int vm_cores = parallel_subset_jobs * 2 + 2
-    Int vm_memory = vm_cores * 4
-
     command <<<
-        set -eux
-
-        # here we use an optimization, that is, in stead of relying on the slow Cromwell localization,
-        # we explicity localize the bam in the with gcloud storage cp
-        time gcloud storage cp ~{aligned_bam} ~{local_bam}
+    set -eux
 
         echo "==========================================================="
         echo "verify input bam is sorted by coordinate"
-        samtools view -H ~{local_bam} | grep "@HD" > hd.line
+        samtools view -H ~{aligned_bam} | grep "@HD" > hd.line
         if ! grep -qF "SO:coordinate" hd.line;
         then
             echo "BAM must be coordinate sorted!" && echo && cat hd.line && exit 1
         fi
         echo "==========================================================="
         echo "index if bai not provided"
-        if ~{defined(aligned_bai)}; then
-            mv ~{aligned_bai} ~{local_bai}
+        if ~{defined(aligned_bai)} ; then
+            if [[ -f "~{aligned_bam}.bai" ]]; then
+                echo "index provided";
+            else  # prep in case user provided bai with different name, e.g. [blah.bam, blah.bai]
+                mv ~{select_first([aligned_bai])} "~{aligned_bam}.bai";
+            fi
         else
-            time samtools index -@3 "~{local_bam}"
+            time samtools index -@3 "~{aligned_bam}"
         fi
         echo "==========================================================="
         echo "######################################"
@@ -1893,10 +1801,10 @@ task ShardAlignedBam {
         samtools view -@3\
             -f4 \
             -o "~{base}.unmapped-reads.bam" \
-            "~{local_bam}" &
+            "~{aligned_bam}" &
         echo "######################################"
         echo "first pad the provided sharding scheme with the uncovered contigs in the bam header"
-        samtools view -H ~{local_bam} | grep "^@SQ" | awk -F '\t' '{print $2}' | awk -F ':' '{print $2}' > contigs.in.header.txt
+        samtools view -H ~{aligned_bam} | grep "^@SQ" | awk -F '\t' '{print $2}' | awk -F ':' '{print $2}' > contigs.in.header.txt
         comm -13 \
             <(tr ',' '\n' < ~{scatter_scheme} | sort) \
             <(sort contigs.in.header.txt) \
@@ -1915,7 +1823,7 @@ task ShardAlignedBam {
             read -ra YY <<< "$XX"
             samtools view -@1 \
                 -o "~{base}.shard-${idx}.bam" \
-                "~{local_bam}" \
+                "~{aligned_bam}" \
                 "${YY[@]}" &
             idx=$(( idx + 1 ))
             job_cnt=$(( job_cnt + 1 ))
@@ -1929,12 +1837,16 @@ task ShardAlignedBam {
     >>>
 
     #########################
+    Int disk_size = 3 * ceil(size(aligned_bam, "GB"))
+    Int vm_cores = parallel_subset_jobs * 2 + 2
+    Int vm_memory = vm_cores * 4
+
     RuntimeAttr default_attr = object {
         cpu_cores:          vm_cores,
         mem_gb:             vm_memory,
         disk_gb:            disk_size,
         preemptible_tries:  1,
-        max_retries:        1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -1959,7 +1871,6 @@ task MergeBamsWithSamtools {
     }
 
     parameter_meta {
-        bams: {localization_optional: true}
         out_prefix: "result file will be named <out_prefix>.bam"
     }
 
@@ -1978,14 +1889,12 @@ task MergeBamsWithSamtools {
     }
 
     command <<<
-        set -euxo pipefail
+    set -euxo pipefail
 
         mkdir -p bams_dir
-        time \
-        gcloud storage cp ~{sep=' ' bams} /cromwell_root/bams_dir/
-        ls bams_dir
+        mv ~{sep=' ' bams} bams_dir/
+        cd bams_dir && ls ./*.bam | tee > bams.list
 
-        cd bams_dir && ls ./*.bam > bams.list
         time \
         samtools merge \
             -p -c --no-PG \
@@ -1995,7 +1904,7 @@ task MergeBamsWithSamtools {
             -b bams.list
         mv ~{out_prefix}.bam \
            ~{out_prefix}.bam.bai \
-        /cromwell_root
+        /mnt/disks/cromwell_root/
     >>>
     #########################
     Int local_ssd_sz = if size(bams, "GiB") > 150 then 750 else 375
@@ -2007,7 +1916,7 @@ task MergeBamsWithSamtools {
         mem_gb:             8,
         disk_gb:            disk_size,
         preemptible_tries:  if "LOCAL" == disk_type then 1 else 0,
-        max_retries:        1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -2026,10 +1935,7 @@ task MergeBamsQuerynameSortedWithPicard {
         desciption: "Merge list of bams that were queryname sorted with Picard"
     }
     parameter_meta {
-        qns_bams: {
-            desciption: "queryname-sorted, preferrably by Picard, bams to be merged",
-            localization_optional: true
-        }
+        qns_bams: "queryname-sorted, preferrably by Picard, bams to be merged"
         base_names: "basenames of all files, INCLUDING the '.bam' extention."
         out_prefix: "result file will be named <out_prefix>.bam"
         num_ssds: "if provided, will use LOCAL SSDs for faster speed at higher cost"
@@ -2046,39 +1952,38 @@ task MergeBamsQuerynameSortedWithPicard {
         File res = "~{out_prefix}.bam"
     }
 
-    Float N = ceil(size(qns_bams, "GB"))
-    Int scaleup_factor = if (N > 100) then 6 else 4
-    Int persistend_disk_size = 20 + ceil(scaleup_factor * N)
-
-    Int disk_size = if defined(num_ssds) then 375*select_first([num_ssds]) else persistend_disk_size
-    String disk_type = if defined(num_ssds) then " LOCAL" else " SSD"
-
     command <<<
-        set -eux
+    set -eux
 
         mkdir -p bams_dir
-        gcloud storage cp ~{sep=' ' qns_bams} /cromwell_root/bams_dir/
-        ls bams_dir
+        mv ~{sep=' ' qns_bams} bams_dir/
+        cd bams_dir && ls ./*.bam | tee > bams.list
 
         # higher memory, also lower # of reads in memory given ~100 longer reads (1.5E4 bp vs 1.5E2 bp)
-        cd bams_dir
         gatk MergeSamFiles \
             --java-options "-Xmx28G -Xms24G" \
             --USE_THREADING \
             -use_jdk_deflater -use_jdk_inflater \
             --SORT_ORDER queryname \
             -I ~{sep=" -I " base_names} \
-            -O "/cromwell_root/~{out_prefix}.bam"
+            -O "/mnt/disks/cromwell_root/~{out_prefix}.bam"
     >>>
 
     #########################
+    Float N = ceil(size(qns_bams, "GB"))
+    Int scaleup_factor = if (N > 100) then 6 else 4
+    Int persistent_disk_size = 20 + ceil(scaleup_factor * N)
+
+    Int disk_size = if defined(num_ssds) then 375*select_first([num_ssds]) else persistent_disk_size
+    String disk_type = if defined(num_ssds) then " LOCAL" else " SSD"
+
     RuntimeAttr default_attr = object {
         cpu_cores:          6,
         mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
+        preemptible_tries:  1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-custom-gatk:4.4.0.0-samtools1.18"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
