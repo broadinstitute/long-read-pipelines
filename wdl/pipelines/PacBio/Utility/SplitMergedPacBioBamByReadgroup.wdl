@@ -5,6 +5,7 @@ import "../../TechAgnostic/Utility/SplitBamByReadgroup.wdl" as Major
 import "../../../tasks/Utility/Utils.wdl"
 import "../../../tasks/Utility/BAMutils.wdl" as BU
 import "../../../tasks/Utility/PBUtils.wdl"
+import "../../../tasks/Utility/GeneralUtils.wdl" as GU
 
 workflow SplitMergedPacBioBamByReadgroup {
     meta {
@@ -29,6 +30,9 @@ workflow SplitMergedPacBioBamByReadgroup {
         Boolean rgid_2_bam_are_aligned = WORKHORSE.rgid_2_bam_are_aligned
         Map[String, String]? rgid_2_fastq = WORKHORSE.rgid_2_fastq
 
+        Map[String, Int] mol_counts = {'Original':     CountGCCMolecules.number,
+                                       'SplitSum':     CountFinalMolecules.sum}
+
         String last_processing_date = WORKHORSE.last_processing_date
     }
 
@@ -49,6 +53,7 @@ workflow SplitMergedPacBioBamByReadgroup {
     if ('coordinate' != GatherBamMetadata.sort_order) {
         call Utils.StopWorkflow { input: reason = "Input bam isn't coordinate-sorted, but rather sorted by ~{GatherBamMetadata.sort_order}"  }
     }
+    call BU.CountMolecules as CountGCCMolecules { input: bam = input_bam, localize_bam = true }
 
     # this guarantees that there are no read groups missing primrose runs
     if (!disable_primrose_check) {
@@ -74,4 +79,7 @@ workflow SplitMergedPacBioBamByReadgroup {
             override_workflow_name = workflow_name,
             debug_mode = false
     }
+    call GU.CoerceMapToArrayOfPairs { input: input_map = WORKHORSE.rgid_2_molecule_counts }
+    call GU.Unzip { input: apss = CoerceMapToArrayOfPairs.output_pairs }
+    call GU.AddIntegers as CountFinalMolecules{ input: integers = Unzip.res.right }
 }

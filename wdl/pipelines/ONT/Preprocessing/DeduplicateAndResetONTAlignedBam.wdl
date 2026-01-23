@@ -7,7 +7,7 @@ import "../../../tasks/Utility/ONTBamShardResetAndDeduplicate.wdl" as CleanOneSh
 
 workflow DeduplicateAndResetONTAlignedBam {
     meta {
-        desciption: "Removes duplicate records from an aligned ONT bam, while resetting the alignment information."
+        description: "Removes duplicate records from an aligned ONT bam, while resetting the alignment information."
     }
 
     parameter_meta {
@@ -22,6 +22,8 @@ workflow DeduplicateAndResetONTAlignedBam {
 
     output {
         File result = Merge.res
+        Array[Int] deduplicated_molecule_counts_per_shard = flatten([CountDedupMoleculesPerShard.number,
+                                                                     [CountDedupMoleculesUnmapped.number]])
     }
 
     # step 1, split input bam by the T2T size-balanced scheme, then for each (don't forget unmapped) shard
@@ -30,8 +32,10 @@ workflow DeduplicateAndResetONTAlignedBam {
     # for each shard, step 2
     scatter (shard_bam in ShardAlignedBam.split_bams) {
         call CleanOneShard.Work as DeShard { input: shard_bam = shard_bam }
+        call BU.CountMolecules as CountDedupMoleculesPerShard { input: bam = DeShard.clean_bam, localize_bam = true }
     }
     call CleanOneShard.Work as DeUmap { input: shard_bam = ShardAlignedBam.unmapped_reads }
+    call BU.CountMolecules as CountDedupMoleculesUnmapped { input: bam = DeUmap.clean_bam, localize_bam = true }
 
     # step 3 gather
     Array[File] fixed_shards = flatten([[DeUmap.clean_bam], DeShard.clean_bam])

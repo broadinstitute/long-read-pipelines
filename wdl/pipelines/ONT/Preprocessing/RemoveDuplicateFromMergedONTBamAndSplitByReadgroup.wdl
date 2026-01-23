@@ -7,11 +7,12 @@ import "../../TechAgnostic/Utility/SplitBamByReadgroup.wdl" as Major
 import "../../../tasks/Utility/Utils.wdl"
 import "../../../tasks/Utility/BAMutils.wdl" as BU
 import "../../../tasks/Utility/ONTUtils.wdl" as OU
+import "../../../tasks/Utility/GeneralUtils.wdl" as GU
 
 workflow RemoveDuplicateFromMergedONTBamAndSplitByReadgroup {
 
     meta {
-        desciption: "Remove duplicate records from an ONT alinged BAM, drop alignment information, and split by the bam by read groups."
+        description: "Remove duplicate records from an ONT alinged BAM, drop alignment information, and split by the bam by read groups."
     }
     parameter_meta {
         fix_bam_header: "Sometimes, the bam given to us contains a specific error mode. We fix it here."
@@ -36,6 +37,10 @@ workflow RemoveDuplicateFromMergedONTBamAndSplitByReadgroup {
         Map[String, String]? rgid_2_ubam_emptyness = WORKHORSE.rgid_2_ubam_emptyness
         Boolean rgid_2_bam_are_aligned = WORKHORSE.rgid_2_bam_are_aligned
 
+        Map[String, Int] mol_counts = {'Original':     CountGCCMolecules.number,
+                                       'Deduplicated': CountDedupMolecules.sum,
+                                       'SplitSum':     CountFinalMolecules.sum}
+
         String last_processing_date = WORKHORSE.last_processing_date
     }
 
@@ -47,6 +52,7 @@ workflow RemoveDuplicateFromMergedONTBamAndSplitByReadgroup {
     if ('coordinate' != GatherBamMetadata.sort_order) {
         call Utils.StopWorkflow { input: reason = "Input bam isn't coordinate-sorted, but rather sorted by ~{GatherBamMetadata.sort_order}"  }
     }
+    call BU.CountMolecules as CountGCCMolecules { input: bam = input_bam, localize_bam = true }
 
     # reality of life--submitted files sometimes need fixings in their headers
     if (fix_bam_header) {
@@ -56,6 +62,7 @@ workflow RemoveDuplicateFromMergedONTBamAndSplitByReadgroup {
     call FixAndReset.DeduplicateAndResetONTAlignedBam as Dedup { input:
         aligned_bam = select_first([FixParticularBamHeaderIssue.fixed, input_bam]), aligned_bai = input_bai, scatter_scheme = scatter_scheme
     }
+    call GU.AddIntegers as CountDedupMolecules { input: integers = Dedup.deduplicated_molecule_counts_per_shard }
 
     File ok_input_bam = Dedup.result
 
@@ -73,7 +80,9 @@ workflow RemoveDuplicateFromMergedONTBamAndSplitByReadgroup {
             gcs_out_root_dir = gcs_out_root_dir,
             debug_mode = false
     }
-
+    call GU.CoerceMapToArrayOfPairs { input: input_map = WORKHORSE.rgid_2_molecule_counts }
+    call GU.Unzip { input: apss = CoerceMapToArrayOfPairs.output_pairs }
+    call GU.AddIntegers as CountFinalMolecules{ input: integers = Unzip.res.right }
     call OU.GetBasecallModel { input: bam = ok_input_bam }
 }
 
