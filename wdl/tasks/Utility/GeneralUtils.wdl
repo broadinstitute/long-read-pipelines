@@ -245,6 +245,32 @@ task ConcatenateFiles {
     }
 }
 
+task AddIntegers {
+    meta {
+        description:
+        "Add an array of integers."
+        warn:
+        "Be cautious with large arrays and/or arrays with very large values due to potential integer overflow."
+    }
+    input {
+        Array[Int] integers
+    }
+    output {
+        Int sum = read_int("result.txt")
+    }
+    command <<<
+    set -euxo pipefail
+
+        echo ~{sep=' ' integers} \
+        | awk '{s=0; for(i=1;i<=NF;i++)s+=$i; print s}' \
+        > result.txt
+    >>>
+    runtime {
+        disks: "local-disk 10 HDD"
+        docker: "marketplace.gcr.io/google/ubuntu2404:latest"
+    }
+}
+
 struct HelperStructForUnzip {
     Array[Pair[String, String]] contents
 }
