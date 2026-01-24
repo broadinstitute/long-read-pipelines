@@ -344,13 +344,22 @@ task GetBasecallModel {
         set -eux
 
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-        samtools view -H ~{bam} | grep "^@RG" > one_rg_per_line.txt
+        export GCS_REQUESTER_PAYS_PROJECT=$(gcloud config get-value project)
+        samtools view -H ~{bam} | grep "^@RG" > one_rg_per_line.txt || true
+        touch one_rg_per_line.txt
+        if [[ ! -s one_rg_per_line.txt ]]; then
+            echo "No RG lines found"
+            echo -e "null\tnull" > results.tsv
+            exit 0
+        fi
 
         while IFS= read -r line
         do
             echo "$line" | tr '\t' '\n' | grep "^DS:" | sed "s/^DS://" | tr ' ' '\n' > tmp.txt
-            runid=$(grep -E "^run(-)?id=" tmp.txt | awk -F '=' '{print $2}')
-            model=$(grep "^basecall_model=" tmp.txt | awk -F '=' '{print $2}')
+            runid=$(grep -E "^run(-)?id=" tmp.txt   | awk -F '=' '{print $2}' || true)
+            model=$(grep "^basecall_model=" tmp.txt | awk -F '=' '{print $2}' || true)
+            runid=${runid:-null}
+            model=${model:-null}
             echo -e "${runid}\t${model}" >> results.tsv
         done < one_rg_per_line.txt
     >>>
