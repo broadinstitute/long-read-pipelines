@@ -8,7 +8,7 @@ import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow SplitBamByReadgroup {
     meta {
-        desciption: "Split a BAM file that was aggregated, for the same sample, into pieces by read group."
+        description: "Split a BAM file that was aggregated, for the same sample, into pieces by read group."
     }
     parameter_meta {
         input_bam: "BAM to operate on; when input is an aligned BAM, user can decide to reset the alignment or not via unmap_bam"
@@ -31,6 +31,7 @@ workflow SplitBamByReadgroup {
     }
     output {
         Map[String, String] rgid_2_bam = MapRgid2Bams.output_map
+        Map[String, Int]    rgid_2_molecule_counts = MapRgid2MoleculeCounts.output_map
         Map[String, String] rgid_2_PU  = MapRgid2PU.output_map
         Map[String, String]? rgid_2_ubam_emptyness = MapRgid2BamEmptiness.output_map
         Boolean rgid_2_bam_are_aligned = ! unmap_bam
@@ -98,6 +99,8 @@ workflow SplitBamByReadgroup {
             call BU.ValidateSamFile { input: bam = select_first([SortUnaligned.qnsort_bam, bam]) }
         }
 
+        call BU.CountMolecules as CountMoleculesInRG { input: bam = select_first([SortUnaligned.qnsort_bam, bam]), localize_bam = true }
+
         # convert to FASTQ if so requested
         if (convert_to_fq) {
             call BU.BamToFastq { input: bam = bam, prefix = basename(bam, ".bam") }
@@ -111,6 +114,7 @@ workflow SplitBamByReadgroup {
     Array[String]  phased_PUs      = platform_unit
     Array[String]  phased_bams     = select_all(flatten([SaveUBam.gcs_path, SaveAlnBam.gcs_path]))
     Array[Boolean] are_ubams_empty = select_all(flatten([uBAM_is_empty, orig_rg_BAM_is_empty]))
+    Array[Int]     molecule_counts = CountMoleculesInRG.number
 
     call GU.CoerceArrayOfPairsToMap as MapRgid2PU { input: keys = phased_rg_ids, values = phased_PUs }
     call GU.CoerceArrayOfPairsToMap as MapRgid2Bams { input: keys = phased_rg_ids, values = phased_bams }
@@ -121,6 +125,7 @@ workflow SplitBamByReadgroup {
     if (unmap_bam) {
         call GU.CoerceArrayOfPairsToMap as MapRgid2BamEmptiness { input: keys = phased_rg_ids, values = are_ubams_empty }
     }
+    call GU.CoerceArrayOfPairsToMap as MapRgid2MoleculeCounts { input: keys = phased_rg_ids, values = molecule_counts }
 
     call GU.GetTodayDate as today {}
 }
