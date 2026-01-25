@@ -24,6 +24,7 @@ workflow SplitBamByReadgroup {
         Boolean convert_to_fq
 
         Boolean validate_output_bams = false
+        Boolean skip_rg_line_pl_value_check = false
 
         String gcs_out_root_dir
         String? override_workflow_name
@@ -96,7 +97,49 @@ workflow SplitBamByReadgroup {
             }
         }
         if (validate_output_bams) {
-            call BU.ValidateSamFile { input: bam = select_first([SortUnaligned.qnsort_bam, bam]) }
+            Array[String] skip_list_default = ["INVALID_TAG_NM",  # for the purpose we currently have, NM and CIGAR don't matter, and longreads have no mates
+                                               "MISSING_TAG_NM",
+                                               "INVALID_CIGAR",
+                                               "ADJACENT_INDEL_IN_CIGAR",
+                                               "CIGAR_MAPS_OFF_REFERENCE",
+                                               "MISMATCH_MATE_CIGAR_STRING",
+                                               "MATE_CIGAR_STRING_INVALID_PRESENCE",
+                                               "MATE_NOT_FOUND",
+                                               "INVALID_MAPPING_QUALITY",
+                                               "INVALID_FLAG_MATE_UNMAPPED",
+                                               "MISMATCH_FLAG_MATE_UNMAPPED",
+                                               "INVALID_FLAG_MATE_NEG_STRAND",
+                                               "MISMATCH_FLAG_MATE_NEG_STRAND",
+                                               "INVALID_MATE_REF_INDEX",
+                                               "MISMATCH_MATE_REF_INDEX",
+                                               "MISMATCH_MATE_ALIGNMENT_START",
+                                               "MATE_FIELD_MISMATCH",
+                                               "PAIRED_READ_NOT_MARKED_AS_FIRST_OR_SECOND"
+                                               ]
+            Array[String] for_some_stupid_gcc = ["INVALID_TAG_NM",  # for the purpose we currently have, NM and CIGAR don't matter, and longreads have no mates
+                                               "MISSING_TAG_NM",
+                                               "INVALID_CIGAR",
+                                               "ADJACENT_INDEL_IN_CIGAR",
+                                               "CIGAR_MAPS_OFF_REFERENCE",
+                                               "MISMATCH_MATE_CIGAR_STRING",
+                                               "MATE_CIGAR_STRING_INVALID_PRESENCE",
+                                               "MATE_NOT_FOUND",
+                                               "INVALID_MAPPING_QUALITY",
+                                               "INVALID_FLAG_MATE_UNMAPPED",
+                                               "MISMATCH_FLAG_MATE_UNMAPPED",
+                                               "INVALID_FLAG_MATE_NEG_STRAND",
+                                               "MISMATCH_FLAG_MATE_NEG_STRAND",
+                                               "INVALID_MATE_REF_INDEX",
+                                               "MISMATCH_MATE_REF_INDEX",
+                                               "MISMATCH_MATE_ALIGNMENT_START",
+                                               "MATE_FIELD_MISMATCH",
+                                               "PAIRED_READ_NOT_MARKED_AS_FIRST_OR_SECOND",
+                                               "MISSING_PLATFORM_VALUE"
+                                               ]
+            call BU.ValidateSamFile { input:
+                bam = select_first([SortUnaligned.qnsort_bam, bam]),
+                validation_errs_to_ignore = if (skip_rg_line_pl_value_check) then skip_list_default else for_some_stupid_gcc
+            }
         }
 
         call BU.CountMolecules as CountMoleculesInRG { input: bam = select_first([SortUnaligned.qnsort_bam, bam]), localize_bam = true }
