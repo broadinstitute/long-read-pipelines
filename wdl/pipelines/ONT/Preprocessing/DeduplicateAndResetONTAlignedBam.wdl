@@ -40,7 +40,7 @@ workflow DeduplicateAndResetONTAlignedBam {
     # step 3 gather
     Array[File] fixed_shards = flatten([[DeUmap.clean_bam], DeShard.clean_bam])
     Array[String] basenames_for_merging = flatten([[DeUmap.basename_of_clean_bam], DeShard.basename_of_clean_bam])
-    call Utils.ComputeAllowedLocalSSD as SizeIt { input: intended_gb = 50 + ceil(size(fixed_shards, "GB"))}
+    call Utils.ComputeAllowedLocalSSD as SizeIt { input: intended_gb = 1000 + ceil(size(fixed_shards, "GB"))}
     call BU.MergeBamsQuerynameSortedWithPicard as Merge { input:
         qns_bams = fixed_shards, base_names = basenames_for_merging,
         out_prefix = basename(aligned_bam, ".bam") + ".DSP-fixed", num_ssds = SizeIt.numb_of_local_ssd
