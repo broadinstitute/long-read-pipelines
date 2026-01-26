@@ -69,10 +69,10 @@ workflow SplitBamByReadgroup {
 
         # basecall_model only applies to ONT, so PacBio data will always get 'None'
         Array[String] readgroup_attrs_to_get = ['ID', 'LB', 'PU']
-        call BU.GetReadGroupInfo { input: bam = bam, keys = readgroup_attrs_to_get, null_value_representation = 'None' }
-        String rgid = GetReadGroupInfo.read_group_info['ID']
-        String library = GetReadGroupInfo.read_group_info['LB']
-        String platform_unit = GetReadGroupInfo.read_group_info['PU']
+        # call BU.GetReadGroupInfo { input: bam = bam, keys = readgroup_attrs_to_get, null_value_representation = 'None' }
+        String rgid = "null" # GetReadGroupInfo.read_group_info['ID']
+        String library = "null" # GetReadGroupInfo.read_group_info['LB']
+        String platform_unit = "null" # GetReadGroupInfo.read_group_info['PU']
 
         if (debug_mode) {
             call Utils.CountBamRecords { input: bam = bam }
