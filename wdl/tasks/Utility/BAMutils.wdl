@@ -1645,7 +1645,6 @@ task SplitNameSortedUbam {
         read_cnt: "number of reads in the uBAM; providing this will reduce run time."
         n_reads: "desired number of reads per split; mutually exclusive with n_files"
         n_files: "desired number of split files; mutually exclusive with n_reads"
-        uBAM: { localization_optional: true }
     }
     input {
         File uBAM
@@ -1665,16 +1664,12 @@ task SplitNameSortedUbam {
     String split_arg = if defined(n_reads) then "--SPLIT_TO_N_READS ~{X}" else "--SPLIT_TO_N_FILES ~{X}"
     String helper_arg = if (defined(read_cnt)) then "--TOTAL_READS_IN_INPUT ~{read_cnt}" else " "
 
-    String base = basename(uBAM, ".bam")
-    String local_bam = "/cromwell_root/~{base}.bam"
-
     command <<<
         set -eux
 
         if ~{fail}; then echo "one and only one of [n_reads, n_files] must be specified" && exit 1; fi
 
         # prep
-        time gcloud storage cp ~{uBAM} ~{local_bam}
         mkdir -p split_outputs
 
         # higher memory, also lower # of reads in memory given ~100 longer reads (1.5E4 bp vs 1.5E2 bp)
@@ -1682,7 +1677,7 @@ task SplitNameSortedUbam {
             --java-options "-Xmx28G -Xms24G" \
             -use_jdk_deflater -use_jdk_inflater \
             --MAX_RECORDS_IN_RAM 5000 \
-            -I ~{local_bam} \
+            -I ~{uBAM} \
             -O split_outputs \
             ~{split_arg} \
             ~{helper_arg}
@@ -1695,8 +1690,8 @@ task SplitNameSortedUbam {
         mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  2,
-        max_retries:        1,
+        preemptible_tries:  1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-gatk/gatk:4.4.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])

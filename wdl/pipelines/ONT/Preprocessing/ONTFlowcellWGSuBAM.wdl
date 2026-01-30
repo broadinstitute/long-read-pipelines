@@ -97,6 +97,7 @@ workflow ONTFlowcellWGSuBAM {
 
     output {
         String last_processing_date = today.yyyy_mm_dd
+        String aln_wallclock_time   = ALN.total_runtime
 
         File aligned_bam = FinalizeAlignedBam.gcs_path
         File aligned_bai = FinalizeAlignedBai.gcs_path

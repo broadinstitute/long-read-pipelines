@@ -24,10 +24,7 @@ task Minimap2 {
         descrpiton: "A wrapper to minimap2 for mapping & aligning (groups of) sequences to a reference. Note that this only works for reads belonging to a single readgroup."
     }
     parameter_meta {
-        reads: {
-            desciption: "query sequences to be mapped and aligned",
-            localization_optional: true
-        }
+        reads:                "query sequences to be mapped and aligned"
         reads_file_basenames: "basenames of the BAM files, note this includes the extention (e.g. .bam, .fasta.gz, etc) of files"
         longer_ont_read_hint: "hint that the input reads are longer (~>20kb N50) ONT reads; this is used to bump the memory to the task"
         ref_fasta:        "reference fasta"
@@ -57,14 +54,18 @@ task Minimap2 {
     Int mm2_threads = cpus - 2
 
     command <<<
-        set -euxo pipefail
+    set -euxo pipefail
+    start_time=$(date +%s)
+
+        results_dir=$(pwd)
 
         FILE="~{reads[0]}"
 
         ############
         # localize data (much faster than Cromwell)
         mkdir -p reads_dir
-        time gcloud storage cp ~{sep=' ' reads} /cromwell_root/reads_dir/
+        mv ~{sep=' ' reads} \
+           reads_dir/
         ls reads_dir
 
         cd reads_dir
@@ -169,12 +170,20 @@ task Minimap2 {
 
         ############
         # move results up
-        mv ~{prefix}.bam ~{prefix}.bam.bai /cromwell_root
+        mv ~{prefix}.bam ~{prefix}.bam.bai "${results_dir}/"
+
+    end_time=$(date +%s)
+    total_seconds=$((end_time - start_time))
+    hours=$((total_seconds / 3600))
+    minutes=$(((total_seconds % 3600) / 60))
+    printf "%02dH%02dM\n" $hours $minutes > "${results_dir}/wallclocktime.txt"
     >>>
 
     output {
         File aligned_bam = "~{prefix}.bam"
         File aligned_bai = "~{prefix}.bam.bai"
+
+        String wallclocktime = read_string("wallclocktime.txt")
     }
 
     #########################
@@ -182,7 +191,7 @@ task Minimap2 {
         cpu_cores:          cpus,
         mem_gb:             mem,
         disk_gb:            disk_size,
-        preemptible_tries:  3,
+        preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-minimap2:2.26-gcloud"
     }

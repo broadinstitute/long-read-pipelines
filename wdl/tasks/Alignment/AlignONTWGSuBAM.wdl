@@ -38,6 +38,8 @@ workflow AlignONTWGSuBAM {
     output {
         File aligned_bam = aBAM
         File aligned_bai = aBAI
+
+        String total_runtime = select_first([sumRuntimes.total_runtime, Minimap2.wallclocktime])
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
@@ -113,6 +115,7 @@ workflow AlignONTWGSuBAM {
             disk_type = if ('LOCAL' == aln_disk_type) then 'SSD' else 'LOCAL',
             timeout_hours = if (100 < size(uBAM, "GiB")) then 10 else 5  # heuristic: longer wait for bigger BAMs
         }
+        call sumRuntimes { input: runtimes = MapShard.wallclocktime }
     }
     if (emperical_bam_sz_threshold >= ceil(size(uBAM, "GiB"))) {
         call AR.Minimap2 {
@@ -207,6 +210,40 @@ task OneOffHandleSpacesInRGLine {
         echo -e "~{orig_rg_line}" | \
             sed "s/${SPACE}${SPACE}*/;/g" \
         > "result.txt"
+    >>>
+    runtime {
+        disks: "local-disk 10 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
+}
+
+task sumRuntimes {
+    input {
+        Array[String] runtimes
+    }
+
+    output {
+        String total_runtime = read_string("total.txt")
+    }
+    command <<<
+        total_minutes=0
+
+        # Read each runtime and sum up
+        while IFS= read -r line; do
+            # Extract hours and minutes from format "XX hours, YY minutes"
+            hours=$(echo "$line" | grep -oP '\d+(?=H)')
+            minutes=$(echo "$line" | grep -oP '\d+(?=M)')
+
+            # Convert to total minutes and add
+            total_minutes=$((total_minutes + 10#$hours * 60 + 10#$minutes))
+        done < ~{write_lines(runtimes)}
+
+        # Convert back to hours and minutes
+        final_hours=$((total_minutes / 60))
+        final_minutes=$((total_minutes % 60))
+
+        # Output in same format with padding
+        printf "%02dH%02dM\n" $final_hours $final_minutes > total.txt
     >>>
     runtime {
         disks: "local-disk 10 HDD"
