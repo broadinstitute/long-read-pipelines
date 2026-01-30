@@ -943,6 +943,7 @@ task Align {
 
     command <<<
     set -euxo pipefail
+    start_time=$(date +%s)
 
         pbmm2 align ~{bam} \
             ~{ref_fasta} \
@@ -975,11 +976,18 @@ task Align {
 
         samtools calmd -b --no-PG ~{prefix}.pre.bam ~{ref_fasta} > ~{prefix}.bam
         samtools index ~{prefix}.bam
+
+    end_time=$(date +%s)
+    total_seconds=$((end_time - start_time))
+    hours=$((total_seconds / 3600))
+    minutes=$(((total_seconds % 3600) / 60))
+    printf "%02dH%02dM\n" $hours $minutes > wallclocktime.txt
     >>>
 
     output {
         File aligned_bam = "~{prefix}.bam"
         File aligned_bai = "~{prefix}.bam.bai"
+        String wallclocktime = read_string("wallclocktime.txt")
     }
 
     #########################

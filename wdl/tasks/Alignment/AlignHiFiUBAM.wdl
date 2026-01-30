@@ -36,6 +36,7 @@ workflow AlignHiFiUBAM {
         File aligned_pbi = IndexAlignedReads.pbi
 
         String movie = movie_name
+        String total_runtime = select_first([sumRuntimes.total_runtime, AlignReadsTogether.wallclocktime])
     }
 
     # todo: verify if this is still necessary
@@ -86,6 +87,7 @@ workflow AlignHiFiUBAM {
         }
 
         call Utils.MergeBams as MergeAlignedReads { input: bams = AlignReads.aligned_bam, prefix = basename(uBAM, ".bam") }
+        call sumRuntimes { input: runtimes = AlignReads.wallclocktime }
     }
     if (! (ceil(size(uBAM, "GiB")) > shard_threshold)) {
         call PB.Align as AlignReadsTogether { input:
@@ -102,4 +104,38 @@ workflow AlignHiFiUBAM {
     File aBAM = select_first([MergeAlignedReads.merged_bam, AlignReadsTogether.aligned_bam])
     File aBAI = select_first([MergeAlignedReads.merged_bai, AlignReadsTogether.aligned_bai])
     call PB.PBIndex as IndexAlignedReads { input: bam = aBAM }
+}
+
+task sumRuntimes {
+    input {
+        Array[String] runtimes
+    }
+
+    output {
+        String total_runtime = read_string("total.txt")
+    }
+    command <<<
+        total_minutes=0
+
+        # Read each runtime and sum up
+        while IFS= read -r line; do
+            # Extract hours and minutes from format "XX hours, YY minutes"
+            hours=$(echo "$line" | grep -oP '\d+(?=H)')
+            minutes=$(echo "$line" | grep -oP '\d+(?=M)')
+
+            # Convert to total minutes and add
+            total_minutes=$((total_minutes + 10#$hours * 60 + 10#$minutes))
+        done < ~{write_lines(runtimes)}
+
+        # Convert back to hours and minutes
+        final_hours=$((total_minutes / 60))
+        final_minutes=$((total_minutes % 60))
+
+        # Output in same format with padding
+        printf "%02dH%02dM\n" $final_hours $final_minutes > total.txt
+    >>>
+    runtime {
+        disks: "local-disk 10 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
 }
