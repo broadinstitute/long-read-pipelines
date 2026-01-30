@@ -131,7 +131,7 @@ workflow ONTFlowcellWGSuBAM {
 
     ###################################################################################
     # prep work
-    String workflow_name = "ONTFlowcellWGSuBAM"
+    String workflow_name = "Realign"
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/~{workflow_name}/~{flowcell}"
     String outdir_aln     = outdir + '/alignments'
     String outdir_metrics = outdir + '/metrics'
