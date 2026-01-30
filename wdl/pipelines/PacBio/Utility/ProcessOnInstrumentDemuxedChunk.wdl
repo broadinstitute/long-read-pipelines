@@ -121,7 +121,7 @@ workflow ProcessOnInstrumentDemuxedChunk {
     # prep work
 
     # where to store final results
-    String workflow_name = "ProcessOnInstrumentDemuxedChunk"
+    String workflow_name = "Realign"
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/" + workflow_name
 
     # String bc_specific_out = outdir + '/' + readgroup_id
