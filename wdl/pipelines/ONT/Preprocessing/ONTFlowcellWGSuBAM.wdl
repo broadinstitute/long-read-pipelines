@@ -83,7 +83,7 @@ workflow ONTFlowcellWGSuBAM {
         Array[String] uBAM_tags_to_preserve = ['MM', 'ML']
 
         # args for optional QC subworkflows
-        File? qc_metrics_config_json
+        File qc_metrics_config_json
         String? fingerprint_sample_id
         String? expected_sex_type
 
@@ -102,8 +102,9 @@ workflow ONTFlowcellWGSuBAM {
         File aligned_bai = FinalizeAlignedBai.gcs_path
 
         Float wgs_cov                                   = QCandMetrics.wgs_cov
-        Map[String, Float] nanoplot_summ                = QCandMetrics.nanoplot_summ
         Map[String, Float] sam_flag_stats               = QCandMetrics.sam_flag_stats
+
+        Map[String, Float]? nanoplot_summ               = QCandMetrics.nanoplot_summ
 
         Map[String, Float]? seqkit_stats = FASTQstats.stats
 
@@ -152,12 +153,14 @@ workflow ONTFlowcellWGSuBAM {
     ###################################################################################
     # QC
     String readgroup_id = bam_SM_ID + "." + flowcell
-    AlignedBamQCnMetricsConfig qcm_config = read_json(select_first([qc_metrics_config_json]))
+    AlignedBamQCnMetricsConfig qcm_config = read_json(qc_metrics_config_json)
     call QCMetrics.Work as QCandMetrics { input:
         bam = ALN.aligned_bam,
         bai = ALN.aligned_bai,
 
         tech = "ONT",
+
+        run_nanoplot = qcm_config.run_nanoplot,
 
         cov_bed            = qcm_config.cov_bed,
         cov_bed_descriptor = qcm_config.cov_bed_descriptor,

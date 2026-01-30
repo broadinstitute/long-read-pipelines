@@ -80,6 +80,8 @@ workflow Work {
 
         String tech
 
+        Boolean run_nanoplot = true
+
         File?   cov_bed
         String? cov_bed_descriptor
 
@@ -100,8 +102,10 @@ workflow Work {
 
     output {
         Float wgs_cov                     = MosDepthWGS.wgs_cov
-        Map[String, Float] nanoplot_summ  = NanoPlotFromBam.stats_map
         Map[String, Float] sam_flag_stats = ParseFlagStatsJson.qc_pass_reads_SAM_flag_stats
+
+        # nanoplot
+        Map[String, Float]? nanoplot_summ = NanoPlotFromBam.stats_map
 
         # fingerprint
         Map[String, String]? fingerprint_check = fp_res
@@ -160,12 +164,14 @@ workflow Work {
 
     ################################
     # nanoplot
-    call NP.NanoPlotFromBam { input: bam = bam, bai = bai, disk_type = disk_type }
-    FinalizationManifestLine b = object
-                                 {files_to_save: flatten([[NanoPlotFromBam.stats], NanoPlotFromBam.plots]),
-                                  is_singleton_file: false,
-                                  destination: metrics_output_dir + "/nanoplot",
-                                  output_attribute_name: "nanoplot"}
+    if (run_nanoplot) {
+        call NP.NanoPlotFromBam { input: bam = bam, bai = bai, disk_type = disk_type }
+        FinalizationManifestLine b = object
+                                    {files_to_save: flatten([[NanoPlotFromBam.stats], NanoPlotFromBam.plots]),
+                                    is_singleton_file: false,
+                                    destination: metrics_output_dir + "/nanoplot",
+                                    output_attribute_name: "nanoplot"}
+    }
 
     ###################################################################################
     # OPTIONAL QC/METRICS
@@ -254,6 +260,8 @@ workflow Work {
 struct AlignedBamQCnMetricsConfig {
     File?   cov_bed                         # An optional BED file on which coverage will be collected (a mean value for each interval)
     String? cov_bed_descriptor              # A short description of the BED provided for targeted coverage estimation; will be used in naming output files.
+
+    Boolean? run_nanoplot                   # if false or omitted, will NOT run nanoplot, which typically takes a long time to run
 
     String? fingerprint_vcf_store           # A GCS 'folder' holding fingerprint VCF files
 
