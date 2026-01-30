@@ -912,10 +912,6 @@ task Align {
     }
 
     parameter_meta {
-        bam: {
-            desciption: "Input BAM file.",
-            localization_optional: true
-        }
         ref_fasta: "Input reference FASTA file."
         sample_name: "we always rely explicitly on input SM name"
         library: "this will override the LB: entry on the @RG line"
@@ -944,14 +940,11 @@ task Align {
 
     Boolean fix_library_entry = if defined(library) then true else false
 
-    String local_ubam = basename(bam)
 
     command <<<
-        set -euxo pipefail
-        time \
-        gcloud storage cp ~{bam} ~{local_ubam}
+    set -euxo pipefail
 
-        pbmm2 align ~{local_ubam} \
+        pbmm2 align ~{bam} \
             ~{ref_fasta} \
             ~{prefix}.pre.bam \
             --preset ~{map_preset} \
@@ -960,7 +953,7 @@ task Align {
             ~{extra_options} \
             --sort \
             --unmapped
-        rm ~{local_ubam}
+        rm ~{bam}
 
         if ~{fix_library_entry}; then
             mv ~{prefix}.pre.bam ~{prefix}.pre.tmp.bam
@@ -1022,14 +1015,6 @@ task PBIndex {
         description: "Index a PacBio long reads BAM file to create the pbi."
     }
 
-    parameter_meta {
-        bam: {
-            desciption: "Input BAM file.",
-            localization_optional: true
-        }
-        runtime_attr_override: "Override default runtime attributes."
-    }
-
     input {
         File bam
 
@@ -1039,11 +1024,9 @@ task PBIndex {
     String base = basename(bam)
 
     command <<<
-        set -euxo pipefail
+    set -euxo pipefail
 
-        time \
-        gcloud storage cp ~{bam} ~{base}
-
+        mv ~{bam} ~{base} || true
         pbindex ~{base}
     >>>
 
