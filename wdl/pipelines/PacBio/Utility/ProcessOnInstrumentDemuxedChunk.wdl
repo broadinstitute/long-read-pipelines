@@ -31,7 +31,7 @@ workflow ProcessOnInstrumentDemuxedChunk {
         "output files will be copied over there"
 
         qc_metrics_config_json:
-        "A config json to for running the QC and metrics-collection sub-workflow 'AlignedBamQCandMetrics'"
+        "A config json to for running the QC and metrics-collection sub-workflow 'AlignedBamQCandMetrics'; could be an empty json file."
 
         fingerprint_sample_id:
         "For fingerprint verification: the ID of the sample supposedly this BAM belongs to; note that the fingerprint VCF is assumed to be located at {fingerprint_store}/{fingerprint_sample_id}*.vcf(.gz)?"
@@ -78,7 +78,7 @@ workflow ProcessOnInstrumentDemuxedChunk {
         String platform
 
         # args for optional QC subworkflows
-        File? qc_metrics_config_json
+        File qc_metrics_config_json
         String? fingerprint_sample_id
         String? expected_sex_type
 
@@ -97,8 +97,8 @@ workflow ProcessOnInstrumentDemuxedChunk {
 
         # metrics block (caveat: always has to keep an eye on the QC subworkflow about outputs)
         Float wgs_cov                                   = QCandMetrics.wgs_cov
-        Map[String, Float] nanoplot_summ                = QCandMetrics.nanoplot_summ
         Map[String, Float] sam_flag_stats               = QCandMetrics.sam_flag_stats
+        Map[String, Float]? nanoplot_summ                = QCandMetrics.nanoplot_summ
 
         # fingerprint
         Map[String, String]? fingerprint_check          = QCandMetrics.fingerprint_check
@@ -149,12 +149,14 @@ workflow ProcessOnInstrumentDemuxedChunk {
 
     ###################################################################################
     # QC
-    AlignedBamQCnMetricsConfig qcm_config = read_json(select_first([qc_metrics_config_json]))
+    AlignedBamQCnMetricsConfig qcm_config = read_json(qc_metrics_config_json)
     call QCMetrics.Work as QCandMetrics { input:
         bam = aBAM,
         bai = aBAI,
 
         tech = platform,
+
+        run_nanoplot = qcm_config.run_nanoplot,
 
         cov_bed            = qcm_config.cov_bed,
         cov_bed_descriptor = qcm_config.cov_bed_descriptor,

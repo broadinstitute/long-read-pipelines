@@ -92,15 +92,18 @@ workflow SaveFilestoDestination {
     call GU.CoerceArrayOfPairsToMap as collect { input: keys = attr, values = final_path }
 
     if (defined(already_finalized)) {
-        scatter(mm in select_first([already_finalized])) {
-            call GU.MapToTsv { input: m = mm}
-        }
-        call GU.ConcatenateFiles { input: af = MapToTsv.tsv, out_name = "does_not_matter.tsv" }
+        Array[Map[String, String]] dummy = select_first([already_finalized])
+        if (0!=length(select_all(dummy))) {
+            scatter(mm in dummy) {
+                call GU.MapToTsv { input: m = mm}
+            }
+            call GU.ConcatenateFiles { input: af = MapToTsv.tsv, out_name = "does_not_matter.tsv" }
 
-        Map[String, String] pack_one = read_map(ConcatenateFiles.merged)
+            Map[String, String] pack_one = read_map(ConcatenateFiles.merged)
 
-        call GU.MergeMaps as PackAllSavings { input:
-            one = pack_one, two = collect.output_map
+            call GU.MergeMaps as PackAllSavings { input:
+                one = pack_one, two = collect.output_map
+            }
         }
     }
 }
