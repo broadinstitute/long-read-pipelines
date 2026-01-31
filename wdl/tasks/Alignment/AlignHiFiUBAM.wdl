@@ -33,7 +33,7 @@ workflow AlignHiFiUBAM {
     output {
         File aligned_bam = aBAM
         File aligned_bai = aBAI
-        File aligned_pbi = IndexAlignedReads.pbi
+        # File aligned_pbi = IndexAlignedReads.pbi
 
         String movie = movie_name
         String total_runtime = select_first([sumRuntimes.total_runtime, AlignReadsTogether.wallclocktime])
@@ -103,7 +103,7 @@ workflow AlignHiFiUBAM {
 
     File aBAM = select_first([MergeAlignedReads.merged_bam, AlignReadsTogether.aligned_bam])
     File aBAI = select_first([MergeAlignedReads.merged_bai, AlignReadsTogether.aligned_bai])
-    call PB.PBIndex as IndexAlignedReads { input: bam = aBAM }
+    # call PB.PBIndex as IndexAlignedReads { input: bam = aBAM }
 }
 
 task sumRuntimes {

@@ -92,7 +92,7 @@ workflow ProcessOnInstrumentDemuxedChunk {
 
         File aligned_bam = FinalizeAlignedBam.gcs_path
         File aligned_bai = FinalizeAlignedBai.gcs_path
-        File aligned_pbi = FinalizeAlignedPbi.gcs_path
+        # File aligned_pbi = FinalizeAlignedPbi.gcs_path
 
         String movie = AlignHiFiUBAM.movie
 
@@ -141,12 +141,12 @@ workflow ProcessOnInstrumentDemuxedChunk {
 
     File aBAM = AlignHiFiUBAM.aligned_bam
     File aBAI = AlignHiFiUBAM.aligned_bai
-    File aPBI = AlignHiFiUBAM.aligned_pbi
+    # File aPBI = AlignHiFiUBAM.aligned_pbi
 
     # save
     call FF.FinalizeToFile as FinalizeAlignedBam { input: outdir = bc_specific_aln_out, file = aBAM, name = readgroup_id + '.bam' }
     call FF.FinalizeToFile as FinalizeAlignedBai { input: outdir = bc_specific_aln_out, file = aBAI, name = readgroup_id + '.bai' }
-    call FF.FinalizeToFile as FinalizeAlignedPbi { input: outdir = bc_specific_aln_out, file = aPBI, name = readgroup_id + '.pbi' }
+    # call FF.FinalizeToFile as FinalizeAlignedPbi { input: outdir = bc_specific_aln_out, file = aPBI, name = readgroup_id + '.pbi' }
 
     ###################################################################################
     # QC
