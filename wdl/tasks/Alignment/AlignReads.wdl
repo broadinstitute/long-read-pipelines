@@ -48,11 +48,11 @@ task Minimap2 {
     # also, the task is mostly CPU-bound (i.e. minimap2)
     Int max_cpus = 96
     Int desired_cpus = (if('LOCAL'==disk_type) then 32 else 24) * length(reads)
-    Int cpus = if max_cpus < desired_cpus then max_cpus else desired_cpus  # WDL 1.0 doesn't have a max(,)....
-    Int mem = cpus * (if('LOCAL'==disk_type || longer_ont_read_hint) then 6 else 5)
+    Int cpus = 24 # if max_cpus < desired_cpus then max_cpus else desired_cpus  # WDL 1.0 doesn't have a max(,)....
+    Int mem = 288 # cpus * (if('LOCAL'==disk_type || longer_ont_read_hint) then 6 else 5)
     # if mimimap2 OoM, tune the line above
 
-    Int mm2_threads = cpus - 2
+    Int mm2_threads = cpus - 4
 
     command <<<
     set -euxo pipefail
