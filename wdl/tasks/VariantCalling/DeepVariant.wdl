@@ -64,9 +64,8 @@ workflow Run {
             Boolean is_38_chr1  = length(how_to_shard_wg_for_calling) > 20 && shard_id == "1-p"
             Boolean is_38_shard3  = length(how_to_shard_wg_for_calling) > 20 && shard_id == "11-q_17-q"
 
-            Boolean pay_fee_and_go = is_t2t_chrX || is_38_chr1 || is_t2t_shard8 || is_38_shard3
-            Int use_this_memory = if ( pay_fee_and_go ) then 48 else dv_memory
-            # RuntimeAttr preemption_override = {"preemptible_tries": if ( pay_fee_and_go ) then 0 else 1}
+            Boolean pay_toll = is_t2t_chrX || is_38_chr1 || is_t2t_shard8 || is_38_shard3
+            Int use_this_memory = if (pay_toll) then 6*dv_threads else dv_memory
             call DV as DeepV {
                 input:
                     bam           = shard_bam,
@@ -79,10 +78,10 @@ workflow Run {
 
                     model_type = model_for_dv_andor_pepper,
 
-                    threads = select_first([dv_threads]),
-                    memory  = use_this_memory, # select_first([dv_memory]),
+                    threads = dv_threads,
+                    memory  = use_this_memory,
+                    max_preemption = if (pay_toll) then 0 else 1,
                     zones = zones,
-                    # runtime_attr_override = preemption_override
             }
         }
 
@@ -158,6 +157,7 @@ task DV {
 
         Int threads
         Int memory
+        Int max_preemption
         String zones
 
         RuntimeAttr? runtime_attr_override
@@ -219,12 +219,14 @@ task DV {
         mem_gb:             memory,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  1,
+        preemptible_tries:  max_preemption,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-deepvariant:1.6.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
+        noAddress: true
+
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
         disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
@@ -331,6 +333,8 @@ task DV_gpu {
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
+        noAddress: true
+
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
         disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"

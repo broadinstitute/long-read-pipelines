@@ -113,7 +113,7 @@ task SampleSV {
 
     RuntimeAttr default_attr = object {
         cpu_cores:          cpus,
-        mem_gb:             6 * cpus,
+        mem_gb:             4 * cpus,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,

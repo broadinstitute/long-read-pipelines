@@ -161,7 +161,7 @@ task Discover {
         mem_gb:             memory,
         disk_gb:            runtime_disk_size,
         preemptible_tries:  2,
-        max_retries:        1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-smrttools:12.0.0.176214"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -229,7 +229,7 @@ task Call {
         cpu_cores:          16,
         mem_gb:             64,
         disk_gb:            disk_size,
-        preemptible_tries:  2,
+        preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-smrttools:12.0.0.176214"
     }
