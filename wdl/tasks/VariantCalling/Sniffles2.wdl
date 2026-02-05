@@ -61,8 +61,6 @@ task SampleSV {
     }
 
     parameter_meta {
-        bam:              { desciption: "input BAM from which to call SVs", localization_optional: true }
-        bai:              "index accompanying the BAM"
         minsvlen:         "minimum SV length in bp. Default 50"
         sample_id:        "Sample ID"
         prefix:           "prefix for output"
@@ -86,17 +84,14 @@ task SampleSV {
     String vcf_output = "~{prefix}.sniffles~{postfix}.vcf.gz"
     String tbi_output = "~{prefix}.sniffles~{postfix}.vcf.gz.tbi"
 
-    String local_bam = "/cromwell_root/~{basename(bam)}"
-
     command <<<
-        set -euxo pipefail
+    set -euxo pipefail
 
-        time gcloud storage cp ~{bam} ~{local_bam}
-        mv ~{bai} "~{local_bam}.bai"
+        if [[ ! -f "~{bam}.bai" ]]; then mv "~{bai}" "~{bam}.bai"; fi
 
         touch ~{bai}  # handle the bai-older-than-bam warning
         sniffles -t ~{cpus} \
-                 -i ~{local_bam} \
+                 -i ~{bam} \
                  --minsvlen ~{minsvlen} \
                  --sample-id ~{sample_id} \
                  ~{if defined(tandem_repeat_bed) then "--tandem-repeats ~{tandem_repeat_bed}" else ""} \
