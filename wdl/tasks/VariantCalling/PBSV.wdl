@@ -109,7 +109,7 @@ task Discover {
             cat RG.lines
             while IFS= read -r line; do
                 id_field=$(echo "${line}" | tr '\t' '\n' | grep "^ID:")
-                pu_field=$(echo "${line}" | tr '\t' '\n' | grep "^PU:")
+                pu_field=$(echo "${line}" | tr '\t' '\n' | grep "^PU:" || echo "PU:NA")
                 sm_field=$(echo "${line}" | tr '\t' '\n' | grep "^SM:")
                 echo -e "@RG\t${id_field}\t${pu_field}\t${sm_field}" >> fixed.rg.lines
             done < RG.lines
