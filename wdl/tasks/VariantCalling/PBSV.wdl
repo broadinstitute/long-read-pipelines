@@ -109,7 +109,7 @@ task Discover {
             cat RG.lines
             while IFS= read -r line; do
                 id_field=$(echo "${line}" | tr '\t' '\n' | grep "^ID:")
-                pu_field=$(echo "${line}" | tr '\t' '\n' | grep "^PU:")
+                pu_field=$(echo "${line}" | tr '\t' '\n' | grep "^PU:" || echo "PU:NA")
                 sm_field=$(echo "${line}" | tr '\t' '\n' | grep "^SM:")
                 echo -e "@RG\t${id_field}\t${pu_field}\t${sm_field}" >> fixed.rg.lines
             done < RG.lines
@@ -154,14 +154,14 @@ task Discover {
     String disk_type = if is_ont then "SSD" else "HDD"
 
     Int num_cores = if(defined(chr)) then 4 else 32
-    Int memory = 2 * num_cores
+    Int memory = if ("chr2"==chr || "chr3"==chr || "chr4"==chr || "chr17"==chr || "chr18"==chr || "chr21"==chr || "chr22"==chr)  then 6 * num_cores else 2 * num_cores
 
     RuntimeAttr default_attr = object {
         cpu_cores:          num_cores,
         mem_gb:             memory,
         disk_gb:            runtime_disk_size,
         preemptible_tries:  2,
-        max_retries:        1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-smrttools:12.0.0.176214"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -224,12 +224,12 @@ task Call {
 
     #########################
     Int disk_size = 2*ceil(size(svsigs, "GiB") + size([ref_fasta, ref_fasta_fai], "GiB"))
-
+    # random string to flush dockstore
     RuntimeAttr default_attr = object {
-        cpu_cores:          16,
-        mem_gb:             64,
+        cpu_cores:          96,
+        mem_gb:             384,
         disk_gb:            disk_size,
-        preemptible_tries:  2,
+        preemptible_tries:  0,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-smrttools:12.0.0.176214"
     }
