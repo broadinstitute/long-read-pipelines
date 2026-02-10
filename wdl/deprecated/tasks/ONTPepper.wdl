@@ -54,7 +54,7 @@ task Pepper {
     Int minimal_disk = 100
 	Int disk_size = if inflation_factor * bam_sz > minimal_disk then inflation_factor * bam_sz else minimal_disk
 
-    String output_root = "/cromwell_root/pepper_output"
+    String output_root = "/mnt/disks/cromwell_root/pepper_output"
 
     String prefix = basename(bam, ".bam") + ".deepvariant_pepper"
 
