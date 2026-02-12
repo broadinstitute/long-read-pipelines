@@ -80,6 +80,7 @@ workflow CallVariants {
 
         File? small_variant_calling_options_json
         File? sv_calling_options_json
+        Array[String]? pbsv_discover_special_chrs
 
         Array[String] gcp_zones = ["us-central1-a", "us-central1-b", "us-central1-c", "us-central1-f"]
     }
@@ -164,7 +165,8 @@ workflow CallVariants {
                 minsvlen = sv_options.min_sv_len,
                 pbsv_discover_per_chr = sv_options.pbsv_discover_per_chr,
 
-                zones = wdl_parsable_zones
+                zones = wdl_parsable_zones,
+                pbsv_discover_special_chrs = pbsv_discover_special_chrs
         }
     }
 

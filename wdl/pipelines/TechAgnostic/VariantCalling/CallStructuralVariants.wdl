@@ -8,6 +8,7 @@ import "../../../structs/ReferenceMetadata.wdl"
 import "../../../tasks/VariantCalling/PBSV.wdl"
 import "../../../tasks/VariantCalling/Sniffles2.wdl" as Sniffles2
 
+
 struct SVCallingConfig {
     Int min_sv_len
     Boolean pbsv_discover_per_chr
@@ -40,6 +41,7 @@ workflow Work {
 
         Boolean pbsv_discover_per_chr
         Array[Pair[String, Pair[File, File]]]? per_chr_bam_bai_and_id
+        Array[String]? pbsv_discover_special_chrs
 
         # reference info
         File ref_bundle_json_file
@@ -87,29 +89,57 @@ workflow Work {
     ##########################################################
     if (pbsv_discover_per_chr) {
 
+        Array[String] arr = if (defined(pbsv_discover_special_chrs)) then select_all(select_first([pbsv_discover_special_chrs])) else []
+
         scatter (triplet in select_first([per_chr_bam_bai_and_id])) {
             String contig = triplet.left
             File shard_bam = triplet.right.left
             File shard_bai = triplet.right.right
 
-            call PBSV.Discover as pbsv_discover_chr {
-                input:
-                    bam = shard_bam,
-                    bai = shard_bai,
-                    is_hifi = is_hifi,
-                    is_ont = is_ont,
-                    chr = contig,
-                    prefix = prefix,
-                    ref_fasta = ref_bundle.fasta,
-                    ref_fasta_fai = ref_bundle.fai,
-                    tandem_repeat_bed = ref_bundle.tandem_repeat_bed,
-                    zones = zones
+            # Int N = length(arr)
+            scatter (a in arr) { if (a == contig) { Boolean is_match = true } }
+            Boolean limit_pbsv_threads = 0 < length(select_all(is_match))
+
+            if (limit_pbsv_threads) {
+                RuntimeAttr overrideMem = object {cpu_cores: if ("chr2"==contig) then 48 else 8, mem_gb: if ("chr2"==contig) then 288 else 48, preemptible_tries: 1}
+                call PBSV.Discover as pbsv_discover_chr_limit {
+                    input:
+                        bam = shard_bam,
+                        bai = shard_bai,
+                        is_hifi = is_hifi,
+                        is_ont = is_ont,
+                        chr = contig,
+                        prefix = prefix,
+                        ref_fasta = ref_bundle.fasta,
+                        ref_fasta_fai = ref_bundle.fai,
+                        tandem_repeat_bed = ref_bundle.tandem_repeat_bed,
+                        zones = zones,
+                        runtime_attr_override = overrideMem
+                }
             }
+
+            if (!limit_pbsv_threads) {
+                call PBSV.Discover as pbsv_discover_chr {
+                    input:
+                        bam = shard_bam,
+                        bai = shard_bai,
+                        is_hifi = is_hifi,
+                        is_ont = is_ont,
+                        chr = contig,
+                        prefix = prefix,
+                        ref_fasta = ref_bundle.fasta,
+                        ref_fasta_fai = ref_bundle.fai,
+                        tandem_repeat_bed = ref_bundle.tandem_repeat_bed,
+                        zones = zones
+                }
+            }
+
+            File svsig = select_first([pbsv_discover_chr_limit.svsig, pbsv_discover_chr.svsig])
         }
 
         call PBSV.Call as pbsv_wg_call {
             input:
-                svsigs = pbsv_discover_chr.svsig,
+                svsigs = svsig,
                 ref_fasta = ref_bundle.fasta,
                 ref_fasta_fai = ref_bundle.fai,
                 is_hifi = is_hifi,
