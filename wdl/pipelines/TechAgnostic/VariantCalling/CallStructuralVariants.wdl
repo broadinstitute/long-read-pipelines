@@ -101,7 +101,8 @@ workflow Work {
             Boolean limit_pbsv_threads = 0 < length(select_all(is_match))
 
             if (limit_pbsv_threads) {
-                RuntimeAttr overrideMem = object {cpu_cores: if ("chr2"==contig) then 48 else 8, mem_gb: if ("chr2"==contig) then 288 else 48, preemptible_tries: 1}
+                RuntimeAttr overrideMem = object {cpu_cores: 8, mem_gb: 48, preemptible_tries: 1}
+                RuntimeAttr overrideMemFuck = object {cpu_cores: 96, mem_gb: 576, preemptible_tries: 0}
                 call PBSV.Discover as pbsv_discover_chr_limit {
                     input:
                         bam = shard_bam,
@@ -114,7 +115,7 @@ workflow Work {
                         ref_fasta_fai = ref_bundle.fai,
                         tandem_repeat_bed = ref_bundle.tandem_repeat_bed,
                         zones = zones,
-                        runtime_attr_override = overrideMem
+                        runtime_attr_override = if ("chr2"==contig) then overrideMemFuck else overrideMem
                 }
             }
 
