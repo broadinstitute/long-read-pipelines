@@ -102,7 +102,7 @@ workflow Work {
 
             if (limit_pbsv_threads) {
                 RuntimeAttr overrideMem = object {cpu_cores: 8, mem_gb: 48, preemptible_tries: 1}
-                RuntimeAttr overrideMemFuck = object {cpu_cores: 96, mem_gb: 576, preemptible_tries: 0}
+                RuntimeAttr overrideMemFuck = object {cpu_cores: 96, mem_gb: 576, preemptible_tries: 0, disk_gb: 500}
                 call PBSV.Discover as pbsv_discover_chr_limit {
                     input:
                         bam = shard_bam,
