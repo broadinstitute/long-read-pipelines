@@ -2,11 +2,11 @@
 # then support both gsutil and gcloud CLIs
 
 ############### stage 0: build samtools and bcftools from source
-FROM ubuntu:20.04
+FROM ubuntu:24.04 AS builder
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG SAMTOOLS_VERSION=1.18
-ARG BCFTOOLS_VERSION=1.18
+ARG SAMTOOLS_VERSION=1.23
+ARG BCFTOOLS_VERSION=1.23
 RUN apt-get -qqy update --fix-missing && \
     apt-get -qqy dist-upgrade && \
     apt-get -qqy install --no-install-recommends \
@@ -27,14 +27,14 @@ RUN apt-get -qqy update --fix-missing && \
     tar xjf samtools-${SAMTOOLS_VERSION}.tar.bz2 && \
     cd samtools-${SAMTOOLS_VERSION} \
         && ./configure --without-curses --enable-libcurl --with-libdeflate \
-        && make -s all all-htslib \
+        && make -j 4 -s all all-htslib \
         && make install install-htslib && \
     cd - && rm -rf samtools-${SAMTOOLS_VERSION}* && \
     wget https://github.com/samtools/bcftools/releases/download/${BCFTOOLS_VERSION}/bcftools-${BCFTOOLS_VERSION}.tar.bz2 && \
     tar xjf bcftools-${BCFTOOLS_VERSION}.tar.bz2 && \
     cd bcftools-${BCFTOOLS_VERSION} \
         && ./configure --without-curses \
-        && make -s \
+        && make -j 4 -s \
         && make install && \
     cd - && rm -rf bcftools-${BCFTOOLS_VERSION}* && \
     apt-get -qqy purge autoconf automake bzip2 gcc make wget && \
@@ -49,7 +49,7 @@ RUN apt-get -qqy update --fix-missing && \
     bcftools --help
 
 ############### stage 1: other commonly used bioinformatics utilities
-FROM ubuntu:20.04
+FROM ubuntu:24.04
 
 ENV HOME=/root
 
@@ -57,13 +57,18 @@ ENV HOME=/root
 CMD ["bash"]
 
 # copy from previous stage the binaries from samtools build
-COPY --from=0 /usr/local/bin/* /usr/local/bin/
+COPY --from=builder /usr/local/bin/* /usr/local/bin/
+COPY --from=builder /usr/local/libexec/bcftools /usr/local/libexec/bcftools
 
 #### Basic utilities
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get -qqy update --fix-missing && \
     apt-get -qqy dist-upgrade && \
     apt-get -qqy install --no-install-recommends \
+                 libcurl4t64 \
+                 libdeflate0 \
+                 liblzma5 \
+                 libbz2-1.0 \
                  apt-transport-https \
                  ca-certificates \
                  gnupg \
@@ -74,6 +79,7 @@ RUN apt-get -qqy update --fix-missing && \
                  datamash \
                  gawk \
                  less \
+                 rename \
                  pigz \
                  tabix \
                  tree \
