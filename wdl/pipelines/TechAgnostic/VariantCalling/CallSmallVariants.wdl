@@ -81,7 +81,7 @@ workflow Work {
         String sex
         String prefix
 
-        Array[Pair[String, Pair[File, File]]] per_chr_bam_bai_and_id
+        Array[Pair[String, Pair[File, File]]]? per_chr_bam_bai_and_id
 
         Boolean is_ont
         Boolean is_r10_4_pore_or_later
@@ -213,7 +213,7 @@ workflow Work {
 
                     bam = bam,
                     bai = bai,
-                    per_chr_bam_bai_and_id = per_chr_bam_bai_and_id,
+                    per_chr_bam_bai_and_id = select_first([per_chr_bam_bai_and_id]),
                     is_ont = is_ont,
 
                     unphased_vcf = DV.vcf,

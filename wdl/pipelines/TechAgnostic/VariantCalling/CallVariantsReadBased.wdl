@@ -96,8 +96,7 @@ workflow CallVariants {
     call GU.CollapseArrayOfStrings as get_zones {input: input_array = gcp_zones, joiner = " "}
     String wdl_parsable_zones = get_zones.collapsed
 
-    # needed for whatshap phasing anyway, so this can be used by SV calling
-    call ShardWholeGenome.Split as SplitBamByChr { input: ref_dict = ref_bundle.dict, bam = bam, bai = bai, }
+
 
     ######################################################################
     # Block for small variants handling
@@ -113,7 +112,7 @@ workflow CallVariants {
                 sex = sex,
                 prefix = prefix,
 
-                per_chr_bam_bai_and_id = SplitBamByChr.id_bam_bai_of_shards,
+                # per_chr_bam_bai_and_id = SplitBamByChr.id_bam_bai_of_shards,
 
                 is_ont = is_ont,
                 is_r10_4_pore_or_later = is_r10_4_pore_or_later,
@@ -143,6 +142,9 @@ workflow CallVariants {
     ######################################################################
     String sv_dir = sub(gcs_out_dir, "/$", "") + "/variants/sv"
     if (defined(sv_calling_options_json)) {
+
+        # needed for whatshap phasing anyway, so this can be used by SV calling
+        call ShardWholeGenome.Split as SplitBamByChr { input: ref_dict = ref_bundle.dict, bam = bam, bai = bai, }
 
         SVCallingConfig sv_options = read_json(select_first([sv_calling_options_json]))
 
