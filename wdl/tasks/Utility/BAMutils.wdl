@@ -1041,7 +1041,6 @@ task SubsetBamToLocusLocal {
         interval_list_file:  "a Picard-style interval list file to subset reads with"
         interval_id:         "an ID string for representing the intervals in the interval list file"
         prefix: "prefix for output bam and bai file names"
-        bam: {localization_optional: true}
     }
 
     input {
@@ -1059,13 +1058,11 @@ task SubsetBamToLocusLocal {
 
     String subset_prefix = prefix + "." + interval_id
 
-    String local_bam = "/cromwell_root/~{basename(bam)}"
-
     command <<<
-        set -euxo pipefail
+    set -euxo pipefail
 
-        time gcloud storage cp ~{bam} ~{local_bam}
-        mv ~{bai} "~{local_bam}.bai" && touch "~{local_bam}.bai"
+        # guard against cases where the bai doesn't follow the naming convension of ".bam.bai"
+        if [[ -f "~{bam}.bai" ]]; then mv ~{bai} "~{bam}.bai"; fi
 
         # see man page for what '-M' means
         samtools view \
@@ -1074,7 +1071,7 @@ task SubsetBamToLocusLocal {
             -@ 1 \
             --write-index \
             -o "~{subset_prefix}.bam##idx##~{subset_prefix}.bam.bai" \
-            ~{local_bam} "~{local_bam}.bai" \
+            ~{bam} "~{bam}.bai" \
             ~{sep=" " intervals}
     >>>
 
@@ -1092,7 +1089,7 @@ task SubsetBamToLocusLocal {
         disk_gb:            disk_size,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.23"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
