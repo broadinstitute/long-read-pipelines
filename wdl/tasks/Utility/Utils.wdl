@@ -1530,6 +1530,7 @@ task SubsetBam {
         set -euxo pipefail
 
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        export GCS_REQUESTER_PAYS_PROJECT=$(gcloud config get-value project)
 
         echo "false" > "samtools.failed.txt"
 
@@ -1561,7 +1562,7 @@ task SubsetBam {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.23"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
