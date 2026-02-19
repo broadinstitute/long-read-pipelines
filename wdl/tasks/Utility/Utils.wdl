@@ -1526,42 +1526,60 @@ task SubsetBam {
         RuntimeAttr? runtime_attr_override
     }
 
-    command <<<
-        set -euxo pipefail
+    String subset_prefix = prefix + "." + locus
 
-        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+    command <<<
+        # the way this works is the following:
+        # 0) relying on the re-auth.sh script to export the credentials
+        # 1) perform the remote sam-view subsetting in the background
+        # 2) listen to the PID of the background process, while re-auth every 1200 seconds
+        source /opt/re-auth.sh
+        set -euxo pipefail
 
         echo "false" > "samtools.failed.txt"
 
+        # see man page for what '-M' means
         samtools view \
             -bhX \
             -M \
             -@ 1 \
             --verbosity=8 \
             --write-index \
-            -o "~{prefix}.bam##idx##~{prefix}.bam.bai" \
+            -o "~{subset_prefix}.bam##idx##~{subset_prefix}.bam.bai" \
             ~{bam} ~{bai} \
-            ~{locus} \
-        || { echo "samtools seem to have failed"; echo "true" > "samtools.failed.txt"; exit 77; }
+            ~{locus} && exit 0 || { echo "samtools seem to have failed"; echo "true" > "samtools.failed.txt"; exit 77; } &
+        pid=$!
+
+        set +e
+        count=0
+        while true; do
+            sleep 1200 && date && source /opt/re-auth.sh
+            count=$(( count+1 ))
+            if [[ ${count} -gt 6 ]]; then echo "true" > "samtools.failed.txt" && exit 0; fi  # way too many attempts, get out
+            if ! pgrep -x -P $pid; then exit 0; fi
+        done
     >>>
 
     output {
-        File subset_bam = "~{prefix}.bam"
-        File subset_bai = "~{prefix}.bam.bai"
+        File subset_bam = "~{subset_prefix}.bam"
+        File subset_bai = "~{subset_prefix}.bam.bai"
         Boolean is_samtools_failed = read_boolean("samtools.failed.txt")
     }
 
     #########################
-    Int disk_size = if (0==disk_offset) then 4*ceil(size([bam, bai], "GB")) else disk_offset + ceil(size([bam, bai], "GB"))
+    # Int disk_size = if (0==disk_offset) then 4*ceil(size([bam, bai], "GB")) else disk_offset + ceil(size([bam, bai], "GB"))
+    Int min_disk = 10
+    Int proposal_disk = ceil(0.2 * size([bam, bai], "GiB"))
+    Int disk_size = if (proposal_disk<min_disk) then min_disk else proposal_disk # here we make one assumption that we aren't getting more than 10% of the whole genome
 
     RuntimeAttr default_attr = object {
-        cpu_cores:          1,
+        cpu_cores:          2,
         mem_gb:             10,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.23.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -1779,7 +1797,7 @@ task ResilientSubsetBam {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.23.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -2231,6 +2249,7 @@ task InferSampleName {
         set -euxo pipefail
 
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        export GCS_REQUESTER_PAYS_PROJECT=$(gcloud config get-value project)
         samtools view -H ~{bam} > header.txt
         if ! grep -q '^@RG' header.txt; then echo "No read group line found!" && exit 1; fi
 
