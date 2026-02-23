@@ -103,6 +103,8 @@ workflow Work {
         Int dv_memory
         Boolean use_gpu = false
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
+        Array[Int] memup_shards
+        Boolean all_memup
 
         # DO NOT EVER DEFINE THESE TWO VARIABLES; THEY ARE USED AS A WDL TRICK. THEY SHOULD NEVER BE DEFINED.
         String? dummy_a
@@ -238,7 +240,9 @@ workflow Work {
                 dv_threads = dv_threads,
                 dv_memory = dv_memory,
                 phase_and_tag = phase_and_tag,
-                zones = zones
+                zones = zones,
+                memup_shards = memup_shards,
+                all_memup = all_memup
         }
         call FF.FinalizeToFile as FinalizeLegacyGVcf { input: outdir = gcs_variants_out_dir, file = WorkOnLegacyONTdata.legacy_ont_dvp_g_vcf }
         call FF.FinalizeToFile as FinalizeLegacyGTbi { input: outdir = gcs_variants_out_dir, file = WorkOnLegacyONTdata.legacy_ont_dvp_g_tbi }

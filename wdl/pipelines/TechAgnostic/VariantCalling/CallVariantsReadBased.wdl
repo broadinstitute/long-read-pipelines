@@ -82,6 +82,9 @@ workflow CallVariants {
         File? sv_calling_options_json
 
         Array[String] gcp_zones = ["us-central1-a", "us-central1-b", "us-central1-c", "us-central1-f"]
+
+        Array[Int] memup_shards
+        Boolean all_memup
     }
 
     if ((!defined(sv_calling_options_json)) && (!defined(small_variant_calling_options_json))) {
@@ -133,7 +136,10 @@ workflow CallVariants {
                 dv_threads = snp_options.dv_threads,
                 dv_memory = snp_options.dv_memory,
                 use_gpu = snp_options.use_gpu,
-                zones = wdl_parsable_zones
+                zones = wdl_parsable_zones,
+
+                memup_shards = memup_shards,
+                all_memup = all_memup
         }
     }
 

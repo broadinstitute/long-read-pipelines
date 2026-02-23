@@ -20,6 +20,8 @@ workflow Run {
 
     input {
         Array[Pair[String, Pair[File, File]]] how_to_shard_wg_for_calling
+        Array[Int] memup_shards
+        Boolean all_memup
         String prefix
         String model_for_pepper_margin_dv
 
@@ -44,8 +46,17 @@ workflow Run {
         File? legacy_ont_dvp_phased_vcf_stats_gtf = ONTPhaseStatsLegacy.stats_gtf
     }
 
-    scatter (triplet in how_to_shard_wg_for_calling) {
+    Int N = length(how_to_shard_wg_for_calling)
+    scatter (i in range(N)) {
+        Pair[String, Pair[File, File]] triplet = how_to_shard_wg_for_calling[i]
         if (triplet.left != "alts") {
+            if (!all_memup) {
+                scatter (j in memup_shards) { Int indicator = if (j == i) then 1 else 0 }
+                call SumInts as SumIndicators { input: integers = indicator }
+                Boolean memup_for_shard = SumIndicators.total > 0
+            }
+            Boolean memup = all_memup || select_first([memup_for_shard, false])
+
             call ONTPepper.Pepper {
                 input:
                     bam           = triplet.right.left,
@@ -53,9 +64,9 @@ workflow Run {
                     ref_fasta     = ref_map['fasta'],
                     ref_fasta_fai = ref_map['fai'],
                     model         = model_for_pepper_margin_dv,
-                    phase_and_tag  = phase_and_tag,
-                    threads       = select_first([dv_threads]),
-                    memory        = select_first([dv_memory]),
+                    phase_and_tag = phase_and_tag,
+                    threads       = dv_threads,
+                    memory        = if (!memup) then dv_memory else 6*dv_threads,
                     zones         = zones
             }
         }
@@ -84,5 +95,26 @@ workflow Run {
         call WhatsHap.Stats as ONTPhaseStatsLegacy { input:
             phased_vcf=MergePEPPERPhasedVCFs.vcf, phased_tbi=MergePEPPERPhasedVCFs.tbi
         }
+    }
+}
+
+task SumInts {
+    input {
+        Array[Int] integers
+    }
+    output {
+        Int total = read_int("result.txt")
+    }
+
+    # WDL helper to write one Int per line to a file
+    File int_file = write_lines(integers)
+
+    command <<<
+        # Use awk to sum the file line-by-line (memory efficient!)
+        awk '{s+=$1} END {print s}' ~{int_file} > result.txt
+    >>>
+    runtime {
+        disks: "local-disk 10 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
     }
 }
