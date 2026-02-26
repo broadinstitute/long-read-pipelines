@@ -161,10 +161,12 @@ workflow Work {
     ####################################################################################################################################
     # but if custom sharding isn't requested, then per-chr sharding is already done, so no need to redo
     if (defined(ref_bundle.size_balanced_scatter_intervallists_locators)) {
+        call ReorderBamHeader { input: input_bam = bam, fasta_fai = ref_bundle.fai }
+
         call ShardWholeGenome.Split as CustomSplitBamForSmallVar {
             input:
-                bam = bam,
-                bai = bai,
+                bam = ReorderBamHeader.output_bam,
+                bai = ReorderBamHeader.output_bai,
                 ref_dict = ref_bundle.dict,
                 ref_scatter_interval_list_ids = select_first([ref_bundle.size_balanced_scatter_interval_ids]),
                 ref_scatter_interval_list_locator = select_first([ref_bundle.size_balanced_scatter_intervallists_locators])
@@ -278,5 +280,61 @@ workflow Work {
         call FF.FinalizeToFile as FinalizeClairTbi  { input: outdir = gcs_variants_out_dir, file = RunClair3.clair_tbi }
         call FF.FinalizeToFile as FinalizeClairGVcf { input: outdir = gcs_variants_out_dir, file = RunClair3.clair_gvcf }
         call FF.FinalizeToFile as FinalizeClairGTbi { input: outdir = gcs_variants_out_dir, file = RunClair3.clair_gtbi }
+    }
+}
+
+task ReorderBamHeader {
+    meta {
+        description: "Reorder BAM header to match the order of contigs in the reference FASTA. This is for just three samples."
+    }
+    input {
+        File input_bam
+        File fasta_fai
+    }
+    output {
+        File output_bam = "~{prefix}.resorted.bam"
+        File output_bai = "~{prefix}.resorted.bam.bai"
+    }
+
+    String prefix = basename(input_bam, ".bam")
+
+    command <<<
+    set -euo pipefail
+
+        # 1. Extract the current header
+        samtools view -H ~{input_bam} > original_header.sam
+
+        # 2. Create the new @SQ lines from the .fai file
+        # FAI format: [chr] [length] [offset] ...
+        awk '{print "@SQ\tSN:"$1"\tLN:"$2}' ~{fasta_fai} > new_sq_lines.txt
+
+        # 3. Reconstruct the header:
+        #    - Keep the original @HD line (first line)
+        #    - Add the new @SQ lines
+        #    - Add all other original lines (@RG, @PG, @CO) except old @SQ and @HD
+        head -n 1 original_header.sam | grep "^@HD" > final_header.sam
+        cat new_sq_lines.txt >> final_header.sam
+        grep -vE "^@HD|^@SQ" original_header.sam >> final_header.sam
+
+        # 4. Apply new header and sort the records to match the new order
+        # We use samtools reheader to swap the metadata, then sort to fix record order.
+        samtools reheader \
+            final_header.sam \
+            ~{input_bam} \
+        | samtools sort \
+            -@ 7 \
+            -m 4G \
+        -o ~{prefix}.resorted.bam \
+            -
+
+        # 5. Index the final output
+        samtools index -@3 ~{prefix}.resorted.bam
+    >>>
+
+    runtime {
+        cpu: 10
+        memory: "40 GB"
+        disks: "local-disk 375 LOCAL"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.23"
     }
 }
