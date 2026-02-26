@@ -1769,7 +1769,7 @@ task ResilientSubsetBam {
     }
 
     #########################
-    Int min_disk = 10
+    Int min_disk = if ("alts" == interval_id) then 50 else 10
     Int proposal_disk = ceil(0.2 * size([bam, bai], "GiB"))
     Int disk_size = if (proposal_disk<min_disk) then min_disk else proposal_disk # here we make one assumption that we aren't getting more than 10% of the whole genome
 
