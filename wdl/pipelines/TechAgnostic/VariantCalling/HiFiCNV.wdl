@@ -8,26 +8,32 @@ import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow HiFiCNV {
     meta {
-        desciption:
+        description:
         "Runs the PacBio HiFiCNV tool on a single (human) HiFi bam."
-    }
-    input {
-        File bam
-        File bai
-        File ref_map_file
-        File exclude_bed
-        File sex_specific_cn
-        String gcs_out_root_dir
     }
     parameter_meta {
         exclude_bed:      "BED holding regions that are known to cause artifacts during HiFiCNV data processing (e.g. centromeres)."
         sex_specific_cn:  "Sex-specific files annotating the PAR regions on and expected copy numbers of sex chromosomes."
-        ref_map_file:     "table indicating reference sequence and auxillary file locations"
-        gcs_out_root_dir: "GCS bucket to store the reads, variants, and metrics files"
+        ref_map_file:     "table indicating reference sequence and auxiliary file locations"
+        gcs_out_root_dir: "GCS bucket to store the variants, and metrics files"
     }
+    input {
+        File bam
+        File bai
 
-    String workflow_name = 'HiFiCNV'
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/~{workflow_name}"
+        File ref_map_file
+        File exclude_bed
+        File sex_specific_cn
+
+        String gcs_out_root_dir
+    }
+    output {
+        Map[String, String] hificnv_outs = {'vcf':      FinalizeVCF.gcs_path,
+                                            'bedgraph': FinalizeLog.gcs_path,
+                                            'depth_bw': FinalizeBigWig.gcs_path,
+                                            'log':      FinalizeBedGraph.gcs_path,
+                                            }
+    }
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
@@ -42,18 +48,12 @@ workflow HiFiCNV {
         sex_specific_cn = sex_specific_cn
     }
 
-    call FF.FinalizeToFile as FinalizeLog { input: outdir = outdir + '/~{InferSampleName.sample_name}', file = PacBioHiFiCNV.log }
-    call FF.FinalizeToFile as FinalizeVCF { input: outdir = outdir + '/~{InferSampleName.sample_name}', file = PacBioHiFiCNV.vcf }
-    call FF.FinalizeToFile as FinalizeBedGraph { input: outdir = outdir + '/~{InferSampleName.sample_name}', file = PacBioHiFiCNV.bedgraph }
-    call FF.FinalizeToFile as FinalizeBigWig { input: outdir = outdir + '/~{InferSampleName.sample_name}', file = PacBioHiFiCNV.depth_bw }
-
-    output {
-        Map[String, String] hificnv_outs = {'vcf': FinalizeVCF.gcs_path,
-                                            'bedgraph': FinalizeLog.gcs_path,
-                                            'log': FinalizeBedGraph.gcs_path,
-                                            'depth_bw': FinalizeBigWig.gcs_path
-                                            }
-    }
+    String workflow_name = 'HiFiCNV'
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/~{workflow_name}/~{InferSampleName.sample_name}"
+    call FF.FinalizeToFile as FinalizeLog      { input: outdir = outdir, file = PacBioHiFiCNV.log }
+    call FF.FinalizeToFile as FinalizeVCF      { input: outdir = outdir, file = PacBioHiFiCNV.vcf }
+    call FF.FinalizeToFile as FinalizeBedGraph { input: outdir = outdir, file = PacBioHiFiCNV.bedgraph }
+    call FF.FinalizeToFile as FinalizeBigWig   { input: outdir = outdir, file = PacBioHiFiCNV.depth_bw }
 }
 
 task PacBioHiFiCNV {
@@ -67,11 +67,19 @@ task PacBioHiFiCNV {
 
         File exclude_bed
         File sex_specific_cn
+
         RuntimeAttr? runtime_attr_override
     }
 
+    output {
+        File vcf = "~{output_prefix}.${sample_name}.vcf.gz"
+        File bedgraph = "~{output_prefix}.${sample_name}.copynum.bedgraph"
+        File log = "~{output_prefix}.log"
+        File depth_bw = "~{output_prefix}.${sample_name}.depth.bw"
+    }
+
     command <<<
-        set -eux
+    set -eux
 
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
@@ -85,12 +93,6 @@ task PacBioHiFiCNV {
 
         tree
     >>>
-    output {
-        File vcf = "~{output_prefix}.${sample_name}.vcf.gz"
-        File bedgraph = "~{output_prefix}.${sample_name}.copynum.bedgraph"
-        File log = "~{output_prefix}.log"
-        File depth_bw = "~{output_prefix}.${sample_name}.depth.bw"
-    }
 
     #########################
     Int min_disk = 40
@@ -104,7 +106,7 @@ task PacBioHiFiCNV {
         disk_gb:            use_this_disk_sz,
         preemptible_tries:  3,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/hificnv:1.0.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/hificnv:1.0.1"
     }
 
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
@@ -115,5 +117,7 @@ task PacBioHiFiCNV {
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+
+        noAddress: true
     }
 }

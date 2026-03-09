@@ -2,23 +2,34 @@ version 1.0
 
 import "../../../structs/Structs.wdl"
 
+import "../../../tasks/Utility/Finalize.wdl" as FF
+
 workflow SummarizeHiFiCNV {
+    meta {
+        description:
+        "Summarizes the outputs of HiFiCNV across multiple samples into a single bed file of CNV calls."
+    }
     input {
-        Array[Map[String, String]] samples_hificnv_results
+        Array[Map[String, File]] samples_hificnv_results
         File ref_map_file
+        String gcs_out_root_dir
+        String cohort_name
+    }
+
+    output {
+        File merged_bed = FinalizeToFile.gcs_path
     }
 
     scatter (mm in samples_hificnv_results) {
-        String vcf = mm['vcf']
-        call ConvertToBed { input: input_vcf = vcf}
+        call ConvertToBed { input: input_vcf = mm['vcf']}
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
     call MergeAndSortBed { input: bed_files = ConvertToBed.bed,  fai_idx = ref_map['fai'] }
 
-    output {
-        File merged_bed = MergeAndSortBed.bed
-    }
+    String workflow_name = 'HiFiCNV'
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/~{workflow_name}"
+    call FF.FinalizeToFile { input: outdir = outdir, file = MergeAndSortBed.bed, name = "~{cohort_name}.HiFiCNV.summary.bed" }
 }
 
 task ConvertToBed {
@@ -28,7 +39,7 @@ task ConvertToBed {
     }
 
     command <<<
-        set -eux
+    set -eux
 
         smid=$(zgrep "^#CHROM" "~{input_vcf}" | awk -F '\t' '{print $10}')
         bcftools view -f "PASS,." "~{input_vcf}" \
@@ -60,7 +71,7 @@ task ConvertToBed {
         mem_gb:             4,
         disk_gb:            10,
         boot_disk_gb:       10,
-        preemptible_tries:  0,
+        preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
     }
@@ -82,27 +93,30 @@ task MergeAndSortBed {
         File fai_idx
         RuntimeAttr? runtime_attr_override
     }
-
-    Int disk_size = 10 + ceil(size(bed_files, "GiB"))
-
-    command <<<
-        set -eux
-
-        cat ~{sep=" " bed_files} > merged.bed
-        bedtools sort -faidx ~{fai_idx} -i merged.bed > merged.and.sorted.bed
-    >>>
-
     output {
         File bed = "merged.and.sorted.bed"
     }
 
+    command <<<
+    set -eux
+
+        cat ~{sep=" " bed_files} \
+        > merged.bed
+
+        bedtools sort -faidx ~{fai_idx} -i merged.bed \
+        > merged.and.sorted.bed
+    >>>
+
+
     #########################
+    Int disk_size = 10 + ceil(size(bed_files, "GiB"))
+
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
         mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  0,
+        preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
     }

@@ -1563,11 +1563,16 @@ task InferSampleName {
         set -euxo pipefail
 
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        export GCLOUD_PROJECT=$(gcloud config get-value project)
+        export GCS_REQUESTER_PAYS_PROJECT=${GCLOUD_PROJECT}
+
+        samtools version
+
         samtools view -H ~{bam} > header.txt
         if ! grep -q '^@RG' header.txt; then echo "No read group line found!" && exit 1; fi
 
         grep '^@RG' header.txt | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g' | sort | uniq > sample.names.txt
-        if [[ $(wc -l sample.names.txt) -gt 1 ]]; then echo "Multiple sample names found!" && exit 1; fi
+        if [[ $(wc -l sample.names.txt | awk '{print $1}') -gt 1 ]]; then echo "Multiple sample names found!" && exit 1; fi
         if grep -iq "unnamedsample" sample.names.txt; then echo "Sample name found to be unnamedsample!" && exit 1; fi
     >>>
 
@@ -1582,7 +1587,7 @@ task InferSampleName {
         bootDiskSizeGb: 10
         preemptible:    2
         maxRetries:     1
-        docker:         "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+        docker:         "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.23"
     }
 }
 
