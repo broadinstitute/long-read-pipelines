@@ -83,6 +83,11 @@ task PacBioHiFiCNV {
 
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
+        # re-generate the bai to ensure it's not corrupted, as corrupted bai can cause hificnv to fail without a clear error message
+        rm ~{bai} \
+        && \
+        samtools index ~{bam}
+
         hificnv \
             --bam ~{bam} \
             --ref ~{ref_fasta} \
