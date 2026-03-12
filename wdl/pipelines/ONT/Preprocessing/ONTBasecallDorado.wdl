@@ -179,6 +179,13 @@ task Basecall {
             uniq | \
             tee barcodes.txt
 
+        # DEBUGGIKNG:
+        echo "################################################################################"
+        echo "DIRECTORY CONTENTS:"
+        echo "################################################################################"
+        find
+        echo "################################################################################"
+
         # rename the
         find dorado_output/ -name '*bam*' -not -path '*fail*' | awk -F"/" '{ a=NF-1; a=$a; b=$NF; gsub(/dorado_output/, "unclassified", a); c=$NF; for (i = NF-1; i > 0; i--) { c=$i"/"c }; system("mv " c " dorado_output/" a ".chunk_~{index}." b); }'
 
