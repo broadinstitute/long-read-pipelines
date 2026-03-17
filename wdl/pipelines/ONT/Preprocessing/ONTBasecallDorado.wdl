@@ -150,8 +150,8 @@ task Basecall {
     Int disk_size = 10 * ceil(size(fast5_files, "GB")) + ceil(size(ref_fasta, "GB")) + ceil(size(ref_index, "GB")) + ceil(size(ref_fasta_dict, "GB"))
 
     String ref_arg = if defined(ref_fasta) then "--reference " else ""
-    String demux_arg = if defined(kit_name) then "--kit-name "+kit_name else "--no-classify"
-    String bc_kit_arg = if defined(kit_name) then "--kit-name "+kit_name else ""
+    String demux_arg = if defined(kit_name) then "--kit-name " + select_first([kit_name]) else "--no-classify"
+    String bc_kit_arg = if defined(kit_name) then "--kit-name " + select_first([kit_name]) else ""
 
     command <<<
         set -euxo pipefail
@@ -186,8 +186,8 @@ task Basecall {
         find
         echo "################################################################################"
 
-        # rename the
-        find dorado_output/ -name '*bam*' -not -path '*fail*' | awk -F"/" '{ a=NF-1; a=$a; b=$NF; gsub(/dorado_output/, "unclassified", a); c=$NF; for (i = NF-1; i > 0; i--) { c=$i"/"c }; system("mv " c " dorado_output/" a ".chunk_~{index}." b); }'
+        # Get list of output files:
+        find dorado_output/ -name '*.bam' -type f > OUT_BAM_FILE_LIST.txt 
 
         # Extract the header for the first bam file
         samtools view -H $(find dorado_output/ -name '*.bam' -type f | head -1) | grep "@RG" > ./rg_header.txt
@@ -209,7 +209,8 @@ task Basecall {
     >>>
 
     output {
-        Array[File] pass_bams = glob("dorado_output/*.bam")
+        #Array[File] pass_bams = glob("dorado_output/*.bam")
+        Array[File] pass_bams = read_lines("OUT_BAM_FILE_LIST.txt")
         File sequencing_summary = "dorado_output/sequencing_summary.txt"
         Array[String] barcodes = read_lines("barcodes.txt")
         Map[String, String] metadata = read_map("metadata.txt")
