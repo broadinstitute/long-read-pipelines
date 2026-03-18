@@ -186,12 +186,41 @@ task Basecall {
         find
         echo "################################################################################"
 
-        # Get list of output files:
-        find dorado_output/ -name '*.bam' -type f > OUT_BAM_FILE_LIST.txt 
-
         # Extract the header for the first bam file
         samtools view -H $(find dorado_output/ -name '*.bam' -type f | head -1) | grep "@RG" > ./rg_header.txt
         cat ./rg_header.txt
+
+        # Get list of output files:   
+        DEST_DIR=dorado_bams
+        find dorado_output/ -type f -name "*.bam" -print0 | while IFS= read -r -d '' f; do
+            base_name=$(basename "$f")
+            dest_path="$DEST_DIR/$base_name"
+            
+            # Check for collision
+            if [ -e "$dest_path" ]; then
+                # Extract filename without extension
+                filename="${base_name%.bam}"
+                
+                # Initialize counter
+                counter=1
+                new_dest_path="${DEST_DIR}/${filename}_${counter}.bam"
+                
+                # Increment counter until a unique filename is found
+                while [ -e "$new_dest_path" ]; do
+                    counter=$((counter + 1))
+                    new_dest_path="${DEST_DIR}/${filename}_${counter}.bam"
+                done
+                
+                new_base_name=$(basename "$new_dest_path")
+                echo "WARNING: Name collision for '$base_name' (from $f)."
+                echo "         -> Copying as '$new_base_name' instead."
+                
+                mv -v "$f" "$new_dest_path"
+            else
+                # No collision, copy normally
+                mv -v "$f" "$dest_path"
+            fi
+        done
 
         # Extract relevant metadata (e.g. sample id, run id, etc.) from the bam header
         runid=$(grep "^@RG" ./rg_header.txt | grep -o "ID:[^[:space:]]*" | cut -d: -f2 | sed 's/_dna.*//g' | uniq)
@@ -210,7 +239,7 @@ task Basecall {
 
     output {
         #Array[File] pass_bams = glob("dorado_output/*.bam")
-        Array[File] pass_bams = read_lines("OUT_BAM_FILE_LIST.txt")
+        Array[File] pass_bams = glob("dorado_bams/*.bam")
         File sequencing_summary = "dorado_output/sequencing_summary.txt"
         Array[String] barcodes = read_lines("barcodes.txt")
         Map[String, String] metadata = read_map("metadata.txt")
