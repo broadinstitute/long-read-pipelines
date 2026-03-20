@@ -192,6 +192,7 @@ task Basecall {
 
         # Get list of output files:   
         DEST_DIR=dorado_bams
+        mkdir -p $DEST_DIR
         find dorado_output/ -type f -name "*.bam" -print0 | while IFS= read -r -d '' f; do
             base_name=$(basename "$f")
             dest_path="$DEST_DIR/$base_name"
