@@ -405,10 +405,14 @@ task FinalizeBasecalls {
 
             grep -w $b $PASS_BAMS | gsutil -m cp -I $PASS_DIR
 
+            # Temporarily undo teh `set` command above:
+            set +euxo pipefail
             if [ ~{length(barcodes)} -eq 1 ]; then
+                set -euxo pipefail
                 cp ~{sequencing_summary} sequencing_summary.$b.txt
                 cp ~{final_summary} final_summary.$b.txt
             else
+                set -euxo pipefail
                 grep -w -e filename -e $b ~{sequencing_summary} > sequencing_summary.$b.txt
                 sed "s/sample_id=/sample_id=$b./" ~{final_summary} > final_summary.$b.txt
             fi
