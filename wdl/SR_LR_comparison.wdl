@@ -452,6 +452,15 @@ def alt_samples(record):
     return carriers
 
 
+def format_svtype(record):
+    value = record.info.get('SVTYPE', '.')
+    if isinstance(value, (tuple, list)):
+        if len(value) == 0:
+            return '.'
+        return str(value[0])
+    return str(value)
+
+
 def format_af(record):
     if 'AF' in record.info:
         value = record.info['AF']
@@ -493,6 +502,7 @@ for record in comp_vcf.fetch():
         'comp_id': comp_id,
         'sr_id': record.id if record.id is not None else '.',
         'sr_af': format_af(record),
+        'sr_svtype': format_svtype(record),
         'samples': alt_samples(record)
     }
     base_key = (record.chrom, base_id)
@@ -549,17 +559,18 @@ with open(out_tsv, 'w') as out:
         for match in candidate_matches:
             if require_sample_overlap and len(base_carriers.intersection(match['samples'])) == 0:
                 continue
-            kept.append((match['sr_id'], match['sr_af']))
+            kept.append((match['sr_id'], match['sr_af'], match['sr_svtype']))
 
         if not kept:
             continue
 
-        kept = sorted(set(kept), key=lambda x: (x[0], x[1]))
+        kept = sorted(set(kept), key=lambda x: (x[0], x[1], x[2]))
         alt_value = ','.join(record.alts) if record.alts is not None else '.'
         sr_ids = ','.join(item[0] for item in kept)
         sr_afs = ','.join(item[1] for item in kept)
+        sr_svtypes = ','.join(item[2] for item in kept)
         lr_id = record.id if record.id is not None else '.'
-        out.write(f"{record.chrom}\t{record.pos}\t{record.ref}\t{alt_value}\t{lr_id}\t{sr_ids}\t{sr_afs}\n")
+        out.write(f"{record.chrom}\t{record.pos}\t{record.ref}\t{alt_value}\t{lr_id}\t{sr_ids}\t{sr_afs}\t{sr_svtypes}\n")
 base_vcf.close()
 EOF
     >>>
@@ -652,12 +663,17 @@ out_vcf = sys.argv[3]
 annotations = {}
 with open(anno_tsv, 'r') as handle:
     for line in handle:
-        chrom, pos, ref, alt, lr_id, sr_ids, sr_afs = line.rstrip('\n').split('\t')
-        annotations[(chrom, pos, ref, alt, lr_id)] = (tuple(sr_ids.split(',')), tuple(sr_afs.split(',')))
+        chrom, pos, ref, alt, lr_id, sr_ids, sr_afs, sr_svtypes = line.rstrip('\n').split('\t')
+        annotations[(chrom, pos, ref, alt, lr_id)] = (
+            tuple(sr_ids.split(',')),
+            tuple(sr_afs.split(',')),
+            tuple(sr_svtypes.split(','))
+        )
 
 header = vcf_in.header.copy()
 header.add_line('##INFO=<ID=SR_MATCH_IDS,Number=.,Type=String,Description="Matched short-read structural variant IDs from Truvari benchmarking">')
 header.add_line('##INFO=<ID=SR_MATCH_AFS,Number=.,Type=String,Description="Allele frequencies of matched short-read structural variants, parallel to SR_MATCH_IDS">')
+header.add_line('##INFO=<ID=SR_MATCH_SVTYPES,Number=.,Type=String,Description="SVTYPE values of matched short-read structural variants, parallel to SR_MATCH_IDS">')
 header.add_line('##INFO=<ID=SR_MATCH_COUNT,Number=1,Type=Integer,Description="Number of matched short-read structural variants">')
 
 vcf_out = VariantFile(out_vcf, 'w', header=header)
@@ -666,9 +682,10 @@ for record in vcf_in:
     lr_id = record.id if record.id is not None else '.'
     key = (record.chrom, str(record.pos), record.ref, alt, lr_id)
     if key in annotations:
-        sr_ids, sr_afs = annotations[key]
+        sr_ids, sr_afs, sr_svtypes = annotations[key]
         record.info['SR_MATCH_IDS'] = sr_ids
         record.info['SR_MATCH_AFS'] = sr_afs
+        record.info['SR_MATCH_SVTYPES'] = sr_svtypes
         record.info['SR_MATCH_COUNT'] = len(sr_ids)
     vcf_out.write(record)
 
