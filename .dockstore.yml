@@ -176,3 +176,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/AnnotateVCFInsRM.wdl
   testParameterFiles:
+- name: SR_LR_comparison
+  subclass: wdl
+  primaryDescriptorPath: /wdl/SR_LR_comparison.wdl
+  testParameterFiles:
