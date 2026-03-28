@@ -267,7 +267,14 @@ task TruvariBench {
     command <<<
         set -euxo pipefail
 
-        truvari bench -b ~{truth_vcf} -c ~{comp_vcf} -f ~{ref_fa} -o outdir ~{params}
+        samtools faidx ~{ref_fa}
+
+        bcftools reheader --fai ~{ref_fa}.fai -o truth.reheadered.vcf.gz ~{truth_vcf}
+        bcftools reheader --fai ~{ref_fa}.fai -o comp.reheadered.vcf.gz ~{comp_vcf}
+        tabix -f -p vcf truth.reheadered.vcf.gz
+        tabix -f -p vcf comp.reheadered.vcf.gz
+
+        truvari bench -b truth.reheadered.vcf.gz -c comp.reheadered.vcf.gz -f ~{ref_fa} -o outdir ~{params}
         tabix -f -p vcf outdir/tp-base.vcf.gz
         tabix -f -p vcf outdir/tp-comp.vcf.gz
         tabix -f -p vcf outdir/fp.vcf.gz
