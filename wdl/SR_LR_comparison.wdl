@@ -393,7 +393,7 @@ EOF
         boot_disk_gb: 10,
         preemptible_tries: 3,
         max_retries: 0,
-        docker: "quay.io/ymostovoy/lr-utils-basic:latest"
+        docker: "quay.io/ymostovoy/lr-PALMER-filter:latest"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -685,6 +685,7 @@ header.add_line('##INFO=<ID=SR_MATCH_COUNT,Number=1,Type=Integer,Description="Nu
 
 vcf_out = VariantFile(out_vcf, 'w', header=header)
 for record in vcf_in:
+    record.translate(header)
     alt = ','.join(record.alts) if record.alts is not None else '.'
     lr_id = record.id if record.id is not None else '.'
     key = (record.chrom, str(record.pos), record.ref, alt, lr_id)
