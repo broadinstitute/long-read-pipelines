@@ -49,12 +49,13 @@ workflow Work {
 
         # optimization
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
+        Boolean skip_sniffles2 = true
     }
 
     output {
-        File sniffles_vcf = FinalizeSnifflesVcf.gcs_path
-        File sniffles_tbi = FinalizeSnifflesTbi.gcs_path
-        File sniffles_snf = FinalizeSnifflesSnf.gcs_path
+        File? sniffles_vcf = FinalizeSnifflesVcf.gcs_path
+        File? sniffles_tbi = FinalizeSnifflesTbi.gcs_path
+        File? sniffles_snf = FinalizeSnifflesSnf.gcs_path
 
         File pbsv_vcf = FinalizePBSVvcf.gcs_path
         File pbsv_tbi = FinalizePBSVtbi.gcs_path
@@ -72,6 +73,8 @@ workflow Work {
     # Sniffles-2
     ##########################################################
     call Utils.InferSampleName { input: bam = bam, bai = bai }
+    if (!skip_sniffles2) {
+
     call Sniffles2.SampleSV as Sniffles2SV {
         input:
             bam    = bam,
@@ -80,6 +83,7 @@ workflow Work {
             sample_id = InferSampleName.sample_name,
             prefix = prefix,
             tandem_repeat_bed = ref_bundle.tandem_repeat_bed
+    }
     }
 
     ##########################################################
@@ -142,7 +146,9 @@ workflow Work {
     call FF.FinalizeToFile as FinalizePBSVvcf { input: outdir = svdir, file = select_first([pbsv_wg_call.vcf, PBSVslow.vcf]) }
     call FF.FinalizeToFile as FinalizePBSVtbi { input: outdir = svdir, file = select_first([pbsv_wg_call.tbi, PBSVslow.tbi]) }
 
-    call FF.FinalizeToFile as FinalizeSnifflesVcf { input: outdir = svdir, file = Sniffles2SV.vcf }
-    call FF.FinalizeToFile as FinalizeSnifflesTbi { input: outdir = svdir, file = Sniffles2SV.tbi }
-    call FF.FinalizeToFile as FinalizeSnifflesSnf { input: outdir = svdir, file = Sniffles2SV.snf }
+    if (!skip_sniffles2) {
+    call FF.FinalizeToFile as FinalizeSnifflesVcf { input: outdir = svdir, file = select_first([Sniffles2SV.vcf]) }
+    call FF.FinalizeToFile as FinalizeSnifflesTbi { input: outdir = svdir, file = select_first([Sniffles2SV.tbi]) }
+    call FF.FinalizeToFile as FinalizeSnifflesSnf { input: outdir = svdir, file = select_first([Sniffles2SV.snf]) }
+    }
 }
