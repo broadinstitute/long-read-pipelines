@@ -1,4 +1,4 @@
-VERSION = 0.1.23
+VERSION = 0.1.23.1
 TAG1 = us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:latest
 

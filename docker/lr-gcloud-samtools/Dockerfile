@@ -5,8 +5,8 @@
 FROM ubuntu:24.04 AS builder
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG SAMTOOLS_VERSION=1.23
-ARG BCFTOOLS_VERSION=1.23
+ARG SAMTOOLS_VERSION=1.23.1
+ARG BCFTOOLS_VERSION=1.23.1
 RUN apt-get -qqy update --fix-missing && \
     apt-get -qqy dist-upgrade && \
     apt-get -qqy install --no-install-recommends \
@@ -102,6 +102,5 @@ RUN apt-get -qqy update --fix-missing && \
            /usr/share/man/??_* && \
     samtools --version && \
     bcftools --version
-
 
 COPY re-auth.sh /opt/
