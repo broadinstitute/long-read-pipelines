@@ -180,3 +180,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/SR_LR_comparison.wdl
   testParameterFiles:
+- name: BamMetrics
+  subclass: wdl
+  primaryDescriptorPath: /wdl/BamMetrics.wdl
+  testParameterFiles:
