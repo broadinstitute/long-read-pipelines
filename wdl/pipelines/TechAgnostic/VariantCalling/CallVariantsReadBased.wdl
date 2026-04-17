@@ -1,6 +1,7 @@
 version 1.0
 
 import "../../../tasks/Utility/GeneralUtils.wdl" as GU
+import "../../../tasks/Utility/BAMutils.wdl" as BU
 import "../../../tasks/Utility/Finalize.wdl" as FF
 import "../../../tasks/Utility/Utils.wdl"
 
@@ -96,8 +97,15 @@ workflow CallVariants {
     call GU.CollapseArrayOfStrings as get_zones {input: input_array = gcp_zones, joiner = " "}
     String wdl_parsable_zones = get_zones.collapsed
 
+    call BU.BamToFastq   { input: bam = bam, prefix = basename(bam, ".bam"), disk_type = "LOCAL" }
+    call RescueHardclips { input: bam = bam, fastq = BamToFastq.reads_fq }
+    if (RescueHardclips.num_hardclipped_records > 0) {
+        call GetHardClippedRecords { input: bam = bam }
+        call Utils.StopWorkflow as FailedRescueMission { input: reason = "Failed to rescue all hardclipped reads."}
+    }
+
     # needed for whatshap phasing anyway, so this can be used by SV calling
-    call ShardWholeGenome.Split as SplitBamByChr { input: ref_dict = ref_bundle.dict, bam = bam, bai = bai, }
+    call ShardWholeGenome.Split as SplitBamByChr { input: ref_dict = ref_bundle.dict, bam = RescueHardclips.restored_bam, bai = RescueHardclips.restored_bai, }
 
     ######################################################################
     # Block for small variants handling
@@ -151,8 +159,8 @@ workflow CallVariants {
                 is_hifi = !is_ont,
                 is_ont = is_ont,
 
-                bam = bam,
-                bai = bai,
+                bam = RescueHardclips.restored_bam,
+                bai = RescueHardclips.restored_bai,
                 prefix = prefix,
 
                 per_chr_bam_bai_and_id = SplitBamByChr.id_bam_bai_of_shards,
@@ -238,5 +246,111 @@ workflow CallVariants {
         File? legacy_phased_tbi = SmallVarJob.legacy_phased_tbi
         File? legacy_phasing_stats_tsv = SmallVarJob.legacy_phasing_stats_tsv
         File? legacy_phasing_stats_gtf = SmallVarJob.legacy_phasing_stats_gtf
+    }
+}
+
+task RescueHardclips {
+    meta {
+        description: "For turning long-read BAM that was generated allowing hardclips for non-primary alignments, into softclips."
+    }
+    parameter_meta {
+        bam: "Input BAM whose hard-clipped records should be converted to soft-clipped records."
+        fastq: "FASTQ containing the full-length read sequence and qualities; assumed to be generated via `samtools fastq {bam}`."
+        output_bam_name: "[default-valued] Output BAM filename."
+    }
+
+    input {
+        File bam
+        File fastq
+
+        String output_bam_name = basename(bam, ".bam") + ".HrestoredasS.bam"
+
+        RuntimeAttr? runtime_attr_override
+    }
+    output {
+        File restored_bam = output_bam_name
+        File restored_bai = output_bam_name + ".bai"
+        Int num_hardclipped_records = read_int("num_hardclipped_records.txt")
+    }
+
+    command <<<
+    set -euxo pipefail
+
+        bam_restorer \
+            ~{bam} \
+            ~{fastq} \
+            ~{output_bam_name}
+
+        samtools index -@3 ~{output_bam_name} &
+
+        samtools view ~{output_bam_name} \
+        | cut -f 6 \
+        | grep -E "(^H|H$)" \
+        | wc -l \
+        > num_hardclipped_records.txt &
+
+        wait
+    >>>
+
+    #########################
+    Int disk_size = 10 + 2*ceil(size([bam, fastq], "GiB"))
+
+    RuntimeAttr default_attr = object {
+        cpu_cores:          16,
+        mem_gb:             96,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-rescuehardclips:0.1.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task GetHardClippedRecords {
+    input {
+        File bam
+        RuntimeAttr? runtime_attr_override
+    }
+    output {
+        File hardclipped_records = "hardclipped_records.txt"
+    }
+    command <<<
+    set -euxo pipefail
+
+        samtools view ~{bam} \
+        | cut -f 1,6 \
+        | grep -EP "(\tH|H$)" \
+        > hardclipped_records.txt
+    >>>
+
+    #########################
+    Int disk_size = 10 + ceil(size(bam, "GiB"))
+
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.23"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }

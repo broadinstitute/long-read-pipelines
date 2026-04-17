@@ -1183,7 +1183,6 @@ task BamToFastq {
     }
 
     parameter_meta {
-        bam: {localization_optional: true}
         prefix: "Prefix for the output fastq file."
 
         save_all_tags:
@@ -1211,8 +1210,6 @@ task BamToFastq {
 
     Boolean custom_tags_to_preserve = 0<length(tags_to_preserve)
 
-    String base = basename(bam)
-    String local_bam = "/cromwell_root/~{base}"
     command <<<
         set -euxo pipefail
 
@@ -1226,27 +1223,22 @@ task BamToFastq {
             fi
         done
 
-        # localize
-        time \
-        gcloud storage cp ~{bam} ~{local_bam}
-
-
         # when saving all tags, the list can be empty as instructed by samtools doc
         time \
         samtools fastq \
             -@1 \
             -t \
             -0 ~{prefix}.fq.gz \
-            ~{local_bam}
+            ~{bam}
 
-        # also using pigz to enable parallel compression
-        time \
-        samtools fastq \
-            ~{true='-T  ' false =' ' save_all_tags} \
-            ~{true='-T ' false =' ' custom_tags_to_preserve} ~{sep=',' tags_to_preserve} \
-            ~{local_bam} \
-        | pigz \
-        > ~{prefix}.fq.gz
+        # # also using pigz to enable parallel compression
+        # time \
+        # samtools fastq \
+        #     ~{true='-T  ' false =' ' save_all_tags} \
+        #     ~{true='-T ' false =' ' custom_tags_to_preserve} ~{sep=',' tags_to_preserve} \
+        #     ~{bam} \
+        # | pigz \
+        # > ~{prefix}.fq.gz
     >>>
 
     #########################
@@ -1256,9 +1248,9 @@ task BamToFastq {
         cpu_cores:          2,
         mem_gb:             8,
         disk_gb:            disk_size,
-        preemptible_tries:  2,
-        max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.23"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
