@@ -1,0 +1,12 @@
+[package]
+name = "bam_restorer"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+
+[dependencies]
+noodles = { version = "0.80", features = ["bam", "sam", "fastq", "core"] }
+rustc-hash = "1.1" 
+anyhow = "1.0"
+bio = "3.0"
+flate2 = { version = "1.1", default-features = false, features = ["rust_backend"] }
