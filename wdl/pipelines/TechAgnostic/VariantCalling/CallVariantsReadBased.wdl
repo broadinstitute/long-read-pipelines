@@ -97,8 +97,8 @@ workflow CallVariants {
     call GU.CollapseArrayOfStrings as get_zones {input: input_array = gcp_zones, joiner = " "}
     String wdl_parsable_zones = get_zones.collapsed
 
-    call BU.BamToFastq   { input: bam = bam, prefix = basename(bam, ".bam"), disk_type = "LOCAL" }
-    call RescueHardclips { input: bam = bam, fastq = BamToFastq.reads_fq }
+    # call BU.BamToFastq   { input: bam = bam, prefix = basename(bam, ".bam"), disk_type = "LOCAL" }
+    call RescueHardclips { input: bam = bam } # , fastq = BamToFastq.reads_fq }
     if (RescueHardclips.num_hardclipped_records > 0) {
         call GetHardClippedRecords { input: bam = bam }
         call Utils.StopWorkflow as FailedRescueMission { input: reason = "Failed to rescue all hardclipped reads."}
@@ -255,13 +255,13 @@ task RescueHardclips {
     }
     parameter_meta {
         bam: "Input BAM whose hard-clipped records should be converted to soft-clipped records."
-        fastq: "FASTQ containing the full-length read sequence and qualities; assumed to be generated via `samtools fastq {bam}`."
+        # fastq: "FASTQ containing the full-length read sequence and qualities; assumed to be generated via `samtools fastq {bam}`."
         output_bam_name: "[default-valued] Output BAM filename."
     }
 
     input {
         File bam
-        File fastq
+        # File fastq
 
         String output_bam_name = basename(bam, ".bam") + ".HrestoredasS.bam"
 
@@ -276,9 +276,16 @@ task RescueHardclips {
     command <<<
     set -euxo pipefail
 
+        time \
+        samtools fastq \
+            -@8 \
+            -t \
+            -0 reads.fq.gz \
+            ~{bam}
+
         bam_restorer \
             ~{bam} \
-            ~{fastq} \
+            reads.fq.gz \
             ~{output_bam_name}
 
         samtools index -@3 ~{output_bam_name} &
@@ -293,7 +300,8 @@ task RescueHardclips {
     >>>
 
     #########################
-    Int disk_size = 10 + 2*ceil(size([bam, fastq], "GiB"))
+    # Int disk_size = 10 + 2*ceil(size([bam, fastq], "GiB"))
+    Int disk_size = 10 + 4*ceil(size(bam, "GiB"))
 
     RuntimeAttr default_attr = object {
         cpu_cores:          16,
