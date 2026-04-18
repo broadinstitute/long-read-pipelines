@@ -314,7 +314,7 @@ task RescueHardclips {
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
-        predefinedMachineType: "n2d-highmem-48"
+        predefinedMachineType: "n1-highmem-64"
         disks:                 "local-disk 750 LOCAL"
         # cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         # memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
