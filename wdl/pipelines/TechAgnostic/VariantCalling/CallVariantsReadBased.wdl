@@ -97,8 +97,8 @@ workflow CallVariants {
     call GU.CollapseArrayOfStrings as get_zones {input: input_array = gcp_zones, joiner = " "}
     String wdl_parsable_zones = get_zones.collapsed
 
-    # call BU.BamToFastq   { input: bam = bam, prefix = basename(bam, ".bam"), disk_type = "LOCAL" }
-    call RescueHardclips { input: bam = bam } # , fastq = BamToFastq.reads_fq }
+    call SelectiveFastQ  { input: bam = bam, }
+    call RescueHardclips { input: bam = bam , fastq = SelectiveFastQ.FQ }
     if (RescueHardclips.num_hardclipped_records > 0) {
         call GetHardClippedRecords { input: bam = bam }
         call Utils.StopWorkflow as FailedRescueMission { input: reason = "Failed to rescue all hardclipped reads."}
@@ -261,7 +261,7 @@ task RescueHardclips {
 
     input {
         File bam
-        # File fastq
+        File fastq
 
         String output_bam_name = basename(bam, ".bam") + ".HrestoredasS.bam"
 
@@ -276,17 +276,13 @@ task RescueHardclips {
     command <<<
     set -euxo pipefail
 
-        time \
-        samtools fastq \
-            -@8 \
-            -t \
-            -0 reads.fq.gz \
-            ~{bam}
-
         bam_restorer \
             ~{bam} \
-            reads.fq.gz \
-            ~{output_bam_name}
+            ~{fastq} \
+        | samtools view \
+            -h -b -@8 \
+        -o ~{output_bam_name} \
+            -
 
         samtools index -@3 ~{output_bam_name} &
 
@@ -304,21 +300,21 @@ task RescueHardclips {
     Int disk_size = 10 + 4*ceil(size(bam, "GiB"))
 
     RuntimeAttr default_attr = object {
-        cpu_cores:          16,
-        mem_gb:             96,
+        cpu_cores:          12,
+        mem_gb:             64,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-rescuehardclips:0.1.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-rescuehardclips:0.1.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
         predefinedMachineType: "n1-highmem-64"
-        disks:                 "local-disk 750 LOCAL"
-        # cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
-        # memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
         # disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        disks:                 "local-disk 750 LOCAL"
         bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
@@ -339,7 +335,7 @@ task GetHardClippedRecords {
 
         samtools view ~{bam} \
         | cut -f 1,6 \
-        | grep -EP "(\tH|H$)" \
+        | grep -P "(\tH|H$)" \
         > hardclipped_records.txt
     >>>
 
@@ -359,6 +355,61 @@ task GetHardClippedRecords {
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
         disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task SelectiveFastQ {
+    input {
+        File bam
+        RuntimeAttr? runtime_attr_override
+    }
+    output {
+        File FQ = "reads.fq.gz"
+    }
+    command <<<
+    set -euxo pipefail
+
+        # first pass: gather the sequence names of hard-clipped records
+        samtools view ~{bam} \
+        | cut -f 1,6 \
+        | grep -P "(\tH|H$)" \
+        | cut -f 1 \
+        | sort \
+        | uniq \
+        > hardclipped_sequence_names.txt
+
+        wc -l hardclipped_sequence_names.txt
+
+        # second pass: extract FASTQ records of those hard-clipped reads
+        samtools view \
+            -h \
+            -N hardclipped_sequence_names.txt \
+            ~{bam} \
+        | samtools fastq \
+            -@8 \
+            -t \
+        -0 reads.fq.gz \
+            -
+    >>>
+    #########################
+    Int disk_size = 10 + 2 * ceil(size(bam, "GiB"))
+
+    RuntimeAttr default_attr = object {
+        cpu_cores:          12,
+        mem_gb:             36,
+        disk_gb:            disk_size,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.23"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
         preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
         maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
