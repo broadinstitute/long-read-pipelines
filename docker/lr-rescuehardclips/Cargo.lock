@@ -46,6 +46,7 @@ dependencies = [
  "bio",
  "flate2",
  "noodles",
+ "noodles-bgzf",
  "rustc-hash",
 ]
 

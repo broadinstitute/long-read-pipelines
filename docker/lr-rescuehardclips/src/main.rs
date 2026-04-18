@@ -1,7 +1,7 @@
 use std::env;
 use std::fs;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Read};
+use std::io::{self, BufRead, BufReader, Read};
 use std::sync::{
     Arc,
     atomic::{AtomicU64, Ordering},
@@ -10,12 +10,14 @@ use std::time::{Duration, Instant};
 
 use bio::alphabets::dna;
 use flate2::{Compression, read::MultiGzDecoder, write::GzEncoder};
+use noodles_bgzf as bgzf;
+use noodles_bgzf::writer::CompressionLevel;
 use rustc_hash::FxHashMap;
 use noodles::bam;
 use noodles::fastq;
 use noodles::sam::{
     alignment::{
-        io::Write as _,
+        io::Write as AlignmentWrite,
         record::{Cigar as _, QualityScores as _},
         record::cigar::{op::Kind, Op},
         record_buf::{Cigar, QualityScores, Sequence},
@@ -25,6 +27,27 @@ use noodles::sam::{
 
 type FastqCache = FxHashMap<Vec<u8>, (Vec<u8>, Vec<u8>)>;
 const REPORT_EVERY: Duration = Duration::from_secs(60);
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum OutputFormat {
+    BamUncompressed,
+    BamCompressed,
+    Sam,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+enum OutputDestination {
+    Stdout,
+    Path(String),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct Config {
+    bam_path: String,
+    fastq_path: String,
+    output_format: OutputFormat,
+    output_destination: OutputDestination,
+}
 
 #[derive(Clone, Debug, Default)]
 struct ByteCounter(Arc<AtomicU64>);
@@ -257,6 +280,105 @@ fn open_fastq_reader(
     ))
 }
 
+fn usage(program: &str) -> String {
+    format!(
+        "Usage:\n  {program} [--sam | -b] [-o OUT] <in.bam> <in.fastq>\n  {program} <in.bam> <in.fastq> <out.bam>\n\nDefault output is uncompressed BAM to stdout.\nUse -b/--compressed-bam for compressed BAM or --sam for SAM text.\nThe legacy 3-positional form preserves compressed BAM file output."
+    )
+}
+
+fn parse_args<I>(args: I) -> anyhow::Result<Config>
+where
+    I: IntoIterator<Item = String>,
+{
+    let mut args = args.into_iter();
+    let program = args
+        .next()
+        .unwrap_or_else(|| "bam_restorer".to_string());
+    let mut output_format = None;
+    let mut output_destination = None;
+    let mut positional = Vec::new();
+
+    while let Some(arg) = args.next() {
+        match arg.as_str() {
+            "-h" | "--help" => {
+                println!("{}", usage(&program));
+                std::process::exit(0);
+            }
+            "-b" | "--compressed-bam" => {
+                anyhow::ensure!(
+                    output_format != Some(OutputFormat::Sam),
+                    "cannot use both --sam and -b/--compressed-bam"
+                );
+                output_format = Some(OutputFormat::BamCompressed);
+            }
+            "--sam" => {
+                anyhow::ensure!(
+                    output_format != Some(OutputFormat::BamCompressed),
+                    "cannot use both --sam and -b/--compressed-bam"
+                );
+                output_format = Some(OutputFormat::Sam);
+            }
+            "-o" | "--output" => {
+                let out = args
+                    .next()
+                    .ok_or_else(|| anyhow::anyhow!("missing value for {arg}\n\n{}", usage(&program)))?;
+                output_destination = Some(OutputDestination::Path(out));
+            }
+            _ if arg.starts_with('-') => {
+                anyhow::bail!("unrecognized option: {arg}\n\n{}", usage(&program));
+            }
+            _ => positional.push(arg),
+        }
+    }
+
+    if positional.len() == 3 && output_destination.is_none() {
+        return Ok(Config {
+            bam_path: positional[0].clone(),
+            fastq_path: positional[1].clone(),
+            output_format: output_format.unwrap_or(OutputFormat::BamCompressed),
+            output_destination: OutputDestination::Path(positional[2].clone()),
+        });
+    }
+
+    anyhow::ensure!(
+        positional.len() == 2,
+        "{}",
+        usage(&program)
+    );
+
+    Ok(Config {
+        bam_path: positional[0].clone(),
+        fastq_path: positional[1].clone(),
+        output_format: output_format.unwrap_or(OutputFormat::BamUncompressed),
+        output_destination: output_destination.unwrap_or(OutputDestination::Stdout),
+    })
+}
+
+fn make_output_sink(destination: &OutputDestination) -> anyhow::Result<Box<dyn io::Write>> {
+    match destination {
+        OutputDestination::Stdout => Ok(Box::new(io::BufWriter::new(io::stdout()))),
+        OutputDestination::Path(path) => Ok(Box::new(io::BufWriter::new(File::create(path)?))),
+    }
+}
+
+fn make_output_writer(config: &Config) -> anyhow::Result<Box<dyn AlignmentWrite>> {
+    let sink = make_output_sink(&config.output_destination)?;
+
+    match config.output_format {
+        OutputFormat::Sam => Ok(Box::new(noodles::sam::io::Writer::new(sink))),
+        OutputFormat::BamCompressed => {
+            let bgzf_writer = bgzf::writer::Builder::default().build_from_writer(sink);
+            Ok(Box::new(bam::io::Writer::from(bgzf_writer)))
+        }
+        OutputFormat::BamUncompressed => {
+            let bgzf_writer = bgzf::writer::Builder::default()
+                .set_compression_level(CompressionLevel::NONE)
+                .build_from_writer(sink);
+            Ok(Box::new(bam::io::Writer::from(bgzf_writer)))
+        }
+    }
+}
+
 fn read_consuming_cigar_len(cigar: &Cigar) -> anyhow::Result<usize> {
     cigar.iter().try_fold(0usize, |len, op_res| {
         let op = op_res?;
@@ -427,11 +549,12 @@ fn restore_record(record: &mut RecordBuf, cache: &FastqCache) -> anyhow::Result<
     Ok(true)
 }
 
-fn run(bam_path: &str, fastq_path: &str, out_path: &str) -> anyhow::Result<usize> {
+fn run(config: &Config) -> anyhow::Result<usize> {
     // --- PASS 1: Load FASTQ into RAM ---
     // With 96GB RAM, we cache everything using FxHashMap for O(1) lookups.
     eprintln!("[*] Loading FASTQ into RAM cache...");
-    let (mut fastq_reader, fastq_counter, fastq_total_bytes) = open_fastq_reader(fastq_path)?;
+    let (mut fastq_reader, fastq_counter, fastq_total_bytes) =
+        open_fastq_reader(&config.fastq_path)?;
     let mut cache = FxHashMap::default();
     let mut read_count = 0u64;
     let mut fastq_meter = ProgressMeter::new("FASTQ cache", fastq_total_bytes);
@@ -450,14 +573,14 @@ fn run(bam_path: &str, fastq_path: &str, out_path: &str) -> anyhow::Result<usize
 
     // --- PASS 2: Process BAM and Patch Hard Clips ---
     eprintln!("[*] Opening BAM for patching...");
-    let bam_total_bytes = fs::metadata(bam_path).ok().map(|m| m.len());
-    let bam_file = File::open(bam_path)?;
+    let bam_total_bytes = fs::metadata(&config.bam_path).ok().map(|m| m.len());
+    let bam_file = File::open(&config.bam_path)?;
     let (counting_bam_reader, bam_counter) = CountingReader::new(bam_file);
     let mut reader = bam::io::reader::Builder::default().build_from_reader(counting_bam_reader);
     let header = reader.read_header()?;
-    
-    let mut writer = bam::io::writer::Builder::default().build_from_path(out_path)?;
-    writer.write_header(&header)?;
+
+    let mut writer = make_output_writer(config)?;
+    writer.write_alignment_header(&header)?;
 
     let mut patched_count = 0u64;
     let mut records_processed = 0u64;
@@ -473,20 +596,15 @@ fn run(bam_path: &str, fastq_path: &str, out_path: &str) -> anyhow::Result<usize
         bam_meter.maybe_report_bam(Some(bam_counter.bytes_read()), records_processed, patched_count);
     }
 
-    writer.try_finish()?;
+    writer.finish(&header)?;
     bam_meter.finish_bam(Some(bam_counter.bytes_read()), records_processed, patched_count);
 
     Ok(patched_count as usize)
 }
 
 fn main() -> anyhow::Result<()> {
-    let args: Vec<String> = env::args().collect();
-    if args.len() < 4 {
-        eprintln!("Usage: bam_restorer <in.bam> <in.fastq> <out.bam>");
-        std::process::exit(1);
-    }
-
-    let patched_count = run(&args[1], &args[2], &args[3])?;
+    let config = parse_args(env::args())?;
+    let patched_count = run(&config)?;
     eprintln!("[*] Success! Patched {} alignments.", patched_count);
     Ok(())
 }
@@ -552,6 +670,15 @@ mod tests {
         ));
         fs::create_dir_all(&dir).unwrap();
         dir
+    }
+
+    fn output_file_config(input_bam_path: &Path, fastq_path: &Path, output_path: &Path) -> Config {
+        Config {
+            bam_path: input_bam_path.to_str().unwrap().to_string(),
+            fastq_path: fastq_path.to_str().unwrap().to_string(),
+            output_format: OutputFormat::BamCompressed,
+            output_destination: OutputDestination::Path(output_path.to_str().unwrap().to_string()),
+        }
     }
 
     fn write_test_fastq(path: &Path, records: &[(&str, &str, &str)]) {
@@ -714,6 +841,70 @@ mod tests {
         assert_eq!(record_type(&make_record(Some("r"), Flags::empty(), cigar(&[(Kind::Match, 4)]), b"ACGT", b"IIII")), "primary");
         assert_eq!(record_type(&make_record(Some("r"), Flags::SECONDARY, cigar(&[(Kind::Match, 4)]), b"ACGT", b"IIII")), "secondary");
         assert_eq!(record_type(&make_record(Some("r"), Flags::SUPPLEMENTARY, cigar(&[(Kind::Match, 4)]), b"ACGT", b"IIII")), "supplementary");
+    }
+
+    #[test]
+    fn parse_args_defaults_to_stdout_uncompressed_bam() {
+        let config = parse_args([
+            "bam_restorer".to_string(),
+            "in.bam".to_string(),
+            "in.fastq".to_string(),
+        ])
+        .unwrap();
+
+        assert_eq!(
+            config,
+            Config {
+                bam_path: "in.bam".to_string(),
+                fastq_path: "in.fastq".to_string(),
+                output_format: OutputFormat::BamUncompressed,
+                output_destination: OutputDestination::Stdout,
+            }
+        );
+    }
+
+    #[test]
+    fn parse_args_preserves_legacy_three_positional_form() {
+        let config = parse_args([
+            "bam_restorer".to_string(),
+            "in.bam".to_string(),
+            "in.fastq".to_string(),
+            "out.bam".to_string(),
+        ])
+        .unwrap();
+
+        assert_eq!(
+            config,
+            Config {
+                bam_path: "in.bam".to_string(),
+                fastq_path: "in.fastq".to_string(),
+                output_format: OutputFormat::BamCompressed,
+                output_destination: OutputDestination::Path("out.bam".to_string()),
+            }
+        );
+    }
+
+    #[test]
+    fn parse_args_supports_explicit_sam_output_file() {
+        let config = parse_args([
+            "bam_restorer".to_string(),
+            "--sam".to_string(),
+            "-o".to_string(),
+            "out.sam".to_string(),
+            "in.bam".to_string(),
+            "in.fastq".to_string(),
+        ])
+        .unwrap();
+
+        assert_eq!(
+            config,
+            Config {
+                bam_path: "in.bam".to_string(),
+                fastq_path: "in.fastq".to_string(),
+                output_format: OutputFormat::Sam,
+                output_destination: OutputDestination::Path("out.sam".to_string()),
+            }
+        );
     }
 
     #[test]
@@ -896,11 +1087,11 @@ mod tests {
 
         write_test_bam(&input_bam_path, &[primary, secondary, supplementary]);
 
-        let patched_count = run(
-            input_bam_path.to_str().unwrap(),
-            fastq_path.to_str().unwrap(),
-            output_bam_path.to_str().unwrap(),
-        )
+        let patched_count = run(&output_file_config(
+            &input_bam_path,
+            &fastq_path,
+            &output_bam_path,
+        ))
         .unwrap();
 
         assert_eq!(patched_count, 2);
@@ -1004,11 +1195,11 @@ mod tests {
 
         write_test_bam(&input_bam_path, &[primary, secondary, supplementary]);
 
-        let patched_count = run(
-            input_bam_path.to_str().unwrap(),
-            fastq_path.to_str().unwrap(),
-            output_bam_path.to_str().unwrap(),
-        )
+        let patched_count = run(&output_file_config(
+            &input_bam_path,
+            &fastq_path,
+            &output_bam_path,
+        ))
         .unwrap();
 
         assert_eq!(patched_count, 2);
@@ -1048,11 +1239,11 @@ mod tests {
 
         write_fastq_from_primary_records(input_bam_path, &fastq_path);
 
-        let patched_count = run(
-            input_bam_path.to_str().unwrap(),
-            fastq_path.to_str().unwrap(),
-            output_bam_path.to_str().unwrap(),
-        )
+        let patched_count = run(&output_file_config(
+            input_bam_path,
+            &fastq_path,
+            &output_bam_path,
+        ))
         .unwrap();
 
         assert_eq!(patched_count, 20);

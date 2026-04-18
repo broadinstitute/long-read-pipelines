@@ -10,3 +10,4 @@ rustc-hash = "1.1"
 anyhow = "1.0"
 bio = "3.0"
 flate2 = { version = "1.1", default-features = false, features = ["rust_backend"] }
+noodles-bgzf = "0.33"

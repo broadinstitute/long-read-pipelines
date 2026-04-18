@@ -1,4 +1,4 @@
-VERSION = 0.1.0 
+VERSION = 0.1.1 
 TAG1 = us.gcr.io/broad-dsp-lrma/lr-rescuehardclips:$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/lr-rescuehardclips:latest
 
