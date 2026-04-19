@@ -373,23 +373,37 @@ task SelectiveFastQ {
     set -euxo pipefail
 
         # first pass: gather the sequence names of hard-clipped records
-        samtools view ~{bam} \
-        | cut -f 1,6 \
-        | grep -P "(\tH|H$)" \
+        # samtools view ~{bam} \
+        # | cut -f 1,6 \
+        # | grep -P "(\tH|H$)" \
+        # | cut -f 1 \
+        # | sort \
+        # | uniq \
+        # > hardclipped_sequence_names.txt
+        # alt approach: use line numbers to extract hard-clipped records' sequence names.
+        samtools view -@1 ~{bam} \
+        | cut -f 6 \
+        | LC_ALL=C grep -nF "H" \
+        | awk -F ':' '{print $1}' \
+        > hardclipped_line_numbers.txt &
+        samtools view -@1 ~{bam} \
         | cut -f 1 \
-        | sort \
-        | uniq \
+        > all_sequence_names.txt &
+        wait
+        LC_ALL=C awk 'NR==FNR {lines[$1]; next} (FNR in lines) && !seen[$0]++' \
+            hardclipped_line_numbers.txt \
+            all_sequence_names.txt \
         > hardclipped_sequence_names.txt
 
         wc -l hardclipped_sequence_names.txt
 
         # second pass: extract FASTQ records of those hard-clipped reads
-        samtools view \
+        samtools view -@1 \
             -h \
             -N hardclipped_sequence_names.txt \
             ~{bam} \
         | samtools fastq \
-            -@8 \
+            -@1 \
             -t \
         -0 reads.fq.gz \
             -
@@ -398,8 +412,8 @@ task SelectiveFastQ {
     Int disk_size = 10 + 2 * ceil(size(bam, "GiB"))
 
     RuntimeAttr default_attr = object {
-        cpu_cores:          12,
-        mem_gb:             36,
+        cpu_cores:          6,
+        mem_gb:             24,
         disk_gb:            disk_size,
         preemptible_tries:  1,
         max_retries:        0,
