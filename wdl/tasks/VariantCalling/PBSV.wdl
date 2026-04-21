@@ -202,7 +202,7 @@ task Call {
         set -euxo pipefail
 
         pbsv call \
-            -j 0 \
+            -j 12 \
             --log-level ~{true='INFO' false='WARN' DEBUG} \
             --log-file pbsv.call.log \
             ~{true='--hifi' false='' is_hifi} \
@@ -227,7 +227,7 @@ task Call {
 
     RuntimeAttr default_attr = object {
         cpu_cores:          16,
-        mem_gb:             64,
+        mem_gb:             96,
         disk_gb:            disk_size,
         preemptible_tries:  1,
         max_retries:        0,
