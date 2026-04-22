@@ -157,8 +157,8 @@ task Discover {
     Int memory = if ("chr2"==chr || "chr3"==chr || "chr4"==chr || "chr17"==chr || "chr18"==chr || "chr21"==chr || "chr22"==chr)  then 6 * num_cores else 2 * num_cores
 
     RuntimeAttr default_attr = object {
-        cpu_cores:          if ("chr3"==chr) then  8 else num_cores,
-        mem_gb:             if ("chr3"==chr) then 48 else memory,
+        cpu_cores:          if ("chr3"==chr) then  22 else num_cores,
+        mem_gb:             if ("chr3"==chr) then 132 else memory,
         disk_gb:            runtime_disk_size,
         preemptible_tries:  2,
         max_retries:        0,
