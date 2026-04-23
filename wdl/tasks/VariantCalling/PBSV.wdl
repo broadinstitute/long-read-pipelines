@@ -202,7 +202,7 @@ task Call {
         set -euxo pipefail
 
         pbsv call \
-            -j 12 \
+            -j 16 \
             --log-level ~{true='INFO' false='WARN' DEBUG} \
             --log-file pbsv.call.log \
             ~{true='--hifi' false='' is_hifi} \
@@ -226,8 +226,8 @@ task Call {
     Int disk_size = 2*ceil(size(svsigs, "GiB") + size([ref_fasta, ref_fasta_fai], "GiB"))
 
     RuntimeAttr default_attr = object {
-        cpu_cores:          16,
-        mem_gb:             96,
+        cpu_cores:           44,
+        mem_gb:             256,
         disk_gb:            disk_size,
         preemptible_tries:  1,
         max_retries:        0,
