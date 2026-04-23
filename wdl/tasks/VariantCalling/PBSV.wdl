@@ -157,10 +157,10 @@ task Discover {
     Int memory = if ("chr2"==chr || "chr3"==chr || "chr4"==chr || "chr17"==chr || "chr18"==chr || "chr21"==chr || "chr22"==chr)  then 6 * num_cores else 2 * num_cores
 
     RuntimeAttr default_attr = object {
-        cpu_cores:          if ("chr3"==chr) then  22 else num_cores,
-        mem_gb:             if ("chr3"==chr) then 132 else memory,
-        disk_gb:            runtime_disk_size,
-        preemptible_tries:  2,
+        cpu_cores:          if ("chr3"==chr) then  44 else num_cores,
+        mem_gb:             if ("chr3"==chr) then 256 else memory,
+        disk_gb:            if ("chr3"==chr) then 128 else runtime_disk_size,
+        preemptible_tries:  1,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-smrttools:12.0.0.176214"
     }
