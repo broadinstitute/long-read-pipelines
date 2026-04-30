@@ -112,6 +112,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../SRJointGenotyping/">SRJointGenotyping</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SRJointGenotypingPopulationScale/">SRJointGenotypingPopulationScale</a>
+                  </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="./">SRUtils</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#bamtofq">BamToFq</a>
@@ -224,7 +226,7 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#baserecalibrator">BaseRecalibrator</a>
+    <li class="toctree-l2"><a class="reference internal" href="#markduplicatesandsort">MarkDuplicatesAndSort</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_7">Inputs</a>
         <ul>
@@ -238,7 +240,7 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#applybqsr">ApplyBQSR</a>
+    <li class="toctree-l2"><a class="reference internal" href="#baserecalibrator">BaseRecalibrator</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_8">Inputs</a>
         <ul>
@@ -246,15 +248,13 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_8">Optional</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_6">Defaults</a>
-    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_8">Outputs</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#revertsam">RevertSam</a>
+    <li class="toctree-l2"><a class="reference internal" href="#applybqsr">ApplyBQSR</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_9">Inputs</a>
         <ul>
@@ -262,13 +262,15 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_9">Optional</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_6">Defaults</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_9">Outputs</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#computebamstats">ComputeBamStats</a>
+    <li class="toctree-l2"><a class="reference internal" href="#runbaserecalibratorandapplybqsr">RunBaseRecalibratorAndApplyBQSR</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_10">Inputs</a>
         <ul>
@@ -276,13 +278,15 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_10">Optional</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_7">Defaults</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_10">Outputs</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#mergevcfs">MergeVCFs</a>
+    <li class="toctree-l2"><a class="reference internal" href="#revertsam">RevertSam</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_11">Inputs</a>
         <ul>
@@ -290,15 +294,13 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_11">Optional</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#defaults_7">Defaults</a>
-    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_11">Outputs</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#indexfeaturefile">IndexFeatureFile</a>
+    <li class="toctree-l2"><a class="reference internal" href="#computebamstats">ComputeBamStats</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_12">Inputs</a>
         <ul>
@@ -312,7 +314,7 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#revertbasequalities">RevertBaseQualities</a>
+    <li class="toctree-l2"><a class="reference internal" href="#mergevcfs">MergeVCFs</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_13">Inputs</a>
         <ul>
@@ -320,9 +322,39 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_13">Optional</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_8">Defaults</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_13">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#indexfeaturefile">IndexFeatureFile</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_14">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_14">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_14">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_14">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#revertbasequalities">RevertBaseQualities</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_15">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_15">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_15">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_15">Outputs</a>
     </li>
         </ul>
     </li>
@@ -411,6 +443,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/HaplotypeCaller/">HaplotypeCaller</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/HaplotypeCaller_Simplified/">HaplotypeCaller_Simplified</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/Hifiasm/">Hifiasm</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/LRCNVs/">LRCNVs</a>
@@ -475,9 +509,13 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRFlowcell/">SRFlowcell</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRFlowcell_Simplified/">SRFlowcell_Simplified</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRIndexBam/">SRIndexBam</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRJointCallGVCFsWithGenomicsDB/">SRJointCallGVCFsWithGenomicsDB</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRJointCallGVCFsWithGenomicsDBPopulationScale/">SRJointCallGVCFsWithGenomicsDBPopulationScale</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS/">SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS</a>
                   </li>
@@ -488,6 +526,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRWholeGenome_Pf_Niare_VETS/">SRWholeGenome_Pf_Niare_VETS</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRWholeGenome_Pf_Niare_VQSR/">SRWholeGenome_Pf_Niare_VQSR</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRWholeGenome_Simplified/">SRWholeGenome_Simplified</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/SampleLevelAlignedMetrics/">SampleLevelAlignedMetrics</a>
                   </li>
@@ -687,9 +727,28 @@
 <li><code>bam</code> (File)</li>
 <li><code>metrics</code> (File)</li>
 </ul>
-<h2 id="baserecalibrator">BaseRecalibrator</h2>
+<h2 id="markduplicatesandsort">MarkDuplicatesAndSort</h2>
 <h3 id="inputs_7">Inputs</h3>
 <h4 id="required_7">Required</h4>
+<ul>
+<li><code>input_bam</code> (File, <strong>required</strong>)</li>
+<li><code>prefix</code> (String, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_7">Optional</h4>
+<ul>
+<li><code>read_name_regex</code> (String?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>sorting_collection_size_ratio</code> (Float?)</li>
+</ul>
+<h3 id="outputs_7">Outputs</h3>
+<ul>
+<li><code>bam</code> (File)</li>
+<li><code>bai</code> (File)</li>
+<li><code>metrics</code> (File)</li>
+</ul>
+<h2 id="baserecalibrator">BaseRecalibrator</h2>
+<h3 id="inputs_8">Inputs</h3>
+<h4 id="required_8">Required</h4>
 <ul>
 <li><code>input_bam</code> (File, <strong>required</strong>); <strong>localization_optional</strong>: true</li>
 <li><code>input_bam_index</code> (File, <strong>required</strong>)</li>
@@ -700,17 +759,17 @@
 <li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
 <li><code>ref_fasta_index</code> (File, <strong>required</strong>)</li>
 </ul>
-<h4 id="optional_7">Optional</h4>
+<h4 id="optional_8">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h3 id="outputs_7">Outputs</h3>
+<h3 id="outputs_8">Outputs</h3>
 <ul>
 <li><code>recalibration_report</code> (File)</li>
 </ul>
 <h2 id="applybqsr">ApplyBQSR</h2>
-<h3 id="inputs_8">Inputs</h3>
-<h4 id="required_8">Required</h4>
+<h3 id="inputs_9">Inputs</h3>
+<h4 id="required_9">Required</h4>
 <ul>
 <li><code>input_bam</code> (File, <strong>required</strong>); <strong>localization_optional</strong>: true</li>
 <li><code>input_bam_index</code> (File, <strong>required</strong>)</li>
@@ -720,7 +779,7 @@
 <li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
 <li><code>ref_fasta_index</code> (File, <strong>required</strong>)</li>
 </ul>
-<h4 id="optional_8">Optional</h4>
+<h4 id="optional_9">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
@@ -729,38 +788,66 @@
 <li><code>bin_base_qualities</code> (Boolean, default=true)</li>
 <li><code>emit_original_quals</code> (Boolean, default=true)</li>
 </ul>
-<h3 id="outputs_8">Outputs</h3>
+<h3 id="outputs_9">Outputs</h3>
 <ul>
 <li><code>recalibrated_bam</code> (File)</li>
 <li><code>recalibrated_bai</code> (File)</li>
 </ul>
+<h2 id="runbaserecalibratorandapplybqsr">RunBaseRecalibratorAndApplyBQSR</h2>
+<h3 id="inputs_10">Inputs</h3>
+<h4 id="required_10">Required</h4>
+<ul>
+<li><code>input_bam</code> (File, <strong>required</strong>); <strong>localization_optional</strong>: true</li>
+<li><code>input_bam_index</code> (File, <strong>required</strong>)</li>
+<li><code>known_sites_index</code> (File, <strong>required</strong>)</li>
+<li><code>known_sites_vcf</code> (File, <strong>required</strong>); <strong>localization_optional</strong>: true</li>
+<li><code>prefix</code> (String, <strong>required</strong>)</li>
+<li><code>ref_dict</code> (File, <strong>required</strong>)</li>
+<li><code>ref_fasta</code> (File, <strong>required</strong>)</li>
+<li><code>ref_fasta_index</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_10">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h4 id="defaults_7">Defaults</h4>
+<ul>
+<li><code>bin_base_qualities</code> (Boolean, default=true)</li>
+<li><code>emit_original_quals</code> (Boolean, default=true)</li>
+</ul>
+<h3 id="outputs_10">Outputs</h3>
+<ul>
+<li><code>recalibrated_bam</code> (File)</li>
+<li><code>recalibrated_bai</code> (File)</li>
+<li><code>recalibration_report</code> (File)</li>
+</ul>
 <h2 id="revertsam">RevertSam</h2>
-<h3 id="inputs_9">Inputs</h3>
-<h4 id="required_9">Required</h4>
+<h3 id="inputs_11">Inputs</h3>
+<h4 id="required_11">Required</h4>
 <ul>
 <li><code>input_bam</code> (File, <strong>required</strong>)</li>
 <li><code>prefix</code> (String, <strong>required</strong>)</li>
 </ul>
-<h4 id="optional_9">Optional</h4>
+<h4 id="optional_11">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h3 id="outputs_9">Outputs</h3>
+<h3 id="outputs_11">Outputs</h3>
 <ul>
 <li><code>bam</code> (File)</li>
 </ul>
 <h2 id="computebamstats">ComputeBamStats</h2>
-<h3 id="inputs_10">Inputs</h3>
-<h4 id="required_10">Required</h4>
+<h3 id="inputs_12">Inputs</h3>
+<h4 id="required_12">Required</h4>
 <ul>
 <li><code>bam_file</code> (File, <strong>required</strong>)</li>
 </ul>
-<h4 id="optional_10">Optional</h4>
+<h4 id="optional_12">Optional</h4>
 <ul>
 <li><code>qual_threshold</code> (Int?)</li>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h3 id="outputs_10">Outputs</h3>
+<h3 id="outputs_12">Outputs</h3>
 <ul>
 <li><code>results</code> (Map[String,Float])</li>
 <li><code>results_file</code> (File)</li>
@@ -770,22 +857,22 @@
 <dt>description</dt>
 <dd>Combine multiple VCFs or GVCFs from scattered HaplotypeCaller runs</dd>
 </dl>
-<h3 id="inputs_11">Inputs</h3>
-<h4 id="required_11">Required</h4>
+<h3 id="inputs_13">Inputs</h3>
+<h4 id="required_13">Required</h4>
 <ul>
 <li><code>input_vcfs</code> (Array[File], <strong>required</strong>)</li>
 <li><code>input_vcfs_indexes</code> (Array[File], <strong>required</strong>)</li>
 <li><code>prefix</code> (String, <strong>required</strong>)</li>
 </ul>
-<h4 id="optional_11">Optional</h4>
+<h4 id="optional_13">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h4 id="defaults_7">Defaults</h4>
+<h4 id="defaults_8">Defaults</h4>
 <ul>
 <li><code>is_gvcf</code> (Boolean, default=false)</li>
 </ul>
-<h3 id="outputs_11">Outputs</h3>
+<h3 id="outputs_13">Outputs</h3>
 <ul>
 <li><code>output_vcf</code> (File)</li>
 <li><code>output_vcf_index</code> (File)</li>
@@ -795,16 +882,16 @@
 <dt>description</dt>
 <dd>Create a Tribble index for a feature file using GATK.  Feature files are defined inside GATK and include VCF, BED, GTF, and other files.</dd>
 </dl>
-<h3 id="inputs_12">Inputs</h3>
-<h4 id="required_12">Required</h4>
+<h3 id="inputs_14">Inputs</h3>
+<h4 id="required_14">Required</h4>
 <ul>
 <li><code>feature_file</code> (File, <strong>required</strong>)</li>
 </ul>
-<h4 id="optional_12">Optional</h4>
+<h4 id="optional_14">Optional</h4>
 <ul>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h3 id="outputs_12">Outputs</h3>
+<h3 id="outputs_14">Outputs</h3>
 <ul>
 <li><code>index</code> (File)</li>
 </ul>
@@ -813,18 +900,18 @@
 <dt>description</dt>
 <dd>Replace base qualities in the bam file with those located in the <code>OQ</code> tag.  If  <code>ApplyBQSR</code> has not been run on the given bam file, no changes are made and the original file is returned.</dd>
 </dl>
-<h3 id="inputs_13">Inputs</h3>
-<h4 id="required_13">Required</h4>
+<h3 id="inputs_15">Inputs</h3>
+<h4 id="required_15">Required</h4>
 <ul>
 <li><code>bam</code> (File, <strong>required</strong>)</li>
 <li><code>prefix</code> (String, <strong>required</strong>)</li>
 </ul>
-<h4 id="optional_13">Optional</h4>
+<h4 id="optional_15">Optional</h4>
 <ul>
 <li><code>bai</code> (File?)</li>
 <li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
 </ul>
-<h3 id="outputs_13">Outputs</h3>
+<h3 id="outputs_15">Outputs</h3>
 <ul>
 <li><code>bam_out</code> (File)</li>
 <li><code>bai_out</code> (File)</li>
@@ -833,7 +920,7 @@
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../SRJointGenotyping/" class="btn btn-neutral float-left" title="SRJointGenotyping"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../SRJointGenotypingPopulationScale/" class="btn btn-neutral float-left" title="SRJointGenotypingPopulationScale"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../StringTie2/" class="btn btn-neutral float-right" title="StringTie2">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -862,7 +949,7 @@
         </span>
     
     
-      <span><a href="../SRJointGenotyping/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../SRJointGenotypingPopulationScale/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../StringTie2/" style="color: #fcfcfc">Next &raquo;</a></span>
