@@ -21,6 +21,7 @@ RUN apt-get update \
         ca-certificates \
         libgomp1 \
         zlib1g \
+        samtools \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /work
