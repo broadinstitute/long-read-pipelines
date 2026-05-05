@@ -97,10 +97,11 @@ workflow CallVariants {
     call GU.CollapseArrayOfStrings as get_zones {input: input_array = gcp_zones, joiner = " "}
     String wdl_parsable_zones = get_zones.collapsed
 
-    call SelectiveFastQ  { input: bam = bam, }
-    call RescueHardclips { input: bam = bam , fastq = SelectiveFastQ.FQ }
+    call DropDuplicateMXTag { input: bam = bam, bai = bai }
+    call SelectiveFastQ  { input: bam = DropDuplicateMXTag.restored_bam, }
+    call RescueHardclips { input: bam = DropDuplicateMXTag.restored_bam , fastq = SelectiveFastQ.FQ }
     if (RescueHardclips.num_hardclipped_records > 0) {
-        call GetHardClippedRecords { input: bam = bam }
+        call GetHardClippedRecords { input: bam = DropDuplicateMXTag.restored_bam }
         call Utils.StopWorkflow as FailedRescueMission { input: reason = "Failed to rescue all hardclipped reads."}
     }
 
@@ -246,6 +247,53 @@ workflow CallVariants {
         File? legacy_phased_tbi = SmallVarJob.legacy_phased_tbi
         File? legacy_phasing_stats_tsv = SmallVarJob.legacy_phasing_stats_tsv
         File? legacy_phasing_stats_gtf = SmallVarJob.legacy_phasing_stats_gtf
+    }
+}
+
+task DropDuplicateMXTag {
+    input {
+        File bam
+        File bai
+        RuntimeAttr? runtime_attr_override
+    }
+    output {
+        File restored_bam = "MXtagDropped.bam"
+        File restored_bai = "MXtagDropped.bam.bai"
+        File reads_with_mx_mismatches = "mx_mismatches.txt"
+    }
+    command <<<
+    set -euxo pipefail
+
+        time \
+        lr_drop_duptag \
+            --input ~{bam} \
+            --output-bam MXtagDropped.bam \
+            --mismatches mx_mismatches.txt
+
+        time \
+        samtools index -@1 MXtagDropped.bam
+    >>>
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             16,
+        disk_gb:            750,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-drop-duptag:0.1.1"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        # predefinedMachineType: "n1-highmem-64"
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        # disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " LOCAL"
+        disks:                 "local-disk 750 LOCAL"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
 
