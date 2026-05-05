@@ -1,0 +1,15 @@
+/target/
+
+# Local run outputs
+*.bam
+*.bai
+*.sam
+*.cram
+*.crai
+*.txt.tmp
+
+# OS/editor files
+.DS_Store
+*.swp
+*.swo
+*~
