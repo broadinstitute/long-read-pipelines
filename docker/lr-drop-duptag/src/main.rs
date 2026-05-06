@@ -1,17 +1,21 @@
 use std::{
+    fs,
     fs::File,
     io::{BufWriter, Write},
+    num::NonZeroUsize,
     path::{Path, PathBuf},
+    time::{Duration, Instant},
 };
 
 use anyhow::{Context, Result, bail};
 use clap::Parser;
 use rust_htslib::bam::{
-    self, Read,
+    self, CompressionLevel, Read,
     record::{Aux, AuxArray, Record},
 };
 
 const TARGET_TAG: &[u8] = b"mx";
+const DEFAULT_PROGRESS_SECONDS: u64 = 60;
 
 #[derive(Debug, Parser)]
 #[command(
@@ -28,6 +32,12 @@ struct Cli {
 
     #[arg(long)]
     mismatches: PathBuf,
+
+    #[arg(long, default_value_t = NonZeroUsize::new(8).unwrap())]
+    threads: NonZeroUsize,
+
+    #[arg(long, default_value_t = DEFAULT_PROGRESS_SECONDS)]
+    progress_seconds: u64,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -137,6 +147,76 @@ struct Summary {
     report_names_written: u64,
 }
 
+#[derive(Debug)]
+struct ProgressMeter {
+    start: Instant,
+    last_report: Instant,
+    report_every: Option<Duration>,
+    input_bytes: Option<u64>,
+}
+
+impl ProgressMeter {
+    fn new(input_bytes: Option<u64>, progress_seconds: u64) -> Self {
+        let now = Instant::now();
+        Self {
+            start: now,
+            last_report: now,
+            report_every: match progress_seconds {
+                0 => None,
+                seconds => Some(Duration::from_secs(seconds)),
+            },
+            input_bytes,
+        }
+    }
+
+    fn maybe_report(&mut self, summary: &Summary, virtual_offset: i64) {
+        let Some(report_every) = self.report_every else {
+            return;
+        };
+
+        if self.last_report.elapsed() < report_every {
+            return;
+        }
+
+        self.last_report = Instant::now();
+        self.report("progress", summary, Some(virtual_offset));
+    }
+
+    fn finish(&self, summary: &Summary, virtual_offset: i64) {
+        self.report("complete", summary, Some(virtual_offset));
+    }
+
+    fn report(&self, label: &str, summary: &Summary, virtual_offset: Option<i64>) {
+        eprintln!(
+            "[*] {label}: {}, {} repaired, {} reported, {}, {}, {} elapsed",
+            format_count(summary.records_processed),
+            format_count(summary.records_repaired),
+            format_count(summary.report_names_written),
+            self.format_percent_complete(virtual_offset),
+            format_rate(summary.records_processed, self.start.elapsed()),
+            format_duration(self.start.elapsed()),
+        );
+    }
+
+    fn format_percent_complete(&self, virtual_offset: Option<i64>) -> String {
+        let Some(input_bytes) = self.input_bytes.filter(|n| *n > 0) else {
+            return "progress unavailable".to_string();
+        };
+
+        let Some(virtual_offset) = virtual_offset else {
+            return "progress unavailable".to_string();
+        };
+
+        if virtual_offset < 0 {
+            return "progress unavailable".to_string();
+        }
+
+        let compressed_offset = (virtual_offset as u64) >> 16;
+        let percent = (compressed_offset as f64 * 100.0 / input_bytes as f64).min(100.0);
+        format!("{percent:.1}% input")
+    }
+}
+
 fn collect_target_values(record: &Record) -> Result<Vec<OwnedAux>> {
     let mut values = Vec::new();
 
@@ -151,11 +231,22 @@ fn collect_target_values(record: &Record) -> Result<Vec<OwnedAux>> {
 }
 
 fn repair_record(record: &mut Record) -> Result<RepairResult> {
-    let values = collect_target_values(record)?;
+    let mut mx_count = 0;
+    for result in record.aux_iter() {
+        let (tag, _) = result.context("failed to parse auxiliary BAM field")?;
+        if tag == TARGET_TAG {
+            mx_count += 1;
+            if mx_count > 1 {
+                break;
+            }
+        }
+    }
 
-    if values.len() <= 1 {
+    if mx_count <= 1 {
         return Ok(RepairResult::default());
     }
+
+    let values = collect_target_values(record)?;
 
     let first = values
         .first()
@@ -186,20 +277,33 @@ fn read_name(record: &Record) -> Result<String> {
     Ok(String::from_utf8_lossy(qname).into_owned())
 }
 
-fn run(input: &Path, output_bam: &Path, mismatches: &Path) -> Result<Summary> {
+fn run(
+    input: &Path,
+    output_bam: &Path,
+    mismatches: &Path,
+    threads: NonZeroUsize,
+    progress_seconds: u64,
+) -> Result<Summary> {
+    let input_bytes = fs::metadata(input).ok().map(|metadata| metadata.len());
     let mut reader = bam::Reader::from_path(input)
         .with_context(|| format!("failed to open input BAM {}", input.display()))?;
+    reader.set_threads(threads.get())?;
     let header = bam::Header::from_template(reader.header());
     let mut writer = bam::Writer::from_path(output_bam, &header, bam::Format::Bam)
         .with_context(|| format!("failed to create output BAM {}", output_bam.display()))?;
+    writer.set_compression_level(CompressionLevel::Fastest)?;
+    writer.set_threads(threads.get())?;
     let mismatch_file = File::create(mismatches)
         .with_context(|| format!("failed to create mismatch report {}", mismatches.display()))?;
     let mut mismatch_writer = BufWriter::new(mismatch_file);
 
     let mut summary = Summary::default();
+    let mut progress = ProgressMeter::new(input_bytes, progress_seconds);
 
-    for result in reader.records() {
-        let mut record = result.context("failed to read BAM record")?;
+    let mut record = Record::new();
+
+    while let Some(result) = reader.read(&mut record) {
+        result.context("failed to read BAM record")?;
         summary.records_processed += 1;
 
         let repair = repair_record(&mut record).with_context(|| {
@@ -221,9 +325,12 @@ fn run(input: &Path, output_bam: &Path, mismatches: &Path) -> Result<Summary> {
         writer
             .write(&record)
             .context("failed to write BAM record")?;
+
+        progress.maybe_report(&summary, reader.tell());
     }
 
     mismatch_writer.flush()?;
+    progress.finish(&summary, reader.tell());
 
     Ok(summary)
 }
@@ -240,7 +347,13 @@ fn read_name_lossy(record: &Record) -> String {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    let summary = run(&cli.input, &cli.output_bam, &cli.mismatches)?;
+    let summary = run(
+        &cli.input,
+        &cli.output_bam,
+        &cli.mismatches,
+        cli.threads,
+        cli.progress_seconds,
+    )?;
 
     eprintln!(
         "[*] complete: {} records processed, {} records repaired, {} report names written",
@@ -248,6 +361,39 @@ fn main() -> Result<()> {
     );
 
     Ok(())
+}
+
+fn format_count(n: u64) -> String {
+    match n {
+        0..=999 => n.to_string(),
+        1_000..=999_999 => format!("{:.1}k", n as f64 / 1_000.0),
+        1_000_000..=999_999_999 => format!("{:.1}M", n as f64 / 1_000_000.0),
+        _ => format!("{:.1}G", n as f64 / 1_000_000_000.0),
+    }
+}
+
+fn format_duration(duration: Duration) -> String {
+    let total_seconds = duration.as_secs();
+    let hours = total_seconds / 3600;
+    let minutes = (total_seconds % 3600) / 60;
+    let seconds = total_seconds % 60;
+
+    if hours > 0 {
+        format!("{hours}:{minutes:02}:{seconds:02}")
+    } else {
+        format!("{minutes:02}:{seconds:02}")
+    }
+}
+
+fn format_rate(records: u64, elapsed: Duration) -> String {
+    let seconds = elapsed.as_secs_f64();
+
+    if seconds <= 0.0 {
+        return "0 rec/s".to_string();
+    }
+
+    let rate = (records as f64 / seconds).round() as u64;
+    format!("{} rec/s", format_count(rate))
 }
 
 #[cfg(test)]
@@ -413,7 +559,7 @@ mod tests {
             ],
         )?;
 
-        let summary = run(&input, &output, &mismatches)?;
+        let summary = run(&input, &output, &mismatches, NonZeroUsize::MIN, 0)?;
 
         assert_eq!(
             summary,
@@ -507,5 +653,54 @@ mod tests {
         assert_eq!(read_name(&record)?.len(), 254);
 
         Ok(())
+    }
+
+    #[test]
+    fn cli_rejects_zero_threads() {
+        let err = Cli::try_parse_from([
+            "lr_drop_duptag",
+            "--input",
+            "in.bam",
+            "--output-bam",
+            "out.bam",
+            "--mismatches",
+            "mismatches.txt",
+            "--threads",
+            "0",
+        ])
+        .expect_err("zero threads must be rejected");
+
+        assert!(err.to_string().contains("invalid value"));
+    }
+
+    #[test]
+    fn progress_seconds_zero_disables_periodic_reports() {
+        let meter = ProgressMeter::new(Some(100), 0);
+        assert!(meter.report_every.is_none());
+    }
+
+    #[test]
+    fn progress_meter_formats_bgzf_virtual_offset_percent() {
+        let meter = ProgressMeter::new(Some(1_000), 60);
+        let virtual_offset = 250_i64 << 16;
+
+        assert_eq!(
+            meter.format_percent_complete(Some(virtual_offset)),
+            "25.0% input"
+        );
+    }
+
+    #[test]
+    fn progress_meter_handles_unknown_progress() {
+        let meter = ProgressMeter::new(None, 60);
+
+        assert_eq!(
+            meter.format_percent_complete(Some(250_i64 << 16)),
+            "progress unavailable"
+        );
+        assert_eq!(
+            meter.format_percent_complete(Some(-1)),
+            "progress unavailable"
+        );
     }
 }
