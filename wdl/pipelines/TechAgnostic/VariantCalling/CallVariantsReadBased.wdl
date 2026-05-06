@@ -268,7 +268,9 @@ task DropDuplicateMXTag {
         lr_drop_duptag \
             --input ~{bam} \
             --output-bam MXtagDropped.bam \
-            --mismatches mx_mismatches.txt
+            --mismatches mx_mismatches.txt \
+            --threads 8 \
+            --progress-seconds 300
 
         time \
         samtools index -@1 MXtagDropped.bam
