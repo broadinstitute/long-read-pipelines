@@ -23,6 +23,8 @@ workflow RemoveDuplicateFromMergedONTBamAndSplitByReadgroup {
         File  input_bam
         File? input_bai
 
+        String desired_sample_name
+
         Boolean fix_bam_header
         File scatter_scheme
 
@@ -71,6 +73,8 @@ workflow RemoveDuplicateFromMergedONTBamAndSplitByReadgroup {
     call Major.SplitBamByReadgroup as WORKHORSE {
         input:
             input_bam = ok_input_bam,
+
+            desired_sample_name = desired_sample_name,
 
             unmap_bam = false, # already done above
             convert_to_fq = false, # no need for ONT data, usually

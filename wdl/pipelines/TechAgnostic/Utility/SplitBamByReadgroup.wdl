@@ -20,6 +20,8 @@ workflow SplitBamByReadgroup {
         File  input_bam
         File? input_bai
 
+        String desired_sample_name
+
         Boolean unmap_bam
         Boolean convert_to_fq
 
@@ -47,21 +49,23 @@ workflow SplitBamByReadgroup {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/~{save_to_this_dir}/" + basename(input_bam, '.bam')
     ##############################################################################################################################
 
+    call AddArtificialReadGroupTag { input: bam = input_bam, desired_sample_name = desired_sample_name }
+
     ##############################################################################################################################
     # split, if there're > 1 RGs
-    call BU.GetReadGroupLines { input: bam = input_bam }
+    call BU.GetReadGroupLines { input: bam = AddArtificialReadGroupTag.bam_with_rg }
     if ( 1 < length(GetReadGroupLines.read_group_ids) ) {
-        String output_prefix = basename(input_bam, ".bam")
-        Int inflation_factor = if(ceil(size([input_bam], "GB"))> 150) then 4 else 3
+        String output_prefix = basename(AddArtificialReadGroupTag.bam_with_rg, ".bam")
+        Int inflation_factor = if(ceil(size([AddArtificialReadGroupTag.bam_with_rg], "GB"))> 150) then 4 else 3
         call Utils.ComputeAllowedLocalSSD as Guess {
-            input: intended_gb = 10 + inflation_factor * ceil(size([input_bam], "GB"))
+            input: intended_gb = 10 + inflation_factor * ceil(size([AddArtificialReadGroupTag.bam_with_rg], "GB"))
         }
         call BU.SplitByRG {
             input:
-                bam = input_bam, out_prefix = output_prefix, num_ssds = Guess.numb_of_local_ssd
+                bam = AddArtificialReadGroupTag.bam_with_rg, out_prefix = output_prefix, num_ssds = Guess.numb_of_local_ssd
         }
     }
-    Array[File] use_these_bams = select_first([SplitByRG.split_bam, [input_bam]])
+    Array[File] use_these_bams = select_first([SplitByRG.split_bam, [AddArtificialReadGroupTag.bam_with_rg]])
 
     ##############################################################################################################################
     # unmap/fastq, if so requested
@@ -171,4 +175,58 @@ workflow SplitBamByReadgroup {
     call GU.CoerceArrayOfPairsToMap as MapRgid2MoleculeCounts { input: keys = phased_rg_ids, values = molecule_counts }
 
     call GU.GetTodayDate as today {}
+}
+
+task AddArtificialReadGroupTag {
+    input {
+        File bam
+        String desired_sample_name
+    }
+    output {
+        File bam_with_rg = "~{prefix}_withArtificialRG.bam"
+        File bai_with_rg = "~{prefix}_withArtificialRG.bam.bai"
+    }
+    String prefix = basename(bam, ".bam")
+    command <<<
+    set -euxo pipefail
+
+        # handle the header
+        echo -e "@RG\tID:artificial\tSM:~{desired_sample_name}\tPL:ONT\tPU:null\tLB:null" \
+        > use_this_rg_line.txt
+        samtools view -H ~{bam} \
+        > header.txt
+        cat header.txt \
+            use_this_rg_line.txt \
+        > new_header.txt
+
+        # add RG tag to each read, and reheader at the same time to add the RG header line
+        samtools view -@1 -h \
+            "~{bam}" \
+        | awk 'BEGIN {OFS="\t"} /^@/ {print; next} {print $0, "RG:Z:artificial"}' \
+        | samtools view -@3 -bh \
+        | samtools reheader \
+            new_header.txt \
+            - \
+        > "~{prefix}_withArtificialRG.bam"
+        samtools index -@3 "~{prefix}_withArtificialRG.bam"
+
+        # verify
+        samtools view -H "~{prefix}_withArtificialRG.bam" \
+        | grep -c "^@RG"
+        samtools view -H "~{prefix}_withArtificialRG.bam" \
+        | grep "^@RG"
+
+        samtools view \
+            "~{prefix}_withArtificialRG.bam" \
+        | head \
+        | grep -cF "RG:Z:artificial"
+    >>>
+    runtime {
+        cpu:            6
+        memory:         "24 GiB"
+        disks:          "local-disk 750 LOCAL"
+        preemptible:    0
+        maxRetries:     0
+        docker:         "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.23.1"
+    }
 }
