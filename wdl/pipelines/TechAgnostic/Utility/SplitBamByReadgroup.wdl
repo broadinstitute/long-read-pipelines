@@ -190,25 +190,28 @@ task AddArtificialReadGroupTag {
     command <<<
     set -euxo pipefail
 
-        # handle the header
-        echo -e "@RG\tID:artificial\tSM:~{desired_sample_name}\tPL:ONT\tPU:null\tLB:null" \
-        > use_this_rg_line.txt
-        samtools view -H ~{bam} \
-        > header.txt
-        cat header.txt \
-            use_this_rg_line.txt \
-        > new_header.txt
+        # # handle the header
+        # echo -e "@RG\tID:artificial\tSM:~{desired_sample_name}\tPL:ONT\tPU:null\tLB:null" \
+        # > use_this_rg_line.txt
+        # samtools view -H ~{bam} \
+        # > header.txt
+        # cat header.txt \
+        #     use_this_rg_line.txt \
+        # > new_header.txt
 
         # add RG tag to each read, and reheader at the same time to add the RG header line
-        samtools view -@1 -h \
-            "~{bam}" \
-        | awk 'BEGIN {OFS="\t"} /^@/ {print; next} {print $0, "RG:Z:artificial"}' \
-        | samtools view -@3 -bh \
-        | samtools reheader \
-            new_header.txt \
-            - \
-        > "~{prefix}_withArtificialRG.bam"
-        samtools index -@3 "~{prefix}_withArtificialRG.bam"
+        samtools view -@3 -h "~{bam}" \
+        | awk 'BEGIN {
+            OFS="\t"
+            rg="@RG\tID:artificial\tSM:~{desired_sample_name}\tPL:ONT\tPU:null\tLB:null"
+            }
+            /^@/ { print; next }
+            !rg_printed { print rg; rg_printed=1 }
+            { print $0, "RG:Z:artificial" }' \
+        | samtools view -@3 --write-index \
+            -u \
+            -o "~{prefix}_withArtificialRG.bam##idx##~{prefix}_withArtificialRG.bam.bai" \
+            -
 
         # verify
         samtools view -H "~{prefix}_withArtificialRG.bam" \
@@ -219,7 +222,7 @@ task AddArtificialReadGroupTag {
         samtools view \
             "~{prefix}_withArtificialRG.bam" \
         | head \
-        | grep -cF "RG:Z:artificial"
+        | grep -cF "RG:Z:artificial" || true
     >>>
     runtime {
         cpu:            6
