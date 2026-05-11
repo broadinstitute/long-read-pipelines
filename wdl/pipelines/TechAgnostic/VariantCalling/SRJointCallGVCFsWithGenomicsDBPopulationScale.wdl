@@ -194,7 +194,8 @@ workflow SRJointCallGVCFsWithGenomicsDBPopulationScale {
                 heterozygosity = heterozygosity,
                 heterozygosity_stdev = heterozygosity_stdev,
                 indel_heterozygosity = indel_heterozygosity,
-                runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
+              # runtime_attr_override = object {preemptible_tries: 0},  # Disable preemption for prototype.
+
         }
         # Select the VCF + index for the raw joint called file:
         File joint_vcf = GnarlyJointCallGVCFs.output_vcf
