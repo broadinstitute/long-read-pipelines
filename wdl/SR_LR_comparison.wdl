@@ -654,12 +654,12 @@ task ApplyAnnotations {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2 * ceil(size(orig_vcf, "GB") + size(anno_tsv, "GB")) + 10
+    Int disk_size = 3 * ceil(size(orig_vcf, "GB") + size(anno_tsv, "GB")) + 20
 
     command <<<
-        set -euo pipefail
+        set -euxo pipefail
 
-        python3 - ~{orig_vcf} ~{anno_tsv} ~{prefix}.annotated.vcf <<'EOF'
+        python3 - ~{orig_vcf} ~{anno_tsv} ~{prefix}.annotated.vcf.gz <<'EOF'
 import sys
 from pysam import VariantFile
 
@@ -683,7 +683,7 @@ header.add_line('##INFO=<ID=SR_MATCH_AFS,Number=.,Type=String,Description="Allel
 header.add_line('##INFO=<ID=SR_MATCH_SVTYPES,Number=.,Type=String,Description="SVTYPE values of matched short-read structural variants, parallel to SR_MATCH_IDS">')
 header.add_line('##INFO=<ID=SR_MATCH_COUNT,Number=1,Type=Integer,Description="Number of matched short-read structural variants">')
 
-vcf_out = VariantFile(out_vcf, 'w', header=header)
+vcf_out = VariantFile(out_vcf, 'wz', header=header)
 for record in vcf_in:
     record.translate(header)
     alt = ','.join(record.alts) if record.alts is not None else '.'
@@ -701,7 +701,6 @@ vcf_out.close()
 vcf_in.close()
 EOF
 
-        bgzip -c ~{prefix}.annotated.vcf > ~{prefix}.annotated.vcf.gz
         tabix -f -p vcf ~{prefix}.annotated.vcf.gz
     >>>
 
