@@ -333,7 +333,7 @@ from pysam import VariantFile
 
 vcf_in = VariantFile(sys.argv[1], 'r')
 vcf_out = VariantFile(sys.argv[2], 'w', header=vcf_in.header)
-truvari_type = sys.argv[3]
+truvari_type = sys.argv[3]  # this is base or comp
 
 if truvari_type not in ['base', 'comp']:
     sys.stderr.write("Please enter either base or comp\n")
@@ -351,7 +351,7 @@ for rec in vcf_in.fetch():
     svlen = rec.info.get('SVLEN')
     if isinstance(svlen, tuple):
         svlen = svlen[0]
-    svlen = int(svlen)
+    svlen = abs(int(svlen))
 
     start_distance = rec.info.get('StartDistance', 0)
     size_diff = rec.info.get('SizeDiff', 0)
@@ -360,17 +360,30 @@ for rec in vcf_in.fetch():
     if isinstance(size_diff, tuple):
         size_diff = size_diff[0]
 
+    # Truvari defines StartDistance and SizeDiff as base - comp.
     if truvari_type == 'base':
-        matched_start = rec.start - int(start_distance)
-        matched_size = svlen - int(size_diff)
+        base_start = rec.start
+        base_size = svlen
+        comp_start = rec.start - int(start_distance)
     else:
-        matched_start = rec.start + int(start_distance)
-        matched_size = svlen + int(size_diff)
+        comp_start = rec.start
+        base_start = rec.start + int(start_distance)
+        base_size = svlen + int(size_diff)
 
-    matched_end = matched_start + matched_size
-    cur_end = rec.start + svlen
+    keep_record = True
+    slop=50
+    if truvari_type == 'base' and svtype == 'INS':
+        ins_start = base_start
+        ins_size = base_size
+        dup_start = comp_start
+        keep_record = abs(dup_start - ins_start) <= ins_size+slop
+    elif truvari_type == 'comp' and svtype == 'DUP':
+        ins_start = base_start
+        ins_size = abs(base_size)
+        dup_start = comp_start
+        keep_record = abs(dup_start - ins_start) <= ins_size+slop
 
-    if min(cur_end, matched_end) > max(rec.start, matched_start):
+    if keep_record:
         vcf_out.write(rec)
 
 vcf_in.close()
