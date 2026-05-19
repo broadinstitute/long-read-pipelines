@@ -172,6 +172,12 @@ task ImportGVCFs {
 
         RuntimeAttr? runtime_attr_override
         Int extra_mem_gb = 0
+
+        # Java Garbage Collection settings:
+        Int periodic_gc_interval = 30000
+        Int periodic_gc_system_load_threshold = 0
+        Int gc_min_heap_free_ratio = 20
+        Int gc_max_heap_free_ratio = 40
     }
 
     Int ref_size = ceil(size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(ref_dict, "GB"))
@@ -290,7 +296,7 @@ task ImportGVCFs {
             fi
         fi
 
-        gatk --java-options "-Xms8192m -Xmx${java_memory_size_mb}m" \
+        gatk --java-options "-Xms8192m -Xmx${java_memory_size_mb}m -XX:+UseG1GC -XX:G1PeriodicGCInterval=~{periodic_gc_interval} -XX:G1PeriodicGCSystemLoadThreshold=~{periodic_gc_system_load_threshold} -XX:MinHeapFreeRatio=~{gc_min_heap_free_ratio} -XX:MaxHeapFreeRatio=~{gc_max_heap_free_ratio} -XX:-ShrinkHeapInSteps -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=heap.hprof" \
             GenomicsDBImport \
                 ~{genomicsdb_arg} \
                 --batch-size ~{batch_size} \
@@ -463,6 +469,18 @@ task GnarlyGenotypeGVCFs {
 
         Boolean keep_combined_raw_annotations = false
         RuntimeAttr? runtime_attr_override
+
+#   - G1PeriodicGCInterval=15000: every 15 s fire a concurrent GC; only path G1 has to uncommit regions back to OS. Default is off
+#   - G1PeriodicGCSystemLoadThreshold=0: fire unconditionally (don't skip under load)
+#   - MinHeapFreeRatio=10 + MaxHeapFreeRatio=20: shrink committed when ≥20% free, target 10% free. Defaults 40/70 are why your heap grew and never shrank.
+#   - -ShrinkHeapInSteps: one-shot shrink to target, not one G1 region per cycle
+#   - HeapDumpOnOutOfMemoryError: safety net if Java actually OOMs
+
+        # Java Garbage Collection settings:
+        Int periodic_gc_interval = 15000
+        Int periodic_gc_system_load_threshold = 0
+        Int gc_min_heap_free_ratio = 10
+        Int gc_max_heap_free_ratio = 20
     }
 
     Int ref_size = ceil(size(ref_fasta, "GB") + size(ref_fasta_fai, "GB") + size(ref_dict, "GB"))
@@ -505,9 +523,9 @@ task GnarlyGenotypeGVCFs {
         mem_max_mb=$( echo "scale=0;${mem_mb}*0.9" | bc )
 
         mem_start_mb=$(printf '%.0f' ${mem_start_mb})
-        mem_max_mb=$(printf '%.0f' ${mem_max_mb})
+        mem_max_mb=$(printf '%.0f' ${mem_max_mb})  
 
-        gatk --java-options "-Xms${mem_start_mb}m -Xmx${mem_max_mb}m" \
+        gatk --java-options "-Xms${mem_start_mb}m -Xmx${mem_max_mb}m -XX:+UseG1GC -XX:G1PeriodicGCInterval=~{periodic_gc_interval} -XX:G1PeriodicGCSystemLoadThreshold=~{periodic_gc_system_load_threshold} -XX:MinHeapFreeRatio=~{gc_min_heap_free_ratio} -XX:MaxHeapFreeRatio=~{gc_max_heap_free_ratio} -XX:-ShrinkHeapInSteps -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=heap.hprof" \
             GnarlyGenotyper \
                 -V ${INPUT_FILE} \
                 -R ~{ref_fasta} \
