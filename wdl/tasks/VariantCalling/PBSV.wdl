@@ -154,7 +154,7 @@ task Discover {
     String disk_type = if is_ont then "SSD" else "HDD"
 
     Int num_cores = if(defined(chr)) then 4 else 32
-    Int memory = 2 * num_cores
+    Int memory = if(defined(chr) && select_first([chr])=="chr22") then 6 * num_cores else 2 * num_cores
 
     RuntimeAttr default_attr = object {
         cpu_cores:          num_cores,
