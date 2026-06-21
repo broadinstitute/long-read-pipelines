@@ -5,6 +5,7 @@ import "../../../tasks/Utility/Finalize.wdl" as FF
 import "../../../tasks/Utility/Utils.wdl"
 
 import "../../../structs/ReferenceMetadata.wdl"
+import "../../../structs/Structs.wdl"
 
 import "../Utility/ShardWholeGenome.wdl"
 
@@ -80,6 +81,8 @@ workflow CallVariants {
 
         File? small_variant_calling_options_json
         File? sv_calling_options_json
+        RuntimeAttr? pbsv_discover_runtime_attr_override
+        RuntimeAttr? pbsv_call_runtime_attr_override
 
         Array[String] gcp_zones = ["us-central1-a", "us-central1-b", "us-central1-c", "us-central1-f"]
 
@@ -153,6 +156,8 @@ workflow CallVariants {
         call ShardWholeGenome.Split as SplitBamByChr { input: ref_dict = ref_bundle.dict, bam = bam, bai = bai, }
 
         SVCallingConfig sv_options = read_json(select_first([sv_calling_options_json]))
+        RuntimeAttr? effective_pbsv_discover_runtime_attr_override = if defined(pbsv_discover_runtime_attr_override) then pbsv_discover_runtime_attr_override else sv_options.pbsv_discover_runtime_attr_override
+        RuntimeAttr? effective_pbsv_call_runtime_attr_override = if defined(pbsv_call_runtime_attr_override) then pbsv_call_runtime_attr_override else sv_options.pbsv_call_runtime_attr_override
 
         call CallStructuralVariants.Work as SVjob {
             input:
@@ -171,8 +176,8 @@ workflow CallVariants {
 
                 minsvlen = sv_options.min_sv_len,
                 pbsv_discover_per_chr = sv_options.pbsv_discover_per_chr,
-                pbsv_discover_runtime_attr_override = sv_options.pbsv_discover_runtime_attr_override,
-                pbsv_call_runtime_attr_override = sv_options.pbsv_call_runtime_attr_override,
+                pbsv_discover_runtime_attr_override = effective_pbsv_discover_runtime_attr_override,
+                pbsv_call_runtime_attr_override = effective_pbsv_call_runtime_attr_override,
 
                 zones = wdl_parsable_zones
         }
