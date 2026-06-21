@@ -32,6 +32,9 @@ workflow RunPBSV {
 
         File? tandem_repeat_bed
         Boolean is_ont = false
+
+        RuntimeAttr? discover_runtime_attr_override
+        RuntimeAttr? call_runtime_attr_override
     }
 
     call Discover {
@@ -44,7 +47,8 @@ workflow RunPBSV {
             tandem_repeat_bed = tandem_repeat_bed,
             prefix            = prefix,
             zones             = zones,
-            is_ont            = is_ont
+            is_ont            = is_ont,
+            runtime_attr_override = discover_runtime_attr_override
     }
 
     call Call {
@@ -55,7 +59,8 @@ workflow RunPBSV {
             is_hifi       = is_hifi,
             prefix        = prefix,
             zones         = zones,
-            is_ont        = is_ont
+            is_ont        = is_ont,
+            runtime_attr_override = call_runtime_attr_override
     }
 
     output {

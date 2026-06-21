@@ -171,6 +171,8 @@ workflow CallVariants {
 
                 minsvlen = sv_options.min_sv_len,
                 pbsv_discover_per_chr = sv_options.pbsv_discover_per_chr,
+                pbsv_discover_runtime_attr_override = sv_options.pbsv_discover_runtime_attr_override,
+                pbsv_call_runtime_attr_override = sv_options.pbsv_call_runtime_attr_override,
 
                 zones = wdl_parsable_zones
         }

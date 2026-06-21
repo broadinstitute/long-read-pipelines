@@ -4,6 +4,7 @@ import "../../../tasks/Utility/Utils.wdl"
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 import "../../../structs/ReferenceMetadata.wdl"
+import "../../../structs/Structs.wdl"
 
 import "../../../tasks/VariantCalling/PBSV.wdl"
 import "../../../tasks/VariantCalling/Sniffles2.wdl" as Sniffles2
@@ -11,6 +12,9 @@ import "../../../tasks/VariantCalling/Sniffles2.wdl" as Sniffles2
 struct SVCallingConfig {
     Int min_sv_len
     Boolean pbsv_discover_per_chr
+
+    RuntimeAttr? pbsv_discover_runtime_attr_override
+    RuntimeAttr? pbsv_call_runtime_attr_override
 
     String? gcp_zones
 }
@@ -46,6 +50,8 @@ workflow Work {
 
         # sv-specific args
         Int minsvlen = 20
+        RuntimeAttr? pbsv_discover_runtime_attr_override
+        RuntimeAttr? pbsv_call_runtime_attr_override
 
         # optimization
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
@@ -67,7 +73,6 @@ workflow Work {
     }
 
     HumanReferenceBundle ref_bundle = read_json(ref_bundle_json_file)
-
     ##########################################################
     # Sniffles-2
     ##########################################################
@@ -103,7 +108,8 @@ workflow Work {
                     ref_fasta = ref_bundle.fasta,
                     ref_fasta_fai = ref_bundle.fai,
                     tandem_repeat_bed = ref_bundle.tandem_repeat_bed,
-                    zones = zones
+                    zones = zones,
+                    runtime_attr_override = pbsv_discover_runtime_attr_override
             }
         }
 
@@ -115,7 +121,8 @@ workflow Work {
                 is_hifi = is_hifi,
                 is_ont = is_ont,
                 prefix = prefix,
-                zones = zones
+                zones = zones,
+                runtime_attr_override = pbsv_call_runtime_attr_override
         }
     }
 
@@ -130,7 +137,9 @@ workflow Work {
                 ref_fasta = ref_bundle.fasta,
                 ref_fasta_fai = ref_bundle.fai,
                 tandem_repeat_bed = ref_bundle.tandem_repeat_bed,
-                zones = zones
+                zones = zones,
+                discover_runtime_attr_override = pbsv_discover_runtime_attr_override,
+                call_runtime_attr_override = pbsv_call_runtime_attr_override
         }
     }
 
