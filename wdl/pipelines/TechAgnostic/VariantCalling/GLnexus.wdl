@@ -243,12 +243,6 @@ task Call {
         description: "Joint-call gVCFs with GLNexus."
     }
 
-    parameter_meta {
-        gvcfs: {
-            localization_optional: true
-        }
-    }
-
     input {
         Array[File] gvcfs
 
@@ -263,27 +257,13 @@ task Call {
         RuntimeAttr? runtime_attr_override
     }
 
-    # this will break call-caching
-    Array[String] a = gvcfs
-    File gs_manifest = write_lines(a)
-    File local_manifest = write_lines(gvcfs)
-
     command <<<
-        set -x
-
-        head ~{gs_manifest}
-        head ~{local_manifest}
-
-        time \
-        cat ~{gs_manifest} \
-        | gcloud storage cp \
-            -I \
-            .
+        set -euxo pipefail
 
         # For guidance on performance settings, see https://github.com/dnanexus-rnd/GLnexus/wiki/Performance
         ulimit -Sn 65536
 
-        echo ~{gvcfs[0]} | sed 's/.*locus_//' | sed 's/.g.vcf.bgz//' | sed 's/___/\t/g' > range.bed
+        echo ~{gvcfs[0]} | sed 's/.*locus_//' | sed -E 's/\.g\.vcf\.(bgz|gz)$//' | sed 's/___/\t/g' > range.bed
 
         glnexus_cli \
             --config ~{config} \
@@ -291,7 +271,7 @@ task Call {
             ~{if more_PL then "--more-PL" else ""} \
             ~{if squeeze then "--squeeze" else ""} \
             ~{if trim_uncalled_alleles then "--trim-uncalled-alleles" else ""} \
-            --list ~{local_manifest} \
+            --list ~{write_lines(gvcfs)} \
             > ~{prefix}.bcf
     >>>
 
