@@ -243,7 +243,7 @@ task ShardVCFByRanges {
     >>>
 
     output {
-        Array[File] sharded_gvcfs = read_lines("sharded_gvcfs.txt")
+        Array[File] sharded_gvcfs = glob("per_contig/*.g.vcf.gz")
     }
 
     #########################
