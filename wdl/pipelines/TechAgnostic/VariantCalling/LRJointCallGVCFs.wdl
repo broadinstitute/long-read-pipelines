@@ -13,6 +13,7 @@ workflow LRJointCallGVCFs {
         gvcfs:            "GCS paths to gVCF files"
         tbis:             "GCS paths to gVCF tbi files"
         ref_map_file:     "table indicating reference sequence and auxillary file locations"
+        chromosomes:      "Reference contigs to shard over, in output order"
         prefix:           "prefix for output joint-called gVCF and tabix index"
         gcs_out_root_dir: "GCS bucket to store the reads, variants, and metrics files"
     }
@@ -22,6 +23,12 @@ workflow LRJointCallGVCFs {
         Array[File] tbis
         File ref_map_file
 
+        Array[String] chromosomes = [
+            "chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7",
+            "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14",
+            "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21",
+            "chr22", "chrX", "chrY", "chrM"
+        ]
         String prefix
 
         String gcs_out_root_dir
@@ -43,6 +50,7 @@ workflow LRJointCallGVCFs {
         gvcfs = gvcfs,
         tbis = tbis,
         dict = ref_map['dict'],
+        chromosomes = chromosomes,
         prefix = prefix
     }
 
