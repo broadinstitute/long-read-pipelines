@@ -213,8 +213,16 @@ task ShardVCFByRanges {
     command <<<
         set -euo pipefail
 
+        mkdir staged_gvcf
         mkdir per_contig
         rm -f sharded_gvcfs.txt
+        ln -sf ~{gvcf} staged_gvcf/input.g.vcf.gz
+        INDEX_BASENAME=$(basename "~{tbi}")
+        if [[ "$INDEX_BASENAME" == *.csi ]]; then
+            ln -sf ~{tbi} staged_gvcf/input.g.vcf.gz.csi
+        else
+            ln -sf ~{tbi} staged_gvcf/input.g.vcf.gz.tbi
+        fi
 
         INDEX=0
         for RANGE in ~{sep=' ' ranges}
@@ -224,7 +232,7 @@ task ShardVCFByRanges {
             OUTFILE="per_contig/$PINDEX.~{basename(gvcf, ".g.vcf.gz")}.locus_$FRANGE.g.vcf.gz"
 
             echo "[$PINDEX] $RANGE -> $OUTFILE" 1>&2
-            bcftools view ~{gvcf} $RANGE | bgzip > $OUTFILE
+            bcftools view staged_gvcf/input.g.vcf.gz $RANGE | bgzip > $OUTFILE
             echo "$OUTFILE" >> sharded_gvcfs.txt
 
             INDEX=$(($INDEX+1))
