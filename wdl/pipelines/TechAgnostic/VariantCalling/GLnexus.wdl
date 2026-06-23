@@ -211,9 +211,10 @@ task ShardVCFByRanges {
     Int disk_size = 1 + 2*ceil(size(gvcf, "GB"))
 
     command <<<
-        set -euxo pipefail
+        set -euo pipefail
 
         mkdir per_contig
+        rm -f sharded_gvcfs.txt
 
         INDEX=0
         for RANGE in ~{sep=' ' ranges}
@@ -222,14 +223,19 @@ task ShardVCFByRanges {
             FRANGE=$(echo $RANGE | sed 's/[:-]/___/g')
             OUTFILE="per_contig/$PINDEX.~{basename(gvcf, ".g.vcf.gz")}.locus_$FRANGE.g.vcf.gz"
 
+            echo "[$PINDEX] $RANGE -> $OUTFILE" 1>&2
             bcftools view ~{gvcf} $RANGE | bgzip > $OUTFILE
+            echo "$OUTFILE" >> sharded_gvcfs.txt
 
             INDEX=$(($INDEX+1))
         done
+
+        N_SHARDS=$(wc -l < sharded_gvcfs.txt)
+        echo "ShardVCFByRanges wrote ${N_SHARDS} shards for ~{basename(gvcf)}" 1>&2
     >>>
 
     output {
-        Array[File] sharded_gvcfs = glob("per_contig/*")
+        Array[File] sharded_gvcfs = read_lines("sharded_gvcfs.txt")
     }
 
     #########################
