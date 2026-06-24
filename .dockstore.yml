@@ -192,3 +192,6 @@ workflows:
 - name: SRJointCallGVCFsWithGenomicsDBPopulationScale
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/SRJointCallGVCFsWithGenomicsDBPopulationScale.wdl
+- name: Flare
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/Flare.wdl
