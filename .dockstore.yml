@@ -194,4 +194,4 @@ workflows:
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/SRJointCallGVCFsWithGenomicsDBPopulationScale.wdl
 - name: Flare
   subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/Flare.wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/FlareLocalAncestryInference.wdl

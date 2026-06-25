@@ -6,7 +6,7 @@ ARG FLARE_VERSION=0.6.0
 ENV HOME=/root
 ENV FLARE_JAR=/opt/flare/flare.jar
 
-COPY prep_vcf_for_flare.py build_gnomad_ref_panel.py merge_global_ancestry.py /opt/flare/scripts/
+COPY prep_vcf_for_flare.py merge_global_ancestry.py /opt/flare/scripts/
 
 RUN apt-get -qqy update --fix-missing && \
     apt-get -qqy dist-upgrade && \
@@ -29,8 +29,6 @@ RUN apt-get -qqy update --fix-missing && \
     chmod +x /usr/local/bin/create_model_file.py && \
     printf '%s\n' '#!/usr/bin/env bash' 'exec python3 /opt/flare/scripts/prep_vcf_for_flare.py "$@"' > /usr/local/bin/prep_vcf_for_flare.py && \
     chmod +x /usr/local/bin/prep_vcf_for_flare.py && \
-    printf '%s\n' '#!/usr/bin/env bash' 'exec python3 /opt/flare/scripts/build_gnomad_ref_panel.py "$@"' > /usr/local/bin/build_gnomad_ref_panel.py && \
-    chmod +x /usr/local/bin/build_gnomad_ref_panel.py && \
     printf '%s\n' '#!/usr/bin/env bash' 'exec python3 /opt/flare/scripts/merge_global_ancestry.py "$@"' > /usr/local/bin/merge_global_ancestry.py && \
     chmod +x /usr/local/bin/merge_global_ancestry.py && \
     apt-get -qqy purge wget && \
