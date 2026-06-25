@@ -4,12 +4,6 @@ import "../../../tasks/Phasing/Flare.wdl"
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow FlareLocalAncestryInference {
-    meta{
-        description : "..."
-    }
-    parameter_meta {
-    }
-
     input {
         File ref_vcf
         File ref_vcf_index
