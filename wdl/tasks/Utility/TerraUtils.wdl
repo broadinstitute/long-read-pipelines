@@ -10,8 +10,8 @@ task UploadDataTable {
     }
 
     parameter_meta {
-        namespace:           "Terra billing project / namespace that owns the destination workspace."
-        workspace:           "Name of the destination Terra workspace."
+        namespace:           "Optional Terra billing project / namespace that owns the destination workspace. When omitted it is auto-detected (WORKSPACE_NAMESPACE env var, else the workspace whose Google project matches this VM)."
+        workspace:           "Optional name of the destination Terra workspace. When omitted it is auto-detected (WORKSPACE_NAME env var, else the workspace whose Google project matches this VM)."
         entities_tsv:        "Terra-formatted entity TSV to upload. Its first column header must be `entity:<table_name>_id`."
         table_name:          "Name of the destination data table (entity type) to upload into."
         require_existing_id: "When true (default), pull the destination table first and verify every entity ID in `entities_tsv` already exists there; any IDs that do not are printed to stderr and the task fails before uploading. When false, upload unconditionally."
@@ -19,8 +19,8 @@ task UploadDataTable {
     }
 
     input {
-        String namespace
-        String workspace
+        String? namespace
+        String? workspace
         File entities_tsv
         String table_name
 
@@ -34,17 +34,72 @@ task UploadDataTable {
     command <<<
         set -euxo pipefail
 
+        # Make the VM's Google project visible to the auto-detection logic below.
+        GOOGLE_PROJECT="${GOOGLE_PROJECT:-$(curl -s -H "Metadata-Flavor: Google" \
+            http://metadata.google.internal/computeMetadata/v1/project/project-id || true)}"
+        export GOOGLE_PROJECT
+
         python3 <<CODE
+        import os
         import sys
 
         import pandas as pd
         import firecloud.api as fapi
 
-        namespace           = "~{namespace}"
-        workspace           = "~{workspace}"
         table_name          = "~{table_name}"
         entities_tsv        = "~{entities_tsv}"
         require_existing_id = ~{true="True" false="False" require_existing_id}
+
+        # namespace/workspace are optional; empty string means "auto-detect".
+        namespace = "~{default='' namespace}"
+        workspace = "~{default='' workspace}"
+
+        def resolve_workspace(namespace, workspace):
+            # 1. Explicit inputs win.
+            if namespace and workspace:
+                return namespace, workspace
+
+            # 2. Terra-injected environment variables (set in interactive runtimes).
+            namespace = namespace or os.environ.get("WORKSPACE_NAMESPACE", "")
+            workspace = workspace or os.environ.get("WORKSPACE_NAME", "")
+            if namespace and workspace:
+                return namespace, workspace
+
+            # 3. Derive from the Google project this VM runs in. In the current Terra
+            #    model each workspace has its own Google project, so the project maps
+            #    back to a unique workspace via the workspaces list.
+            project = os.environ.get("GOOGLE_PROJECT", "")
+            if not project:
+                sys.stderr.write(
+                    "ERROR: namespace/workspace not provided and GOOGLE_PROJECT is unset; "
+                    "cannot auto-detect the destination workspace.\n"
+                )
+                sys.exit(1)
+
+            resp = fapi.list_workspaces(fields="workspace.namespace,workspace.name,workspace.googleProject")
+            if resp.status_code != 200:
+                sys.stderr.write(
+                    f"ERROR: could not list workspaces to auto-detect the destination: "
+                    f"HTTP {resp.status_code}: {resp.text}\n"
+                )
+                sys.exit(1)
+
+            matches = sorted({
+                (w["workspace"]["namespace"], w["workspace"]["name"])
+                for w in resp.json()
+                if w["workspace"].get("googleProject") == project
+            })
+            if len(matches) == 1:
+                return matches[0]
+
+            sys.stderr.write(
+                f"ERROR: could not uniquely auto-detect the workspace for Google project "
+                f"'{project}' (found {len(matches)} match(es)); pass namespace and workspace "
+                f"explicitly.\n"
+            )
+            sys.exit(1)
+
+        namespace, workspace = resolve_workspace(namespace, workspace)
 
         # Identify the entity-ID column. Terra entity TSVs name it 'entity:<table>_id'.
         id_col = f"entity:{table_name}_id"
