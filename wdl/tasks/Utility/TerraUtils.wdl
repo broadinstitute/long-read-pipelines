@@ -15,6 +15,7 @@ task UploadDataTable {
         entities_tsv:        "Terra-formatted entity TSV to upload. Its first column header must be `entity:<table_name>_id`."
         table_name:          "Name of the destination data table (entity type) to upload into."
         require_existing_id: "When true (default), pull the destination table first and verify every entity ID in `entities_tsv` already exists there; any IDs that do not are printed to stderr and the task fails before uploading. When false, upload unconditionally."
+        columns_must_exist:  "When true (default), every column in `entities_tsv` must already exist in the destination table; any that do not are printed to stderr and the task fails before uploading. When false, new columns are allowed."
         runtime_attr_override: "Override default runtime attributes."
     }
 
@@ -25,6 +26,7 @@ task UploadDataTable {
         String table_name
 
         Boolean require_existing_id = true
+        Boolean columns_must_exist = true
 
         RuntimeAttr? runtime_attr_override
     }
@@ -49,6 +51,7 @@ task UploadDataTable {
         table_name          = "~{table_name}"
         entities_tsv        = "~{entities_tsv}"
         require_existing_id = ~{true="True" false="False" require_existing_id}
+        columns_must_exist  = ~{true="True" false="False" columns_must_exist}
 
         # namespace/workspace are optional; empty string means "auto-detect".
         namespace = "~{default='' namespace}"
@@ -117,8 +120,8 @@ task UploadDataTable {
 
         new_ids = [str(x) for x in new_df[id_col].tolist()]
 
-        if require_existing_id:
-            # Pull the destination table and collect the IDs that already exist.
+        if require_existing_id or columns_must_exist:
+            # Pull the destination table once to validate IDs and/or columns against it.
             resp = fapi.get_entities(namespace, workspace, table_name)
             if resp.status_code != 200:
                 sys.stderr.write(
@@ -126,17 +129,42 @@ task UploadDataTable {
                     f"{namespace}/{workspace}: HTTP {resp.status_code}: {resp.text}\n"
                 )
                 sys.exit(1)
-            existing_ids = set(e["name"] for e in resp.json())
+            dest_entities = resp.json()
 
-            # Any new ID not already present is an error; list them all.
-            missing = [i for i in new_ids if i not in existing_ids]
-            if missing:
-                sys.stderr.write(
-                    f"ERROR: {len(missing)} of {len(new_ids)} sample ID(s) in {entities_tsv} are not "
-                    f"present in destination table '{table_name}' ({namespace}/{workspace}):\n"
-                )
-                for m in missing:
-                    sys.stderr.write(f"  {m}\n")
+            fail = False
+
+            if require_existing_id:
+                existing_ids = set(e["name"] for e in dest_entities)
+                # Any new ID not already present is an error; list them all.
+                missing_ids = [i for i in new_ids if i not in existing_ids]
+                if missing_ids:
+                    sys.stderr.write(
+                        f"ERROR: {len(missing_ids)} of {len(new_ids)} sample ID(s) in {entities_tsv} "
+                        f"are not present in destination table '{table_name}' "
+                        f"({namespace}/{workspace}):\n"
+                    )
+                    for m in missing_ids:
+                        sys.stderr.write(f"  {m}\n")
+                    fail = True
+
+            if columns_must_exist:
+                # Destination columns are the union of attribute keys across its rows.
+                existing_cols = set()
+                for e in dest_entities:
+                    existing_cols.update(e.get("attributes", {}).keys())
+                # The entity-ID column is not a data attribute, so exclude it.
+                new_cols = [c for c in new_df.columns if c != id_col]
+                missing_cols = [c for c in new_cols if c not in existing_cols]
+                if missing_cols:
+                    sys.stderr.write(
+                        f"ERROR: {len(missing_cols)} column(s) in {entities_tsv} are not present in "
+                        f"destination table '{table_name}' ({namespace}/{workspace}):\n"
+                    )
+                    for c in missing_cols:
+                        sys.stderr.write(f"  {c}\n")
+                    fail = True
+
+            if fail:
                 sys.exit(1)
 
         # All checks passed (or were skipped): upload the table.
