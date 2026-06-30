@@ -22,7 +22,10 @@ workflow PfalciparumTypeDrugResistanceMarkers {
 
         do_functional_annotation: "Whether to perform functional annotation"
 
-        joint_vcfs: "Optional list of per-contig joint-call VCFs, given as paths/URLs (e.g. gs://...). When provided, the analyzed sample's resolved genotypes are STREAMED from these files at the drug-resistance loci and the files are never localized. Each must have a co-located tabix index (.tbi) and SnpEff (ANN) annotations, and the sample must be present in at least one of them or the workflow fails. The given GVCF is still used to fill in no-call evidence."
+        joint_vcfs: {
+            description: "Optional list of per-contig joint-call VCFs, given as paths/URLs (e.g. gs://...). When provided, the analyzed sample's resolved genotypes are STREAMED from these files at the drug-resistance loci and the files are never localized. Each must have a co-located tabix index (.tbi) and SnpEff (ANN) annotations, and the sample must be present in at least one of them or the workflow fails. The given GVCF is still used to fill in no-call evidence.",
+            localization_optional: true
+        }
         sample_id: "Optional sample ID to analyze when joint_vcfs is provided. Defaults to the single sample present in 'vcf'."
     }
 
@@ -40,7 +43,7 @@ workflow PfalciparumTypeDrugResistanceMarkers {
 
         Boolean do_functional_annotation = true
 
-        Array[String]? joint_vcfs
+        Array[File]? joint_vcfs
         String? sample_id
     }
 
@@ -155,6 +158,13 @@ workflow PfalciparumTypeDrugResistanceMarkers {
 }
 
 task CallDrugResistanceMutations {
+    parameter_meta {
+        joint_vcf_urls: {
+            description: "Optional per-contig joint-call VCFs streamed at the drug-resistance loci. Marked localization_optional so Cromwell passes the (gs://) paths through to the tools without localizing these potentially huge files.",
+            localization_optional: true
+        }
+    }
+
     input {
         File vcf
         File vcf_index
@@ -165,14 +175,14 @@ task CallDrugResistanceMutations {
         File drug_resistance_list
         File genes_gff
 
-        Array[String]? joint_vcf_urls
+        Array[File]? joint_vcf_urls
         String? sample_id
 
         RuntimeAttr? runtime_attr_override
     }
 
-    # Joint-call VCF URLs are intentionally passed as strings (not File) so Cromwell
-    # never localizes the (potentially huge) per-contig joint VCFs; they are streamed.
+    # joint_vcf_urls is localization_optional (see parameter_meta), so Cromwell passes the
+    # gs:// paths straight through and the per-contig joint VCFs are streamed, never localized.
     Array[String] joint_vcf_urls_safe = select_first([joint_vcf_urls, []])
 
     Int disk_size = 1 + 2*ceil(size([vcf, gvcf, drug_resistance_list], "GB"))
