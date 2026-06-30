@@ -20,7 +20,7 @@ All workflow scripts are located in the `/wdl` directory and are written in WDL 
 and intended for use with Google Cloud Platform via the scientific workflow engine, Cromwell.
 The WDL scripts are divided into three subdirectories: `tasks`, `structs`, and `pipelines`;
 then further divided by sequencing platform and analysis type.
-See [Repository Structure](./wdl_style_guide.md) for more information on directory structure.
+See [Repository Structure](./repo_structure.md) for more information on directory structure.
 
 ## Docker Containers
 
@@ -59,7 +59,7 @@ the Dockstore repository.
 
 Please adhere to the following best practices if contributing to this repository:
 
-1. **Read Style Guide**: Before making any changes to the code, it's important to read the style guide. The style guide contains information on how to write code that is consistent with the rest of the codebase. See [WDL Style Guide](./wdl_style_guide.md) and [Docker Style Guide](./docker_style_guide.md) for more information.
+1. **Read Style Guide**: Before making any changes to the code, it's important to read the style guide. The style guide contains information on how to write code that is consistent with the rest of the codebase. See [WDL Style Rules](./WDL_STYLE_RULES.md) and [Docker Style Guide](./docker_style_guide.md) for more information.
 2. **Create a new branch**: When making contributions to a repository, it's important to create a new branch for each change you make. The name of the branch should begin with your initials followed by an underscore and a short description of the change. For example, if Janet Sully is making a change to the README file, the name might be `js_update_readme`.
 3. **Keep commits small and focused**: When making changes to the code, it's important to keep your commits small and focused on a specific task. This makes it easier for others to review your changes and also makes it easier to roll back changes if necessary.
 4. **Write clear commit messages**: When committing changes to the repository, it's important to write clear and concise commit messages that describe what changes were made. This helps others understand the changes you made and why you made them.
