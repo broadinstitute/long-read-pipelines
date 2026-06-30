@@ -87,9 +87,9 @@ task SplitMultiSampleVCFTask {
             done < "${REQUESTED_SAMPLES}"
 
             if [ "${#missing[@]}" -gt 0 ]; then
-                echo "ERROR: the following requested sample(s) are not present in the input VCF:"
+                echo "ERROR: the following requested sample(s) are not present in the input VCF:" >&2
                 for sample in "${missing[@]}"; do
-                    echo "  ${sample}"
+                    echo "  ${sample}" >&2
                 done
                 exit 1
             fi
