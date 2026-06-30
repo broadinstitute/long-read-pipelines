@@ -50,7 +50,7 @@ workflow PfalciparumTypeDrugResistanceMarkers {
     # Read ref map into map data type so we can access its fields:
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    if (do_functional_annotation) {
+    if (do_functional_annotation && (!defined(joint_vcfs) || length(select_first([joint_vcfs, []])) == 0)) {
         call FUNK.FunctionallyAnnotateVariants { input: vcf = vcf, snpeff_db = snpeff_db, snpeff_db_identifier = snpeff_db_identifier }
     }
 
