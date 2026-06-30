@@ -12,6 +12,7 @@ workflow SplitMultiSampleVCF {
         input_vcf: "Multi-sample VCF file (can be compressed or uncompressed)"
         input_vcf_index: "Index file for the input VCF (required if VCF is compressed)"
         num_samples: "Number of samples in the input VCF (optional; default: 100)"
+        sample_names: "Optional list of sample names to extract. If provided, every name must occur in input_vcf; the workflow fails (listing all absent names) when any is missing. Only the listed samples are emitted; otherwise every sample is emitted."
     }
 
     input {
@@ -19,13 +20,16 @@ workflow SplitMultiSampleVCF {
         File? input_vcf_index
 
         Int num_samples = 100
+
+        Array[String]? sample_names
     }
 
     call SplitMultiSampleVCFTask {
         input:
             input_vcf = input_vcf,
             input_vcf_index = input_vcf_index,
-            num_samples = num_samples
+            num_samples = num_samples,
+            sample_names = sample_names
     }
 
     output {
@@ -43,6 +47,7 @@ task SplitMultiSampleVCFTask {
         input_vcf: "Multi-sample VCF file (can be compressed or uncompressed)"
         input_vcf_index: "Index file for the input VCF (required if VCF is compressed)"
         num_samples: "Number of samples in the input VCF (optional; default: 100)"
+        sample_names: "Optional list of sample names to extract. If provided, every name must occur in input_vcf; the task fails (listing all absent names) when any is missing. Only the listed samples are emitted; otherwise every sample is emitted."
         runtime_attr_override: "Override default runtime attributes"
     }
 
@@ -52,8 +57,12 @@ task SplitMultiSampleVCFTask {
 
         Int num_samples = 100
 
+        Array[String]? sample_names
+
         RuntimeAttr? runtime_attr_override
     }
+
+    Array[String] requested_samples = select_first([sample_names, []])
 
     Int disk_size = 10 + num_samples*ceil(size([input_vcf, input_vcf_index], "GB"))
 
@@ -61,7 +70,36 @@ task SplitMultiSampleVCFTask {
         set -euxo pipefail
 
         mkdir -p out_dir
-        bcftools +split ~{input_vcf} -Oz2 -W=tbi -o out_dir
+
+        REQUESTED_SAMPLES="~{write_lines(requested_samples)}"
+
+        if [ -s "${REQUESTED_SAMPLES}" ]; then
+            # Sample names present in the input VCF.
+            bcftools query -l ~{input_vcf} > vcf_samples.txt
+
+            # Collect every requested sample that is absent from the VCF.
+            missing=()
+            while IFS= read -r sample; do
+                [ -z "${sample}" ] && continue
+                if ! grep -Fxq -- "${sample}" vcf_samples.txt; then
+                    missing+=("${sample}")
+                fi
+            done < "${REQUESTED_SAMPLES}"
+
+            if [ "${#missing[@]}" -gt 0 ]; then
+                echo "ERROR: the following requested sample(s) are not present in the input VCF:"
+                for sample in "${missing[@]}"; do
+                    echo "  ${sample}"
+                done
+                exit 1
+            fi
+
+            # All requested samples are present: emit only those.
+            bcftools +split ~{input_vcf} -S "${REQUESTED_SAMPLES}" -Oz2 -W=tbi -o out_dir
+        else
+            # No sample subset requested: emit every sample.
+            bcftools +split ~{input_vcf} -Oz2 -W=tbi -o out_dir
+        fi
 
     >>>
 
