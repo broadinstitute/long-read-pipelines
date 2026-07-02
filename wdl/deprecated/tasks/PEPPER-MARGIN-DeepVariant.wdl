@@ -77,7 +77,12 @@ workflow Run {
     call VariantUtils.MergeAndSortVCFs as MergePEPPERGVCFs { input:
         vcfs     = select_all(Pepper.gVCF),
         prefix   = pepper_prefix + ".g",
-        ref_fasta_fai = ref_map['fai']
+        ref_fasta_fai = ref_map['fai'],
+        # Right-size: this merge peaked at ~2.2 GiB RAM / ~3 cores on the task's
+        # default 48 GB / 8-core VM (bcftools sort spills to --temp-dir, so RAM
+        # stays low). Trim CPU+RAM only; disk is left at the task default since
+        # the sort's temp spill needs the headroom.
+        runtime_attr_override = object { cpu_cores: 4, mem_gb: 8 }
     }
 
     if (phase_and_tag) {
