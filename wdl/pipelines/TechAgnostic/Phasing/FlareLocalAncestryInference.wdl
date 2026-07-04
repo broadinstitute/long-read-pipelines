@@ -11,6 +11,7 @@ workflow FlareLocalAncestryInference {
         File test_vcf
         File plink_map
         File ref_fasta
+        File ref_fasta_fai
 
         String chromosome
         Boolean is_chr_x = false
@@ -33,6 +34,7 @@ workflow FlareLocalAncestryInference {
             joint_vcf = test_vcf,
             ref_vcf = ref_vcf,
             ref_fasta = ref_fasta,
+            ref_fasta_fai = ref_fasta_fai,
             chromosome = chromosome,
             prefix = output_prefix + ".prep",
             is_chr_x = is_chr_x,
@@ -42,10 +44,10 @@ workflow FlareLocalAncestryInference {
     call Flare.Flare as F {
         input:
             ref_vcf = FilterVCFs.ref_vcf_out,
-            ref_vcf_index = FilterVCFs.ref_vcf_tbi,
+            ref_vcf_index = FilterVCFs.ref_vcf_csi,
             ref_panel = ref_panel,
             test_vcf = FilterVCFs.gt_vcf,
-            test_vcf_index = FilterVCFs.gt_vcf_tbi,
+            test_vcf_index = FilterVCFs.gt_vcf_csi,
             plink_map = plink_map,
             output_prefix = output_prefix,
             em = em,

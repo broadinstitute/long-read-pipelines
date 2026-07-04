@@ -16,7 +16,31 @@ LOG = logging.getLogger(__name__)
 
 def run_cmd(cmd: list[str], *, check: bool = True) -> subprocess.CompletedProcess:
     LOG.info("Running: %s", " ".join(cmd))
-    return subprocess.run(cmd, check=check, text=True, capture_output=True)
+    proc = subprocess.run(cmd, check=False, text=True, capture_output=True)
+    if proc.stdout.strip():
+        LOG.debug(proc.stdout.strip())
+    if proc.stderr.strip():
+        LOG.info(proc.stderr.strip())
+    if check and proc.returncode != 0:
+        msg = proc.stderr.strip() or proc.stdout.strip() or "unknown error"
+        raise RuntimeError(
+            f"Command failed ({proc.returncode}): {' '.join(cmd)}\n{msg}"
+        ) from None
+    return proc
+
+
+def log_file_stats(path: Path, label: str) -> None:
+    if not path.exists():
+        LOG.warning("%s: %s does not exist", label, path)
+        return
+    size_gb = path.stat().st_size / (1024**3)
+    proc = run_cmd(["bcftools", "view", "-H", str(path)], check=False)
+    n_records = len(proc.stdout.splitlines()) if proc.returncode == 0 else "?"
+    LOG.info("%s: %s (%.2f GiB, %s records)", label, path.name, size_gb, n_records)
+
+
+def bcftools_index(path: Path) -> None:
+    run_cmd(["bcftools", "index", "-c", "-f", str(path)])
 
 
 def read_sex_map(path: Path | None) -> dict[str, str]:
@@ -36,8 +60,14 @@ def read_sex_map(path: Path | None) -> dict[str, str]:
     return sex_by_sample
 
 
-def bcftools_index(vcf: Path) -> None:
-    run_cmd(["bcftools", "index", "-f", str(vcf)])
+def require_fasta_index(ref_fasta: Path, ref_fasta_fai: Path) -> None:
+    expected = Path(f"{ref_fasta}.fai")
+    if expected.exists():
+        return
+    if not ref_fasta_fai.exists():
+        raise FileNotFoundError(f"Missing FASTA index: {ref_fasta_fai}")
+    expected.symlink_to(ref_fasta_fai)
+    LOG.info("Linked %s -> %s", expected, ref_fasta_fai)
 
 
 def normalize_vcf(vcf: Path, ref_fasta: Path, out_path: Path) -> None:
@@ -49,13 +79,13 @@ def normalize_vcf(vcf: Path, ref_fasta: Path, out_path: Path) -> None:
             str(ref_fasta),
             "-m",
             "-any",
-            "-Oz",
+            "-Ob",
             "-o",
             str(out_path),
             str(vcf),
         ]
     )
-    bcftools_index(out_path)
+    log_file_stats(out_path, "normalized")
 
 
 def filter_biallelic_snps(vcf: Path, out_path: Path) -> None:
@@ -67,13 +97,12 @@ def filter_biallelic_snps(vcf: Path, out_path: Path) -> None:
             "-M2",
             "-v",
             "snps",
-            "-Oz",
+            "-Ob",
             "-o",
             str(out_path),
             str(vcf),
         ]
     )
-    bcftools_index(out_path)
 
 
 def filter_maf(vcf: Path, maf: float, out_path: Path) -> None:
@@ -83,16 +112,26 @@ def filter_maf(vcf: Path, maf: float, out_path: Path) -> None:
             "view",
             "-q",
             f"{maf}:minor",
-            "-Oz",
+            "-Ob",
             "-o",
             str(out_path),
             str(vcf),
         ]
     )
-    bcftools_index(out_path)
 
 
-def intersect_vcfs(gt_vcf: Path, ref_vcf: Path, gt_out: Path, ref_out: Path) -> None:
+def intersect_vcfs(
+    gt_vcf: Path,
+    ref_vcf: Path,
+    gt_out: Path,
+    ref_out: Path,
+    *,
+    output_vcf: bool,
+) -> None:
+    bcftools_index(gt_vcf)
+    bcftools_index(ref_vcf)
+    out_args = ["-Oz"] if output_vcf else ["-Ob"]
+
     with tempfile.TemporaryDirectory() as tmp:
         tmpdir = Path(tmp)
         run_cmd(
@@ -107,10 +146,12 @@ def intersect_vcfs(gt_vcf: Path, ref_vcf: Path, gt_out: Path, ref_out: Path) -> 
                 str(ref_vcf),
             ]
         )
-        run_cmd(["bcftools", "view", "-Oz", "-o", str(gt_out), str(tmpdir / "0000.vcf")])
-        run_cmd(["bcftools", "view", "-Oz", "-o", str(ref_out), str(tmpdir / "0001.vcf")])
-    bcftools_index(gt_out)
-    bcftools_index(ref_out)
+        run_cmd(["bcftools", "view", *out_args, "-o", str(gt_out), str(tmpdir / "0000.vcf")])
+        run_cmd(["bcftools", "view", *out_args, "-o", str(ref_out), str(tmpdir / "0001.vcf")])
+
+    if not output_vcf:
+        bcftools_index(gt_out)
+        bcftools_index(ref_out)
 
 
 def thin_vcf(input_vcf: Path, output_vcf: Path, min_spacing: int) -> None:
@@ -119,6 +160,7 @@ def thin_vcf(input_vcf: Path, output_vcf: Path, min_spacing: int) -> None:
 
     last_kept_pos: int | None = None
     last_chrom: str | None = None
+    kept = 0
 
     with open_fn(input_vcf, "rt") as fin, out_open(output_vcf, "wt") as fout:
         for line in fin:
@@ -135,6 +177,9 @@ def thin_vcf(input_vcf: Path, output_vcf: Path, min_spacing: int) -> None:
                 continue
             fout.write(line)
             last_kept_pos = pos
+            kept += 1
+
+    LOG.info("Thinned to %s records in %s", kept, output_vcf.name)
 
 
 def fix_male_chrx_hets(
@@ -144,15 +189,13 @@ def fix_male_chrx_hets(
     out_path: Path,
 ) -> None:
     if chromosome not in ("chrX", "X") or not sex_by_sample:
-        run_cmd(["bcftools", "view", "-Oz", "-o", str(out_path), str(vcf)])
-        bcftools_index(out_path)
+        run_cmd(["bcftools", "view", "-Ob", "-o", str(out_path), str(vcf)])
         return
 
     males = [s for s, sex in sex_by_sample.items() if sex in ("male", "m")]
     if not males:
         LOG.warning("is_chr_x set but sex map contains no male samples")
-        run_cmd(["bcftools", "view", "-Oz", "-o", str(out_path), str(vcf)])
-        bcftools_index(out_path)
+        run_cmd(["bcftools", "view", "-Ob", "-o", str(out_path), str(vcf)])
         return
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -160,7 +203,6 @@ def fix_male_chrx_hets(
         males_file = tmpdir / "males.txt"
         males_file.write_text("\n".join(males) + "\n")
 
-        # Restrict to non-PAR chrX, then set het genotypes in males to hom-alt phased (1|1).
         non_par = tmpdir / "non_par.bcf"
         run_cmd(
             [
@@ -168,7 +210,7 @@ def fix_male_chrx_hets(
                 "view",
                 "-r",
                 "chrX:2781480-155701382",
-                "-Oz",
+                "-Ob",
                 "-o",
                 str(non_par),
                 str(vcf),
@@ -182,7 +224,7 @@ def fix_male_chrx_hets(
                 "bcftools",
                 "+setGT",
                 str(non_par),
-                "-Oz",
+                "-Ob",
                 "-o",
                 str(fixed_non_par),
                 "--",
@@ -196,15 +238,14 @@ def fix_male_chrx_hets(
         )
         bcftools_index(fixed_non_par)
 
-        # Concat PAR + fixed non-PAR + merge back: replace non-PAR records in original.
-        par_vcf = tmpdir / "par.vcf.gz"
+        par_vcf = tmpdir / "par.bcf"
         run_cmd(
             [
                 "bcftools",
                 "view",
                 "-r",
                 "chrX:10001-2781479,chrX:155701383-156030895",
-                "-Oz",
+                "-Ob",
                 "-o",
                 str(par_vcf),
                 str(vcf),
@@ -217,32 +258,37 @@ def fix_male_chrx_hets(
                 "bcftools",
                 "concat",
                 "-a",
-                "-Oz",
+                "-Ob",
                 "-o",
                 str(out_path),
                 str(par_vcf),
                 str(fixed_non_par),
             ]
         )
-        bcftools_index(out_path)
 
 
 def validate_phased_gt(vcf: Path) -> None:
     proc = run_cmd(
-        ["bcftools", "query", "-f", "[%GT\t]\n", str(vcf)],
+        ["bcftools", "view", "-H", str(vcf)],
         check=False,
     )
     if proc.returncode != 0:
-        raise RuntimeError(proc.stderr or "bcftools query failed during GT validation")
+        raise RuntimeError(proc.stderr or "bcftools view failed during GT validation")
+    checked = 0
     for line in proc.stdout.splitlines():
-        for gt in line.split("\t"):
-            gt = gt.strip()
+        fields = line.split("\t")
+        for gt in fields[9:]:
             if not gt or gt == ".":
                 continue
-            if "/" in gt:
-                raise ValueError(f"Unphased genotype found (expected '|'): {gt}")
-            if "." in gt:
-                raise ValueError(f"Missing allele in genotype: {gt}")
+            fmt = gt.split(":")[0]
+            if "/" in fmt:
+                raise ValueError(f"Unphased genotype found (expected '|'): {fmt}")
+            if "." in fmt:
+                raise ValueError(f"Missing allele in genotype: {fmt}")
+        checked += 1
+        if checked >= 1000:
+            break
+    LOG.info("Validated phased GT format on %s records", checked)
 
 
 def parse_args() -> argparse.Namespace:
@@ -250,6 +296,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--gt", required=True, type=Path, help="Study BCF/VCF for one chromosome")
     parser.add_argument("--ref", required=True, type=Path, help="Reference VCF for one chromosome")
     parser.add_argument("--ref-fasta", required=True, type=Path, help="GRCh38 reference FASTA")
+    parser.add_argument("--ref-fasta-fai", required=True, type=Path, help="FASTA index (.fai)")
     parser.add_argument("--chromosome", required=True, help="Chromosome name, e.g. chr20 or chrX")
     parser.add_argument("--out-prefix", required=True, type=Path, help="Output prefix for filtered VCFs")
     parser.add_argument("--maf", type=float, default=0.01, help="Minimum MAF in study cohort")
@@ -268,6 +315,7 @@ def main() -> int:
         format="%(levelname)s: %(message)s",
     )
 
+    require_fasta_index(args.ref_fasta, args.ref_fasta_fai)
     sex_by_sample = read_sex_map(args.sample_sex_map)
     if args.is_chr_x and not sex_by_sample:
         LOG.warning("chrX run without sample_sex_map; skipping male het correction")
@@ -278,16 +326,16 @@ def main() -> int:
 
     with tempfile.TemporaryDirectory() as tmp:
         tmpdir = Path(tmp)
-        gt_norm = tmpdir / "gt.norm.vcf.gz"
-        ref_norm = tmpdir / "ref.norm.vcf.gz"
-        gt_snps = tmpdir / "gt.snps.vcf.gz"
-        ref_snps = tmpdir / "ref.snps.vcf.gz"
-        gt_maf = tmpdir / "gt.maf.vcf.gz"
+        gt_norm = tmpdir / "gt.norm.bcf"
+        ref_norm = tmpdir / "ref.norm.bcf"
+        gt_snps = tmpdir / "gt.snps.bcf"
+        ref_snps = tmpdir / "ref.snps.bcf"
+        gt_maf = tmpdir / "gt.maf.bcf"
         gt_isec = tmpdir / "gt.isec.vcf.gz"
         ref_isec = tmpdir / "ref.isec.vcf.gz"
         gt_thin = tmpdir / "gt.thin.vcf.gz"
         ref_thin = tmpdir / "ref.thin.vcf.gz"
-        gt_chrx = tmpdir / "gt.chrx.vcf.gz"
+        gt_chrx = tmpdir / "gt.chrx.bcf"
 
         normalize_vcf(args.gt, args.ref_fasta, gt_norm)
         normalize_vcf(args.ref, args.ref_fasta, ref_norm)
@@ -301,12 +349,17 @@ def main() -> int:
         filter_biallelic_snps(gt_for_filter, gt_snps)
         filter_biallelic_snps(ref_norm, ref_snps)
         filter_maf(gt_snps, args.maf, gt_maf)
-        intersect_vcfs(gt_maf, ref_snps, gt_isec, ref_isec)
+        log_file_stats(gt_maf, "study MAF-filtered")
+
+        intersect_vcfs(gt_maf, ref_snps, gt_isec, ref_isec, output_vcf=True)
         thin_vcf(gt_isec, gt_thin, args.thin_bp)
         thin_vcf(ref_isec, ref_thin, args.thin_bp)
 
         # Re-intersect after thinning so site sets match exactly.
-        intersect_vcfs(gt_thin, ref_thin, gt_out, ref_out)
+        intersect_vcfs(gt_thin, ref_thin, gt_out, ref_out, output_vcf=True)
+
+    bcftools_index(gt_out)
+    bcftools_index(ref_out)
 
     if not args.skip_validation:
         validate_phased_gt(gt_out)

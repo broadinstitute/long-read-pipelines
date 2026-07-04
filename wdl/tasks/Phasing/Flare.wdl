@@ -9,6 +9,7 @@ task FilterVCFsForFlare {
         File joint_vcf
         File ref_vcf
         File ref_fasta
+        File ref_fasta_fai
         String chromosome
         String prefix
 
@@ -33,6 +34,7 @@ task FilterVCFsForFlare {
             --gt ~{joint_vcf} \
             --ref ~{ref_vcf} \
             --ref-fasta ~{ref_fasta} \
+            --ref-fasta-fai ~{ref_fasta_fai} \
             --chromosome ~{chromosome} \
             --out-prefix ~{prefix} \
             --maf ~{maf} \
@@ -43,19 +45,19 @@ task FilterVCFsForFlare {
 
     output {
         File gt_vcf = "~{prefix}.gt.flare.vcf.gz"
-        File gt_vcf_tbi = "~{prefix}.gt.flare.vcf.gz.tbi"
+        File gt_vcf_csi = "~{prefix}.gt.flare.vcf.gz.csi"
         File ref_vcf_out = "~{prefix}.ref.flare.vcf.gz"
-        File ref_vcf_tbi = "~{prefix}.ref.flare.vcf.gz.tbi"
+        File ref_vcf_csi = "~{prefix}.ref.flare.vcf.gz.csi"
     }
 
     runtime {
-        cpu: 4
-        memory: "16 GiB"
+        cpu: 8
+        memory: "64 GiB"
         disks: "local-disk " + disk_size + " HDD"
         bootDiskSizeGb: 10
         preemptible: 1
         maxRetries: 1
-        docker: "us.gcr.io/broad-dsp-lrma/lr-flare:0.6.0-v1"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-flare:0.6.0-v3"
     }
 }
 
