@@ -125,7 +125,10 @@ task Pepper {
         mem_gb:             memory,
         disk_gb:            disk_size,
         boot_disk_gb:       50,
-        preemptible_tries:  1,
+        preemptible_tries:  0,  # each Pepper shard runs ~4.5h; at that length preemption is
+                                # frequent, and a reclaim discards the whole partial run then
+                                # falls back to on-demand anyway. Non-preemptible is cheaper
+                                # and ~2x faster wall-clock here. (was 1)
         max_retries:        0,
         docker:             "kishwars/pepper_deepvariant:r0.8" + if use_gpu then "-gpu" else ""
     }
