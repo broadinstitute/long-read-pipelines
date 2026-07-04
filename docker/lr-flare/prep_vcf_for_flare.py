@@ -29,14 +29,38 @@ def run_cmd(cmd: list[str], *, check: bool = True) -> subprocess.CompletedProces
     return proc
 
 
-def log_file_stats(path: Path, label: str) -> None:
+def count_records(path: Path) -> int:
+    """Stream-count variants without loading records into Python memory."""
+    proc = subprocess.Popen(
+        ["bcftools", "view", "-H", str(path)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    assert proc.stdout is not None
+    count = 0
+    for _ in proc.stdout:
+        count += 1
+    stderr = proc.stderr.read() if proc.stderr else ""
+    proc.wait()
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"bcftools view failed counting records in {path}: {stderr.strip()}"
+        )
+    return count
+
+
+def log_file_size(path: Path, label: str) -> None:
     if not path.exists():
         LOG.warning("%s: %s does not exist", label, path)
         return
     size_gb = path.stat().st_size / (1024**3)
-    proc = run_cmd(["bcftools", "view", "-H", str(path)], check=False)
-    n_records = len(proc.stdout.splitlines()) if proc.returncode == 0 else "?"
-    LOG.info("%s: %s (%.2f GiB, %s records)", label, path.name, size_gb, n_records)
+    LOG.info("%s: %s (%.2f GiB)", label, path.name, size_gb)
+
+
+def log_file_stats(path: Path, label: str) -> None:
+    log_file_size(path, label)
+    LOG.info("%s record count: %s", label, count_records(path))
 
 
 def bcftools_index(path: Path) -> None:
@@ -85,7 +109,7 @@ def normalize_vcf(vcf: Path, ref_fasta: Path, out_path: Path) -> None:
             str(vcf),
         ]
     )
-    log_file_stats(out_path, "normalized")
+    log_file_size(out_path, "normalized")
 
 
 def filter_biallelic_snps(vcf: Path, out_path: Path) -> None:
@@ -267,27 +291,37 @@ def fix_male_chrx_hets(
         )
 
 
-def validate_phased_gt(vcf: Path) -> None:
-    proc = run_cmd(
+def validate_phased_gt(vcf: Path, max_records: int = 1000) -> None:
+    proc = subprocess.Popen(
         ["bcftools", "view", "-H", str(vcf)],
-        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
     )
-    if proc.returncode != 0:
-        raise RuntimeError(proc.stderr or "bcftools view failed during GT validation")
+    assert proc.stdout is not None
     checked = 0
-    for line in proc.stdout.splitlines():
-        fields = line.split("\t")
-        for gt in fields[9:]:
-            if not gt or gt == ".":
-                continue
-            fmt = gt.split(":")[0]
-            if "/" in fmt:
-                raise ValueError(f"Unphased genotype found (expected '|'): {fmt}")
-            if "." in fmt:
-                raise ValueError(f"Missing allele in genotype: {fmt}")
-        checked += 1
-        if checked >= 1000:
-            break
+    try:
+        for line in proc.stdout:
+            fields = line.rstrip("\n").split("\t")
+            for gt in fields[9:]:
+                if not gt or gt == ".":
+                    continue
+                fmt = gt.split(":")[0]
+                if "/" in fmt:
+                    raise ValueError(f"Unphased genotype found (expected '|'): {fmt}")
+                if "." in fmt:
+                    raise ValueError(f"Missing allele in genotype: {fmt}")
+            checked += 1
+            if checked >= max_records:
+                break
+    finally:
+        proc.stdout.close()
+        if proc.poll() is None:
+            proc.kill()
+        stderr = proc.stderr.read() if proc.stderr else ""
+        proc.wait()
+        if proc.returncode not in (0, -9) and checked < max_records:
+            raise RuntimeError(stderr.strip() or "bcftools view failed during GT validation")
     LOG.info("Validated phased GT format on %s records", checked)
 
 

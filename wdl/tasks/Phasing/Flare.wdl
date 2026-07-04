@@ -57,7 +57,7 @@ task FilterVCFsForFlare {
         bootDiskSizeGb: 10
         preemptible: 1
         maxRetries: 1
-        docker: "us.gcr.io/broad-dsp-lrma/lr-flare:0.6.0-v3"
+        docker: "us.gcr.io/broad-dsp-lrma/lr-flare:0.6.0-v4"
     }
 }
 
