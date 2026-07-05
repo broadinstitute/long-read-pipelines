@@ -200,6 +200,85 @@ task ThinVCFsForFlare {
 }
 
 
+task FilterFlareReadySites {
+
+    input {
+        File gt_vcf
+        File gt_vcf_index
+        File ref_vcf
+        File ref_vcf_index
+        File ref_panel
+        String prefix
+    }
+
+    Float gt_size_gb = size(gt_vcf, "GB")
+    Float ref_size_gb = size(ref_vcf, "GB")
+    Int disk_size = 4 * ceil(gt_size_gb + ref_size_gb) + 50
+
+    command <<<
+        set -euxo pipefail
+
+        cut -f1 ~{ref_panel} | sort -u > ref.panel.samples
+
+        bcftools view -S ref.panel.samples -Ou ~{ref_vcf} | \
+            bcftools query -f '%CHROM\t%POS\t[%GT\t]\n' | \
+            awk '
+                {
+                    bad = 0
+                    for (i = 3; i <= NF; i++) {
+                        if ($i == "") continue
+                        if ($i ~ /\./ || $i ~ /\//) bad = 1
+                    }
+                    if (!bad) print $1, $2
+                }
+            ' | sort -k1,1 -k2,2n > ref.complete.sites
+
+        bcftools view -Ou ~{gt_vcf} | \
+            bcftools query -f '%CHROM\t%POS\t[%GT\t]\n' | \
+            awk '
+                {
+                    bad = 0
+                    for (i = 3; i <= NF; i++) {
+                        if ($i == "") continue
+                        if ($i ~ /\./ || $i ~ /\//) bad = 1
+                    }
+                    if (!bad) print $1, $2
+                }
+            ' | sort -k1,1 -k2,2n > gt.complete.sites
+
+        comm -12 ref.complete.sites gt.complete.sites > complete.sites
+
+        n_sites=$(wc -l < complete.sites | tr -d ' ')
+        if [ "$n_sites" -eq 0 ]; then
+            echo "No sites with complete phased genotypes in both reference panel and study VCF" >&2
+            exit 1
+        fi
+
+        bcftools view -T complete.sites -Oz -o ~{prefix}.ref.vcf.gz ~{ref_vcf}
+        bcftools view -T complete.sites -Oz -o ~{prefix}.gt.vcf.gz ~{gt_vcf}
+        bcftools index -c -f ~{prefix}.ref.vcf.gz
+        bcftools index -c -f ~{prefix}.gt.vcf.gz
+    >>>
+
+    output {
+        File gt_vcf_out = "~{prefix}.gt.vcf.gz"
+        File gt_vcf_csi = "~{prefix}.gt.vcf.gz.csi"
+        File ref_vcf_out = "~{prefix}.ref.vcf.gz"
+        File ref_vcf_csi = "~{prefix}.ref.vcf.gz.csi"
+    }
+
+    runtime {
+        cpu: 4
+        memory: "16 GiB"
+        disks: "local-disk " + disk_size + " HDD"
+        bootDiskSizeGb: 10
+        preemptible: 1
+        maxRetries: 1
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+}
+
+
 task MergeGlobalAncestry {
 
     input {

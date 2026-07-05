@@ -69,13 +69,23 @@ workflow FlareLocalAncestryInference {
             prefix = prep_prefix + ".flare"
     }
 
-    call Flare.Flare as F {
+    call Flare.FilterFlareReadySites as FilterSites {
         input:
+            gt_vcf = FinalizeSites.gt_vcf_out,
+            gt_vcf_index = FinalizeSites.gt_vcf_csi,
             ref_vcf = FinalizeSites.ref_vcf_out,
             ref_vcf_index = FinalizeSites.ref_vcf_csi,
             ref_panel = ref_panel,
-            test_vcf = FinalizeSites.gt_vcf_out,
-            test_vcf_index = FinalizeSites.gt_vcf_csi,
+            prefix = prep_prefix + ".ready"
+    }
+
+    call Flare.Flare as F {
+        input:
+            ref_vcf = FilterSites.ref_vcf_out,
+            ref_vcf_index = FilterSites.ref_vcf_csi,
+            ref_panel = ref_panel,
+            test_vcf = FilterSites.gt_vcf_out,
+            test_vcf_index = FilterSites.gt_vcf_csi,
             plink_map = plink_map,
             output_prefix = output_prefix,
             em = em,
