@@ -38,8 +38,6 @@ workflow FlareLocalAncestryInference {
     call Flare.PrepRefVcfForFlare as PrepRef {
         input:
             ref_vcf = ref_vcf,
-            ref_fasta = ref_fasta,
-            ref_fasta_fai = ref_fasta_fai,
             prefix = prep_prefix + ".ref"
     }
 

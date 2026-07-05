@@ -59,8 +59,6 @@ task PrepRefVcfForFlare {
 
     input {
         File ref_vcf
-        File ref_fasta
-        File ref_fasta_fai
         String prefix
     }
 
@@ -71,15 +69,8 @@ task PrepRefVcfForFlare {
 
         bcftools view \
             -m2 -M2 -v snps \
-            -Ob -o ~{prefix}.snps.pre.bcf \
+            -Ob -o ~{prefix}.bcf \
             ~{ref_vcf}
-
-        bcftools norm \
-            -f ~{ref_fasta} \
-            -m-any \
-            -Ob \
-            -o ~{prefix}.bcf \
-            ~{prefix}.snps.pre.bcf
 
         bcftools index -c -f ~{prefix}.bcf
     >>>
@@ -121,13 +112,28 @@ task IntersectVCFsForFlare {
         mkdir isec
         bcftools isec \
             -p isec \
+            -c all \
             -n=2 \
             -w1,2 \
             ~{gt_vcf} \
             ~{ref_vcf}
 
-        bcftools view -Oz -o ~{prefix}.gt.vcf.gz isec/0000.vcf
-        bcftools view -Oz -o ~{prefix}.ref.vcf.gz isec/0001.vcf
+        bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\n' isec/0000.vcf | sort -u > gt.sites
+        bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\n' isec/0001.vcf | sort -u > ref.sites
+        comm -12 gt.sites ref.sites > matched.sites
+
+        n_sites=$(wc -l < matched.sites | tr -d ' ')
+        if [ "$n_sites" -eq 0 ]; then
+            echo "No overlapping sites with matching REF/ALT between study and reference VCFs" >&2
+            echo "Study contigs:" >&2
+            bcftools query -f '%CHROM\n' ~{gt_vcf} | sort -u | head -5 >&2
+            echo "Reference contigs:" >&2
+            bcftools query -f '%CHROM\n' ~{ref_vcf} | sort -u | head -5 >&2
+            exit 1
+        fi
+
+        bcftools view -T matched.sites -Oz -o ~{prefix}.gt.vcf.gz isec/0000.vcf
+        bcftools view -T matched.sites -Oz -o ~{prefix}.ref.vcf.gz isec/0001.vcf
         bcftools index -c -f ~{prefix}.gt.vcf.gz
         bcftools index -c -f ~{prefix}.ref.vcf.gz
     >>>
@@ -174,6 +180,12 @@ task ThinVCFsForFlare {
                     if (last < 0 || $2 - last >= min) { print; last = $2 }
                 }
             ' > keep.sites
+
+        n_sites=$(wc -l < keep.sites | tr -d ' ')
+        if [ "$n_sites" -eq 0 ]; then
+            echo "No sites available for thinning; study VCF has no variant records" >&2
+            exit 1
+        fi
 
         bcftools view -T keep.sites -Oz -o ~{prefix}.gt.vcf.gz ~{gt_vcf}
         bcftools view -T keep.sites -Oz -o ~{prefix}.ref.vcf.gz ~{ref_vcf}
