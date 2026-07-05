@@ -195,6 +195,9 @@ workflows:
 - name: Flare
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/FlareLocalAncestryInference.wdl
+- name: MergeFlareGlobalAncestry
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/MergeFlareGlobalAncestry.wdl
 - name: SaigeStep0
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Association/SaigeStep0.wdl

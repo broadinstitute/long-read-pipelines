@@ -1,7 +1,6 @@
 version 1.0
 
 import "../../../tasks/Phasing/Flare.wdl"
-import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow FlareLocalAncestryInference {
     input {
@@ -13,41 +12,70 @@ workflow FlareLocalAncestryInference {
         File ref_fasta
         File ref_fasta_fai
 
-        String chromosome
-        Boolean is_chr_x = false
-        File? sample_sex_map
         File? flare_model
 
-        String gcs_out_root_dir
         String output_prefix
 
+        Float maf = 0.01
+        Int thin_bp = 20000
         Int nthreads = 16
         Int mem_gb = 64
     }
 
     Boolean em = !defined(flare_model)
 
-    String outdir = sub(gcs_out_root_dir, "/+$", "") + "/FlareLocalAncestryInference/~{output_prefix}"
+    String prep_prefix = output_prefix + ".prep"
 
-    call Flare.FilterVCFsForFlare as FilterVCFs {
+    call Flare.PrepStudyVcfForFlare as PrepStudy {
         input:
             joint_vcf = test_vcf,
+            ref_fasta = ref_fasta,
+            ref_fasta_fai = ref_fasta_fai,
+            prefix = prep_prefix + ".study",
+            maf = maf
+    }
+
+    call Flare.PrepRefVcfForFlare as PrepRef {
+        input:
             ref_vcf = ref_vcf,
             ref_fasta = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
-            chromosome = chromosome,
-            prefix = output_prefix + ".prep",
-            is_chr_x = is_chr_x,
-            sample_sex_map = sample_sex_map
+            prefix = prep_prefix + ".ref"
+    }
+
+    call Flare.IntersectVCFsForFlare as IntersectSites {
+        input:
+            gt_vcf = PrepStudy.gt_bcf,
+            gt_vcf_index = PrepStudy.gt_bcf_csi,
+            ref_vcf = PrepRef.ref_bcf,
+            ref_vcf_index = PrepRef.ref_bcf_csi,
+            prefix = prep_prefix + ".isec"
+    }
+
+    call Flare.ThinVCFsForFlare as ThinSites {
+        input:
+            gt_vcf = IntersectSites.gt_vcf_out,
+            ref_vcf = IntersectSites.ref_vcf_out,
+            prefix = prep_prefix + ".thin",
+            thin_bp = thin_bp
+    }
+
+    call Flare.IntersectVCFsForFlare as FinalizeSites {
+        input:
+            gt_vcf = ThinSites.gt_vcf_out,
+            gt_vcf_index = ThinSites.gt_vcf_csi,
+            ref_vcf = ThinSites.ref_vcf_out,
+            ref_vcf_index = ThinSites.ref_vcf_csi,
+            prefix = prep_prefix + ".flare"
     }
 
     call Flare.Flare as F {
         input:
-            ref_vcf = FilterVCFs.ref_vcf_out,
-            ref_vcf_index = FilterVCFs.ref_vcf_csi,
+            ref_vcf = FinalizeSites.ref_vcf_out,
+            ref_vcf_index = FinalizeSites.ref_vcf_csi,
             ref_panel = ref_panel,
-            test_vcf = FilterVCFs.gt_vcf,
-            test_vcf_index = FilterVCFs.gt_vcf_csi,
+            test_vcf = FinalizeSites.gt_vcf_out,
+            test_vcf_index = FinalizeSites.gt_vcf_csi,
             plink_map = plink_map,
             output_prefix = output_prefix,
             em = em,
@@ -56,36 +84,14 @@ workflow FlareLocalAncestryInference {
             mem_gb = mem_gb
     }
 
-    call FF.FinalizeToFile as FinalizeGlobalAnc {
-        input:
-            outdir = outdir,
-            file = F.global_anc
-    }
-
-    call FF.FinalizeToFile as FinalizeAncVCF {
-        input:
-            outdir = outdir,
-            file = F.anc_vcf
-    }
-
-    call FF.FinalizeToFile as FinalizeLog {
-        input:
-            outdir = outdir,
-            file = F.log
-    }
-
     if (em) {
-        call FF.FinalizeToFile as FinalizeModel {
-            input:
-                outdir = outdir,
-                file = F.model
-        }
+        File em_model = F.model
     }
 
     output {
-        File global_anc = FinalizeGlobalAnc.gcs_path
-        File anc_vcf = FinalizeAncVCF.gcs_path
-        File log = FinalizeLog.gcs_path
-        File? model = FinalizeModel.gcs_path
+        File global_anc = F.global_anc
+        File anc_vcf = F.anc_vcf
+        File log = F.log
+        File? model = em_model
     }
 }
