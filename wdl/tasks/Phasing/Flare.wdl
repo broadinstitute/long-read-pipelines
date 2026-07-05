@@ -233,8 +233,9 @@ task FilterFlareReadySites {
         cut -f1 ~{ref_panel} | sort -u > ref.panel.samples
 
         bcftools view -S ref.panel.samples -Ou ~{ref_vcf} | \
-            bcftools query -f '%CHROM\t%POS\t[%GT\t]\n' | \
+            bcftools query -f '%CHROM\t%POS[\t%GT]\n' | \
             awk '
+                BEGIN { OFS = "\t" }
                 {
                     bad = 0
                     for (i = 3; i <= NF; i++) {
@@ -246,8 +247,9 @@ task FilterFlareReadySites {
             ' | sort -k1,1 -k2,2n > ref.complete.sites
 
         bcftools view -Ou ~{gt_vcf} | \
-            bcftools query -f '%CHROM\t%POS\t[%GT\t]\n' | \
+            bcftools query -f '%CHROM\t%POS[\t%GT]\n' | \
             awk '
+                BEGIN { OFS = "\t" }
                 {
                     bad = 0
                     for (i = 3; i <= NF; i++) {
