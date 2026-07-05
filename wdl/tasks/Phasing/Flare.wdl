@@ -18,19 +18,17 @@ task PrepStudyVcfForFlare {
     command <<<
         set -euxo pipefail
 
-        ln -sf ~{ref_fasta_fai} ~{ref_fasta}.fai
+        bcftools view \
+            -m2 -M2 -v snps \
+            -Ob -o ~{prefix}.snps.pre.bcf \
+            ~{joint_vcf}
 
         bcftools norm \
             -f ~{ref_fasta} \
             -m-any \
             -Ob \
-            -o ~{prefix}.norm.bcf \
-            ~{joint_vcf}
-
-        bcftools view \
-            -m2 -M2 -v snps \
-            -Ob -o ~{prefix}.snps.bcf \
-            ~{prefix}.norm.bcf
+            -o ~{prefix}.snps.bcf \
+            ~{prefix}.snps.pre.bcf
 
         bcftools view \
             -q ~{maf}:minor \
@@ -70,8 +68,6 @@ task PrepRefVcfForFlare {
 
     command <<<
         set -euxo pipefail
-
-        ln -sf ~{ref_fasta_fai} ~{ref_fasta}.fai
 
         bcftools view \
             -m2 -M2 -v snps \
