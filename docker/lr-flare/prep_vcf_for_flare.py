@@ -165,13 +165,21 @@ def intersect_vcfs(
                 "-p",
                 str(tmpdir),
                 "-n=2",
-                "-w1",
+                "-w1,2",
                 str(gt_vcf),
                 str(ref_vcf),
             ]
         )
-        run_cmd(["bcftools", "view", *out_args, "-o", str(gt_out), str(tmpdir / "0000.vcf")])
-        run_cmd(["bcftools", "view", *out_args, "-o", str(ref_out), str(tmpdir / "0001.vcf")])
+        gt_isec_vcf = tmpdir / "0000.vcf"
+        ref_isec_vcf = tmpdir / "0001.vcf"
+        if not gt_isec_vcf.exists() or not ref_isec_vcf.exists():
+            created = sorted(p.name for p in tmpdir.iterdir())
+            raise RuntimeError(
+                "bcftools isec did not produce expected outputs 0000.vcf and 0001.vcf; "
+                f"found: {created}"
+            )
+        run_cmd(["bcftools", "view", *out_args, "-o", str(gt_out), str(gt_isec_vcf)])
+        run_cmd(["bcftools", "view", *out_args, "-o", str(ref_out), str(ref_isec_vcf)])
 
     if not output_vcf:
         bcftools_index(gt_out)
@@ -361,9 +369,8 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         tmpdir = Path(tmp)
         gt_norm = tmpdir / "gt.norm.bcf"
-        ref_norm = tmpdir / "ref.norm.bcf"
-        gt_snps = tmpdir / "gt.snps.bcf"
         ref_snps = tmpdir / "ref.snps.bcf"
+        gt_snps = tmpdir / "gt.snps.bcf"
         gt_maf = tmpdir / "gt.maf.bcf"
         gt_isec = tmpdir / "gt.isec.vcf.gz"
         ref_isec = tmpdir / "ref.isec.vcf.gz"
@@ -372,7 +379,11 @@ def main() -> int:
         gt_chrx = tmpdir / "gt.chrx.bcf"
 
         normalize_vcf(args.gt, args.ref_fasta, gt_norm)
-        normalize_vcf(args.ref, args.ref_fasta, ref_norm)
+
+        # SNP-filter gnomAD before norm to avoid a multi-hour, ~50 GiB intermediate.
+        filter_biallelic_snps(args.ref, tmpdir / "ref.snps.pre.bcf")
+        normalize_vcf(tmpdir / "ref.snps.pre.bcf", args.ref_fasta, ref_snps)
+        log_file_size(ref_snps, "reference SNP-filtered+normalized")
 
         if args.is_chr_x and sex_by_sample:
             fix_male_chrx_hets(gt_norm, sex_by_sample, args.chromosome, gt_chrx)
@@ -381,7 +392,6 @@ def main() -> int:
             gt_for_filter = gt_norm
 
         filter_biallelic_snps(gt_for_filter, gt_snps)
-        filter_biallelic_snps(ref_norm, ref_snps)
         filter_maf(gt_snps, args.maf, gt_maf)
         log_file_stats(gt_maf, "study MAF-filtered")
 
