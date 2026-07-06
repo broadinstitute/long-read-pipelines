@@ -152,7 +152,7 @@ task IntersectVCFsForFlare {
         disks: "local-disk " + disk_size + " HDD"
         bootDiskSizeGb: 10
         preemptible: 1
-        maxRetries: 1
+        maxRetries: 0
         docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
     }
 }
@@ -412,8 +412,6 @@ task Flare {
         RuntimeAttr? runtime_attr_override
     }
 
-    String model_arg = if defined(flare_model) then "model=~{flare_model}" else ""
-
     command <<<
         set -euxo pipefail
 
@@ -425,7 +423,7 @@ task Flare {
             out=~{output_prefix} \
             nthreads=~{nthreads} \
             em=~{em} \
-            ~{model_arg}
+            ~{if defined(flare_model) then "model=" + flare_model else ""}
 
     >>>
 
