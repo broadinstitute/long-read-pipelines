@@ -2,6 +2,7 @@ version 1.0
 
 import "../../../tasks/Utility/Finalize.wdl" as FF
 import "../../../structs/ReferenceMetadata.wdl"
+import "../../../structs/Structs.wdl"
 import "../../../tasks/Utility/Utils.wdl"
 
 import "../Utility/ShardWholeGenome.wdl"
@@ -290,6 +291,8 @@ task ReorderBamHeader {
     input {
         File input_bam
         File fasta_fai
+
+        RuntimeAttr? runtime_attr_override
     }
     output {
         File output_bam = "~{prefix}.resorted.bam"
@@ -297,6 +300,14 @@ task ReorderBamHeader {
     }
 
     String prefix = basename(input_bam, ".bam")
+
+    # Local SSD only attaches in units of 375 GB, so round up to the nearest multiple.
+    # samtools sort's spill plus the reheadered output BAM mean total disk traffic is
+    # several times the input size, not just input + a small margin.
+    Int bam_sz = ceil(size(input_bam, "GB"))
+    Int local_ssd_unit_gb = 375
+    Int raw_disk_gb = if bam_sz * 5 > local_ssd_unit_gb then bam_sz * 5 else local_ssd_unit_gb
+    Int disk_size = ceil(raw_disk_gb / 375.0) * local_ssd_unit_gb
 
     command <<<
     set -euo pipefail
@@ -331,10 +342,21 @@ task ReorderBamHeader {
         samtools index -@3 ~{prefix}.resorted.bam
     >>>
 
+    RuntimeAttr default_attr = object {
+        cpu_cores:          10,
+        mem_gb:             40,
+        disk_gb:            disk_size,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.23"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
-        cpu: 10
-        memory: "40 GB"
-        disks: "local-disk 375 LOCAL"
-        docker: "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.23"
+        cpu:            select_first([runtime_attr.cpu_cores,        default_attr.cpu_cores])
+        memory:         select_first([runtime_attr.mem_gb,           default_attr.mem_gb]) + " GiB"
+        disks:          "local-disk " + select_first([runtime_attr.disk_gb, default_attr.disk_gb]) + " LOCAL"
+        preemptible:    select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:     select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:         select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
