@@ -246,7 +246,7 @@ task FilterFlareReadySites {
                 }
             ' | sort -k1,1 -k2,2n > ref.complete.sites
 
-        bcftools view -Ou ~{gt_vcf} | \
+        bcftools view -S ^ref.panel.samples -Ou ~{gt_vcf} | \
             bcftools query -f '%CHROM\t%POS[\t%GT]\n' | \
             awk '
                 BEGIN { OFS = "\t" }
@@ -268,8 +268,14 @@ task FilterFlareReadySites {
             exit 1
         fi
 
+        n_study=$(bcftools view -S ^ref.panel.samples ~{gt_vcf} | bcftools query -l | wc -l | tr -d ' ')
+        if [ "$n_study" -eq 0 ]; then
+            echo "No study samples remain after excluding reference panel samples" >&2
+            exit 1
+        fi
+
         bcftools view -T complete.sites -Oz -o ~{prefix}.ref.vcf.gz ~{ref_vcf}
-        bcftools view -T complete.sites -Oz -o ~{prefix}.gt.vcf.gz ~{gt_vcf}
+        bcftools view -S ^ref.panel.samples -T complete.sites -Oz -o ~{prefix}.gt.vcf.gz ~{gt_vcf}
         bcftools index -c -f ~{prefix}.ref.vcf.gz
         bcftools index -c -f ~{prefix}.gt.vcf.gz
     >>>
