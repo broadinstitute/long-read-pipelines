@@ -102,9 +102,10 @@ task IntersectVCFsForFlare {
         String prefix
     }
 
-    Float gt_size_gb = size(gt_vcf, "GB")
-    Float ref_size_gb = size(ref_vcf, "GB")
-    Int disk_size = 20 + 6 * ceil(gt_size_gb + ref_size_gb)
+    # Float gt_size_gb = size(gt_vcf, "GB")
+    # Float ref_size_gb = size(ref_vcf, "GB")
+    # Int disk_size = 20 + 6 * ceil(gt_size_gb + ref_size_gb)
+    Int disk_size = 10 + 10*ceil(size([gt_vcf, ref_vcf], "GB"))
 
     command <<<
         set -euxo pipefail
@@ -166,9 +167,10 @@ task ThinVCFsForFlare {
         Int thin_bp = 20000
     }
 
-    Float gt_size_gb = size(gt_vcf, "GB")
-    Float ref_size_gb = size(ref_vcf, "GB")
-    Int disk_size = 10 + 4 * ceil(gt_size_gb + ref_size_gb)
+    # Float gt_size_gb = size(gt_vcf, "GB")
+    # Float ref_size_gb = size(ref_vcf, "GB")
+    # Int disk_size = 10 + 4 * ceil(gt_size_gb + ref_size_gb)
+    Int disk_size = 10 + 10*ceil(size([gt_vcf, ref_vcf], "GB"))
 
     command <<<
         set -euxo pipefail
@@ -223,9 +225,10 @@ task FilterFlareReadySites {
         String prefix
     }
 
-    Float gt_size_gb = size(gt_vcf, "GB")
-    Float ref_size_gb = size(ref_vcf, "GB")
-    Int disk_size = 20 + 6 * ceil(gt_size_gb + ref_size_gb)
+    # Float gt_size_gb = size(gt_vcf, "GB")
+    # Float ref_size_gb = size(ref_vcf, "GB")
+    # Int disk_size = 20 + 6 * ceil(gt_size_gb + ref_size_gb)
+    Int disk_size = 10 + 10*ceil(size([gt_vcf, ref_vcf], "GB"))
 
     command <<<
         set -euxo pipefail
