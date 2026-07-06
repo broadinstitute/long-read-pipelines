@@ -101,10 +101,6 @@ workflow FlareLocalAncestryInference {
     }
 
     output {
-        File ready_gt_vcf = FilterSites.gt_vcf_out
-        File ready_gt_vcf_index = FilterSites.gt_vcf_csi
-        File ready_ref_vcf = FilterSites.ref_vcf_out
-        File ready_ref_vcf_index = FilterSites.ref_vcf_csi
         File? global_anc = F.global_anc
         File? anc_vcf = F.anc_vcf
         File? log = F.log
