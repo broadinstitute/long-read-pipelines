@@ -55,6 +55,10 @@ workflow Work {
         RuntimeAttr? pbsv_call_runtime_attr_override
         RuntimeAttr? sniffles_runtime_attr_override
 
+        # per-shard memory bump for pbsv discover; shard indices match the order of per_chr_bam_bai_and_id
+        Array[Int] pbsv_discover_memup_shards = []
+        Int? pbsv_discover_memup_gb
+
         # optimization
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
     }
@@ -95,10 +99,17 @@ workflow Work {
     ##########################################################
     if (pbsv_discover_per_chr) {
 
-        scatter (triplet in select_first([per_chr_bam_bai_and_id])) {
+        Array[Pair[String, Pair[File, File]]] pbsv_discover_shards = select_first([per_chr_bam_bai_and_id])
+
+        scatter (i in range(length(pbsv_discover_shards))) {
+            Pair[String, Pair[File, File]] triplet = pbsv_discover_shards[i]
             String contig = triplet.left
             File shard_bam = triplet.right.left
             File shard_bai = triplet.right.right
+
+            scatter (j in pbsv_discover_memup_shards) { Int pbsv_discover_memup_indicator = if (j == i) then 1 else 0 }
+            call SumInts as SumPbsvDiscoverMemupIndicators { input: integers = pbsv_discover_memup_indicator }
+            Boolean pbsv_discover_memup_for_shard = SumPbsvDiscoverMemupIndicators.total > 0
 
             call PBSV.Discover as pbsv_discover_chr {
                 input:
@@ -112,7 +123,9 @@ workflow Work {
                     ref_fasta_fai = ref_bundle.fai,
                     tandem_repeat_bed = ref_bundle.tandem_repeat_bed,
                     zones = zones,
-                    runtime_attr_override = pbsv_discover_runtime_attr_override
+                    runtime_attr_override = pbsv_discover_runtime_attr_override,
+                    memup = pbsv_discover_memup_for_shard,
+                    memup_gb = pbsv_discover_memup_gb
             }
         }
 
@@ -157,4 +170,25 @@ workflow Work {
     call FF.FinalizeToFile as FinalizeSnifflesVcf { input: outdir = svdir, file = Sniffles2SV.vcf }
     call FF.FinalizeToFile as FinalizeSnifflesTbi { input: outdir = svdir, file = Sniffles2SV.tbi }
     call FF.FinalizeToFile as FinalizeSnifflesSnf { input: outdir = svdir, file = Sniffles2SV.snf }
+}
+
+task SumInts {
+    input {
+        Array[Int] integers
+    }
+    output {
+        Int total = read_int("result.txt")
+    }
+
+    # WDL helper to write one Int per line to a file
+    File int_file = write_lines(integers)
+
+    command <<<
+        # Use awk to sum the file line-by-line (memory efficient!)
+        awk '{s+=$1} END {print s}' ~{int_file} > result.txt
+    >>>
+    runtime {
+        disks: "local-disk 10 HDD"
+        docker: "gcr.io/cloud-marketplace/google/ubuntu2004:latest"
+    }
 }

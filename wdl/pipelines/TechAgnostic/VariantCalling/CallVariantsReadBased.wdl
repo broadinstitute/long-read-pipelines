@@ -89,6 +89,10 @@ workflow CallVariants {
 
         Array[Int] memup_shards
         Boolean all_memup
+
+        # per-shard memory bump for pbsv discover; shard indices match the order of SplitBamByChr's output
+        Array[Int] pbsv_discover_memup_shards = []
+        Int? pbsv_discover_memup_gb
     }
 
     if ((!defined(sv_calling_options_json)) && (!defined(small_variant_calling_options_json))) {
@@ -181,6 +185,8 @@ workflow CallVariants {
                 pbsv_discover_runtime_attr_override = effective_pbsv_discover_runtime_attr_override,
                 pbsv_call_runtime_attr_override = effective_pbsv_call_runtime_attr_override,
                 sniffles_runtime_attr_override = effective_sniffles_runtime_attr_override,
+                pbsv_discover_memup_shards = pbsv_discover_memup_shards,
+                pbsv_discover_memup_gb = pbsv_discover_memup_gb,
 
                 zones = wdl_parsable_zones
         }

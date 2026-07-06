@@ -81,6 +81,8 @@ task Discover {
         String prefix
         String zones
         Boolean is_ont = false
+        Boolean memup = false
+        Int? memup_gb
         RuntimeAttr? runtime_attr_override
     }
 
@@ -93,6 +95,8 @@ task Discover {
         tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
         chr:               "chr on which to call variants"
         prefix:            "prefix for output"
+        memup:             "if true, use memup_gb instead of the default 2*num_cores memory"
+        memup_gb:          "memory (GiB) to use for this shard when memup is true"
     }
 
     String fileoutput = if defined(chr) then "~{prefix}.~{chr}.svsig.gz" else "~{prefix}.svsig.gz"
@@ -159,7 +163,7 @@ task Discover {
     String disk_type = if is_ont then "SSD" else "HDD"
 
     Int num_cores = if(defined(chr)) then 4 else 32
-    Int memory = if ("chr2"==chr || "chr3"==chr || "chr4"==chr || "chr17"==chr || "chr18"==chr || "chr21"==chr || "chr22"==chr)  then 6 * num_cores else 2 * num_cores
+    Int memory = if (memup) then select_first([memup_gb, 2 * num_cores]) else 2 * num_cores
 
     RuntimeAttr default_attr = object {
         cpu_cores:          num_cores,
