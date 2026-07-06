@@ -83,6 +83,7 @@ workflow CallVariants {
         File? sv_calling_options_json
         RuntimeAttr? pbsv_discover_runtime_attr_override
         RuntimeAttr? pbsv_call_runtime_attr_override
+        RuntimeAttr? sniffles_runtime_attr_override
 
         Array[String] gcp_zones = ["us-central1-a", "us-central1-b", "us-central1-c", "us-central1-f"]
 
@@ -158,6 +159,7 @@ workflow CallVariants {
         SVCallingConfig sv_options = read_json(select_first([sv_calling_options_json]))
         RuntimeAttr? effective_pbsv_discover_runtime_attr_override = if defined(pbsv_discover_runtime_attr_override) then pbsv_discover_runtime_attr_override else sv_options.pbsv_discover_runtime_attr_override
         RuntimeAttr? effective_pbsv_call_runtime_attr_override = if defined(pbsv_call_runtime_attr_override) then pbsv_call_runtime_attr_override else sv_options.pbsv_call_runtime_attr_override
+        RuntimeAttr? effective_sniffles_runtime_attr_override = if defined(sniffles_runtime_attr_override) then sniffles_runtime_attr_override else sv_options.sniffles_runtime_attr_override
 
         call CallStructuralVariants.Work as SVjob {
             input:
@@ -178,6 +180,7 @@ workflow CallVariants {
                 pbsv_discover_per_chr = sv_options.pbsv_discover_per_chr,
                 pbsv_discover_runtime_attr_override = effective_pbsv_discover_runtime_attr_override,
                 pbsv_call_runtime_attr_override = effective_pbsv_call_runtime_attr_override,
+                sniffles_runtime_attr_override = effective_sniffles_runtime_attr_override,
 
                 zones = wdl_parsable_zones
         }

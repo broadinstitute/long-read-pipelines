@@ -15,6 +15,7 @@ struct SVCallingConfig {
 
     RuntimeAttr? pbsv_discover_runtime_attr_override
     RuntimeAttr? pbsv_call_runtime_attr_override
+    RuntimeAttr? sniffles_runtime_attr_override
 
     String? gcp_zones
 }
@@ -52,6 +53,7 @@ workflow Work {
         Int minsvlen = 20
         RuntimeAttr? pbsv_discover_runtime_attr_override
         RuntimeAttr? pbsv_call_runtime_attr_override
+        RuntimeAttr? sniffles_runtime_attr_override
 
         # optimization
         String zones = "us-central1-a us-central1-b us-central1-c us-central1-f"
@@ -84,7 +86,8 @@ workflow Work {
             minsvlen = minsvlen,
             sample_id = InferSampleName.sample_name,
             prefix = prefix,
-            tandem_repeat_bed = ref_bundle.tandem_repeat_bed
+            tandem_repeat_bed = ref_bundle.tandem_repeat_bed,
+            runtime_attr_override = sniffles_runtime_attr_override
     }
 
     ##########################################################
