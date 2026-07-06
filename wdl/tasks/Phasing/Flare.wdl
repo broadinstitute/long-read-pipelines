@@ -230,79 +230,51 @@ task FilterFlareReadySites {
     command <<<
         set -euxo pipefail
 
-        complete_sites() {
-            awk '
-                BEGIN { OFS = "\t" }
-                {
-                    bad = 0
-                    for (i = 3; i <= NF; i++) {
-                        split($i, gt_field, ":")
-                        gt = gt_field[1]
-                        if (gt == "" || gt == ".") continue
-                        if (gt ~ /\./ || gt ~ /\//) bad = 1
-                    }
-                    if (!bad) print $1, $2
-                }
-            ' | sort -u -k1,1 -k2,2n
-        }
-
         cut -f1 ~{ref_panel} | sort -u > ref.panel.samples
         bcftools query -l ~{gt_vcf} | sort -u > gt.samples
         comm -12 ref.panel.samples gt.samples > overlap.samples
 
-        echo "Finding ref-panel sites with complete phased genotypes..." >&2
-        bcftools view --force-samples -S ref.panel.samples -Ou ~{ref_vcf} | \
-            bcftools query -f '%CHROM\t%POS[\t%GT]\n' | \
-            complete_sites > ref.complete.sites
+        n_overlap=$(wc -l < overlap.samples | tr -d ' ')
+        echo "Excluding $n_overlap study samples that also appear in the reference panel" >&2
 
-        echo "Finding study sites with complete phased genotypes..." >&2
-        if [ -s overlap.samples ]; then
-            bcftools view --force-samples -S ^overlap.samples -Ou ~{gt_vcf} | \
-                bcftools query -f '%CHROM\t%POS[\t%GT]\n' | \
-                complete_sites > gt.complete.sites
+        bcftools view --force-samples -S ref.panel.samples \
+            -i 'N_MISSING==0' -e 'GT~"/"' \
+            -Ob -o ~{prefix}.ref.bcf ~{ref_vcf}
+
+        if [ "$n_overlap" -gt 0 ]; then
+            bcftools view --force-samples -S ^overlap.samples \
+                -i 'N_MISSING==0' -e 'GT~"/"' \
+                -Ob -o ~{prefix}.gt.bcf ~{gt_vcf}
         else
-            bcftools view -Ou ~{gt_vcf} | \
-                bcftools query -f '%CHROM\t%POS[\t%GT]\n' | \
-                complete_sites > gt.complete.sites
+            bcftools view \
+                -i 'N_MISSING==0' -e 'GT~"/"' \
+                -Ob -o ~{prefix}.gt.bcf ~{gt_vcf}
         fi
 
-        comm -12 ref.complete.sites gt.complete.sites > complete.sites
-
-        n_sites=$(wc -l < complete.sites | tr -d ' ')
-        if [ "$n_sites" -eq 0 ]; then
-            echo "No sites with complete phased genotypes in both reference panel and study VCF" >&2
-            exit 1
-        fi
-        echo "Keeping ${n_sites} sites for FLARE" >&2
-
-        if [ -s overlap.samples ]; then
-            n_study=$(bcftools view --force-samples -S ^overlap.samples ~{gt_vcf} | bcftools query -l | wc -l | tr -d ' ')
-            n_overlap=$(wc -l < overlap.samples | tr -d ' ')
-            echo "Excluding ${n_overlap} study samples that overlap the reference panel" >&2
-        else
-            n_study=$(bcftools query -l ~{gt_vcf} | wc -l | tr -d ' ')
-        fi
+        n_study=$(bcftools query -l ~{prefix}.gt.bcf | wc -l | tr -d ' ')
         if [ "$n_study" -eq 0 ]; then
-            echo "No study samples remain after excluding reference panel samples" >&2
+            echo "No study samples remain after excluding reference panel overlaps" >&2
             exit 1
         fi
-        echo "Running FLARE on ${n_study} study samples" >&2
+        echo "FLARE study sample count: $n_study" >&2
 
-        echo "Writing reference VCF..." >&2
-        bcftools view --force-samples -S ref.panel.samples -T complete.sites -Ob -o ~{prefix}.ref.bcf ~{ref_vcf}
-        bcftools index -c -f ~{prefix}.ref.bcf
-        bcftools convert -Oz -o ~{prefix}.ref.vcf.gz ~{prefix}.ref.bcf
-        bcftools index -c -f ~{prefix}.ref.vcf.gz
+        mkdir isec
+        bcftools isec -p isec -c all -n=2 -w1,2 ~{prefix}.ref.bcf ~{prefix}.gt.bcf
 
-        echo "Writing study VCF..." >&2
-        bcftools view -T complete.sites -Ob -o ~{prefix}.gt.sites.bcf ~{gt_vcf}
-        if [ -s overlap.samples ]; then
-            bcftools view --force-samples -S ^overlap.samples -Ob -o ~{prefix}.gt.bcf ~{prefix}.gt.sites.bcf
-        else
-            cp ~{prefix}.gt.sites.bcf ~{prefix}.gt.bcf
+        bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\n' isec/0000.vcf | sort -u > gt.sites
+        bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\n' isec/0001.vcf | sort -u > ref.sites
+        comm -12 gt.sites ref.sites > matched.sites
+
+        n_sites=$(wc -l < matched.sites | tr -d ' ')
+        if [ "$n_sites" -eq 0 ]; then
+            echo "No shared sites between study and reference after filtering" >&2
+            exit 1
         fi
-        bcftools index -c -f ~{prefix}.gt.bcf
-        bcftools convert -Oz -o ~{prefix}.gt.vcf.gz ~{prefix}.gt.bcf
+        echo "Shared sites for FLARE: $n_sites" >&2
+
+        bcftools view -T matched.sites -Oz -o ~{prefix}.ref.vcf.gz isec/0000.vcf
+        bcftools view -T matched.sites -Oz -o ~{prefix}.gt.vcf.gz isec/0001.vcf
+        bcftools index -c -f ~{prefix}.ref.vcf.gz
         bcftools index -c -f ~{prefix}.gt.vcf.gz
     >>>
 
