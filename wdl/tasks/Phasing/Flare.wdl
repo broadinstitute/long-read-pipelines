@@ -251,6 +251,9 @@ task FilterFlareReadySites {
                 bcftools view -e 'GT~"/"' -Ob -o ~{prefix}.gt.bcf
         fi
 
+        bcftools index -c -f ~{prefix}.ref.bcf
+        bcftools index -c -f ~{prefix}.gt.bcf
+
         n_study=$(bcftools query -l ~{prefix}.gt.bcf | wc -l | tr -d ' ')
         if [ "$n_study" -eq 0 ]; then
             echo "No study samples remain after excluding reference panel overlaps" >&2
