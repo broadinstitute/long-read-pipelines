@@ -238,17 +238,17 @@ task FilterFlareReadySites {
         echo "Excluding $n_overlap study samples that also appear in the reference panel" >&2
 
         bcftools view --force-samples -S ref.panel.samples \
-            -i 'N_MISSING==0' -e 'GT~"/"' \
-            -Ob -o ~{prefix}.ref.bcf ~{ref_vcf}
+            -i 'N_MISSING==0' -Ou ~{ref_vcf} | \
+            bcftools view -e 'GT~"/"' -Ob -o ~{prefix}.ref.bcf
 
         if [ "$n_overlap" -gt 0 ]; then
             bcftools view --force-samples -S ^overlap.samples \
-                -i 'N_MISSING==0' -e 'GT~"/"' \
-                -Ob -o ~{prefix}.gt.bcf ~{gt_vcf}
+                -i 'N_MISSING==0' -Ou ~{gt_vcf} | \
+                bcftools view -e 'GT~"/"' -Ob -o ~{prefix}.gt.bcf
         else
             bcftools view \
-                -i 'N_MISSING==0' -e 'GT~"/"' \
-                -Ob -o ~{prefix}.gt.bcf ~{gt_vcf}
+                -i 'N_MISSING==0' -Ou ~{gt_vcf} | \
+                bcftools view -e 'GT~"/"' -Ob -o ~{prefix}.gt.bcf
         fi
 
         n_study=$(bcftools query -l ~{prefix}.gt.bcf | wc -l | tr -d ' ')
