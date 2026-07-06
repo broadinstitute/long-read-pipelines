@@ -14,6 +14,8 @@ workflow FlareLocalAncestryInference {
 
         File? flare_model
 
+        Boolean run_flare = true
+
         String output_prefix
 
         Float maf = 0.01
@@ -77,29 +79,35 @@ workflow FlareLocalAncestryInference {
             prefix = prep_prefix + ".ready"
     }
 
-    call Flare.Flare as F {
-        input:
-            ref_vcf = FilterSites.ref_vcf_out,
-            ref_vcf_index = FilterSites.ref_vcf_csi,
-            ref_panel = ref_panel,
-            test_vcf = FilterSites.gt_vcf_out,
-            test_vcf_index = FilterSites.gt_vcf_csi,
-            plink_map = plink_map,
-            output_prefix = output_prefix,
-            em = em,
-            flare_model = flare_model,
-            nthreads = nthreads,
-            mem_gb = mem_gb
-    }
+    if (run_flare) {
+        call Flare.Flare as F {
+            input:
+                ref_vcf = FilterSites.ref_vcf_out,
+                ref_vcf_index = FilterSites.ref_vcf_csi,
+                ref_panel = ref_panel,
+                test_vcf = FilterSites.gt_vcf_out,
+                test_vcf_index = FilterSites.gt_vcf_csi,
+                plink_map = plink_map,
+                output_prefix = output_prefix,
+                em = em,
+                flare_model = flare_model,
+                nthreads = nthreads,
+                mem_gb = mem_gb
+        }
 
-    if (em) {
-        File em_model = F.model
+        if (em) {
+            File em_model = F.model
+        }
     }
 
     output {
-        File global_anc = F.global_anc
-        File anc_vcf = F.anc_vcf
-        File log = F.log
+        File ready_gt_vcf = FilterSites.gt_vcf_out
+        File ready_gt_vcf_index = FilterSites.gt_vcf_csi
+        File ready_ref_vcf = FilterSites.ref_vcf_out
+        File ready_ref_vcf_index = FilterSites.ref_vcf_csi
+        File? global_anc = F.global_anc
+        File? anc_vcf = F.anc_vcf
+        File? log = F.log
         File? model = em_model
     }
 }

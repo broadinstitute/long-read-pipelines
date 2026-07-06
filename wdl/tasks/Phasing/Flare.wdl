@@ -13,7 +13,7 @@ task PrepStudyVcfForFlare {
         Float maf = 0.01
     }
 
-    Int disk_size = 4 * ceil(size(joint_vcf, "GB")) + 50
+    Int disk_size = 1 + 4 * ceil(size(joint_vcf, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -44,8 +44,8 @@ task PrepStudyVcfForFlare {
     }
 
     runtime {
-        cpu: 8
-        memory: "64 GiB"
+        cpu: 2
+        memory: "4 GiB"
         disks: "local-disk " + disk_size + " HDD"
         bootDiskSizeGb: 10
         preemptible: 1
@@ -62,7 +62,7 @@ task PrepRefVcfForFlare {
         String prefix
     }
 
-    Int disk_size = 4 * ceil(size(ref_vcf, "GB")) + 50
+    Int disk_size = 1 + 4 * ceil(size(ref_vcf, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -81,8 +81,8 @@ task PrepRefVcfForFlare {
     }
 
     runtime {
-        cpu: 4
-        memory: "32 GiB"
+        cpu: 2
+        memory: "4 GiB"
         disks: "local-disk " + disk_size + " HDD"
         bootDiskSizeGb: 10
         preemptible: 1
@@ -104,7 +104,7 @@ task IntersectVCFsForFlare {
 
     Float gt_size_gb = size(gt_vcf, "GB")
     Float ref_size_gb = size(ref_vcf, "GB")
-    Int disk_size = 4 * ceil(gt_size_gb + ref_size_gb) + 50
+    Int disk_size = 1 + 4 * ceil(gt_size_gb + ref_size_gb)
 
     command <<<
         set -euxo pipefail
@@ -146,8 +146,8 @@ task IntersectVCFsForFlare {
     }
 
     runtime {
-        cpu: 4
-        memory: "32 GiB"
+        cpu: 2
+        memory: "4 GiB"
         disks: "local-disk " + disk_size + " HDD"
         bootDiskSizeGb: 10
         preemptible: 1
@@ -168,7 +168,7 @@ task ThinVCFsForFlare {
 
     Float gt_size_gb = size(gt_vcf, "GB")
     Float ref_size_gb = size(ref_vcf, "GB")
-    Int disk_size = 4 * ceil(gt_size_gb + ref_size_gb) + 50
+    Int disk_size = 1 + 4 * ceil(gt_size_gb + ref_size_gb)
 
     command <<<
         set -euxo pipefail
@@ -202,7 +202,7 @@ task ThinVCFsForFlare {
 
     runtime {
         cpu: 2
-        memory: "16 GiB"
+        memory: "4 GiB"
         disks: "local-disk " + disk_size + " HDD"
         bootDiskSizeGb: 10
         preemptible: 1
@@ -225,7 +225,7 @@ task FilterFlareReadySites {
 
     Float gt_size_gb = size(gt_vcf, "GB")
     Float ref_size_gb = size(ref_vcf, "GB")
-    Int disk_size = 8 * ceil(gt_size_gb + ref_size_gb) + 50
+    Int disk_size = 1 + 4 * ceil(gt_size_gb + ref_size_gb)
 
     command <<<
         set -euxo pipefail
@@ -289,8 +289,8 @@ task FilterFlareReadySites {
     }
 
     runtime {
-        cpu: 4
-        memory: "32 GiB"
+        cpu: 2
+        memory: "8 GiB"
         disks: "local-disk " + disk_size + " HDD"
         bootDiskSizeGb: 10
         preemptible: 1
@@ -308,7 +308,7 @@ task MergeGlobalAncestry {
     }
 
     Float input_size_gb = size(global_anc_files, "GB")
-    Int disk_size = 2 * ceil(input_size_gb) + 10
+    Int disk_size = 1 + 4 * ceil(input_size_gb)
 
     command <<<
         set -euxo pipefail
