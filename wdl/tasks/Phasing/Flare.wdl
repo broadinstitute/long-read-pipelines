@@ -231,6 +231,8 @@ task FilterFlareReadySites {
         set -euxo pipefail
 
         cut -f1 ~{ref_panel} | sort -u > ref.panel.samples
+        bcftools query -l ~{gt_vcf} | sort -u > gt.samples
+        comm -12 ref.panel.samples gt.samples > overlap.samples
 
         bcftools view -S ref.panel.samples -Ou ~{ref_vcf} | \
             bcftools query -f '%CHROM\t%POS[\t%GT]\n' | \
@@ -246,19 +248,35 @@ task FilterFlareReadySites {
                 }
             ' | sort -k1,1 -k2,2n > ref.complete.sites
 
-        bcftools view -S ^ref.panel.samples -Ou ~{gt_vcf} | \
-            bcftools query -f '%CHROM\t%POS[\t%GT]\n' | \
-            awk '
-                BEGIN { OFS = "\t" }
-                {
-                    bad = 0
-                    for (i = 3; i <= NF; i++) {
-                        if ($i == "") continue
-                        if ($i ~ /\./ || $i ~ /\//) bad = 1
+        if [ -s overlap.samples ]; then
+            bcftools view -S ^overlap.samples -Ou ~{gt_vcf} | \
+                bcftools query -f '%CHROM\t%POS[\t%GT]\n' | \
+                awk '
+                    BEGIN { OFS = "\t" }
+                    {
+                        bad = 0
+                        for (i = 3; i <= NF; i++) {
+                            if ($i == "") continue
+                            if ($i ~ /\./ || $i ~ /\//) bad = 1
+                        }
+                        if (!bad) print $1, $2
                     }
-                    if (!bad) print $1, $2
-                }
-            ' | sort -k1,1 -k2,2n > gt.complete.sites
+                ' | sort -k1,1 -k2,2n > gt.complete.sites
+        else
+            bcftools view -Ou ~{gt_vcf} | \
+                bcftools query -f '%CHROM\t%POS[\t%GT]\n' | \
+                awk '
+                    BEGIN { OFS = "\t" }
+                    {
+                        bad = 0
+                        for (i = 3; i <= NF; i++) {
+                            if ($i == "") continue
+                            if ($i ~ /\./ || $i ~ /\//) bad = 1
+                        }
+                        if (!bad) print $1, $2
+                    }
+                ' | sort -k1,1 -k2,2n > gt.complete.sites
+        fi
 
         comm -12 ref.complete.sites gt.complete.sites > complete.sites
 
@@ -268,14 +286,22 @@ task FilterFlareReadySites {
             exit 1
         fi
 
-        n_study=$(bcftools view -S ^ref.panel.samples ~{gt_vcf} | bcftools query -l | wc -l | tr -d ' ')
+        if [ -s overlap.samples ]; then
+            n_study=$(bcftools view -S ^overlap.samples ~{gt_vcf} | bcftools query -l | wc -l | tr -d ' ')
+        else
+            n_study=$(bcftools query -l ~{gt_vcf} | wc -l | tr -d ' ')
+        fi
         if [ "$n_study" -eq 0 ]; then
             echo "No study samples remain after excluding reference panel samples" >&2
             exit 1
         fi
 
         bcftools view -T complete.sites -Oz -o ~{prefix}.ref.vcf.gz ~{ref_vcf}
-        bcftools view -S ^ref.panel.samples -T complete.sites -Oz -o ~{prefix}.gt.vcf.gz ~{gt_vcf}
+        if [ -s overlap.samples ]; then
+            bcftools view -S ^overlap.samples -T complete.sites -Oz -o ~{prefix}.gt.vcf.gz ~{gt_vcf}
+        else
+            bcftools view -T complete.sites -Oz -o ~{prefix}.gt.vcf.gz ~{gt_vcf}
+        fi
         bcftools index -c -f ~{prefix}.ref.vcf.gz
         bcftools index -c -f ~{prefix}.gt.vcf.gz
     >>>
