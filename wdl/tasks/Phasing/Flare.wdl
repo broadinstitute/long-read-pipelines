@@ -105,7 +105,7 @@ task IntersectVCFsForFlare {
     # Float gt_size_gb = size(gt_vcf, "GB")
     # Float ref_size_gb = size(ref_vcf, "GB")
     # Int disk_size = 20 + 6 * ceil(gt_size_gb + ref_size_gb)
-    Int disk_size = 10 + 10*ceil(size([gt_vcf, ref_vcf], "GB"))
+    Int disk_size = 50 + 10*ceil(size([gt_vcf, ref_vcf], "GB"))
 
     command <<<
         set -euxo pipefail
