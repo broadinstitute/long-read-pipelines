@@ -225,57 +225,45 @@ task FilterFlareReadySites {
 
     Float gt_size_gb = size(gt_vcf, "GB")
     Float ref_size_gb = size(ref_vcf, "GB")
-    Int disk_size = 4 * ceil(gt_size_gb + ref_size_gb) + 50
+    Int disk_size = 8 * ceil(gt_size_gb + ref_size_gb) + 50
 
     command <<<
         set -euxo pipefail
 
-        cut -f1 ~{ref_panel} | sort -u > ref.panel.samples
-        bcftools query -l ~{gt_vcf} | sort -u > gt.samples
-        comm -12 ref.panel.samples gt.samples > overlap.samples
-
-        bcftools view -S ref.panel.samples -Ou ~{ref_vcf} | \
-            bcftools query -f '%CHROM\t%POS[\t%GT]\n' | \
+        complete_sites() {
             awk '
                 BEGIN { OFS = "\t" }
                 {
                     bad = 0
                     for (i = 3; i <= NF; i++) {
-                        if ($i == "") continue
-                        if ($i ~ /\./ || $i ~ /\//) bad = 1
+                        split($i, gt_field, ":")
+                        gt = gt_field[1]
+                        if (gt == "" || gt == ".") continue
+                        if (gt ~ /\./ || gt ~ /\//) bad = 1
                     }
                     if (!bad) print $1, $2
                 }
-            ' | sort -k1,1 -k2,2n > ref.complete.sites
+            ' | sort -u -k1,1 -k2,2n
+        }
 
+        cut -f1 ~{ref_panel} | sort -u > ref.panel.samples
+        bcftools query -l ~{gt_vcf} | sort -u > gt.samples
+        comm -12 ref.panel.samples gt.samples > overlap.samples
+
+        echo "Finding ref-panel sites with complete phased genotypes..." >&2
+        bcftools view --force-samples -S ref.panel.samples -Ou ~{ref_vcf} | \
+            bcftools query -f '%CHROM\t%POS[\t%GT]\n' | \
+            complete_sites > ref.complete.sites
+
+        echo "Finding study sites with complete phased genotypes..." >&2
         if [ -s overlap.samples ]; then
-            bcftools view -S ^overlap.samples -Ou ~{gt_vcf} | \
+            bcftools view --force-samples -S ^overlap.samples -Ou ~{gt_vcf} | \
                 bcftools query -f '%CHROM\t%POS[\t%GT]\n' | \
-                awk '
-                    BEGIN { OFS = "\t" }
-                    {
-                        bad = 0
-                        for (i = 3; i <= NF; i++) {
-                            if ($i == "") continue
-                            if ($i ~ /\./ || $i ~ /\//) bad = 1
-                        }
-                        if (!bad) print $1, $2
-                    }
-                ' | sort -k1,1 -k2,2n > gt.complete.sites
+                complete_sites > gt.complete.sites
         else
             bcftools view -Ou ~{gt_vcf} | \
                 bcftools query -f '%CHROM\t%POS[\t%GT]\n' | \
-                awk '
-                    BEGIN { OFS = "\t" }
-                    {
-                        bad = 0
-                        for (i = 3; i <= NF; i++) {
-                            if ($i == "") continue
-                            if ($i ~ /\./ || $i ~ /\//) bad = 1
-                        }
-                        if (!bad) print $1, $2
-                    }
-                ' | sort -k1,1 -k2,2n > gt.complete.sites
+                complete_sites > gt.complete.sites
         fi
 
         comm -12 ref.complete.sites gt.complete.sites > complete.sites
@@ -285,9 +273,12 @@ task FilterFlareReadySites {
             echo "No sites with complete phased genotypes in both reference panel and study VCF" >&2
             exit 1
         fi
+        echo "Keeping ${n_sites} sites for FLARE" >&2
 
         if [ -s overlap.samples ]; then
-            n_study=$(bcftools view -S ^overlap.samples ~{gt_vcf} | bcftools query -l | wc -l | tr -d ' ')
+            n_study=$(bcftools view --force-samples -S ^overlap.samples ~{gt_vcf} | bcftools query -l | wc -l | tr -d ' ')
+            n_overlap=$(wc -l < overlap.samples | tr -d ' ')
+            echo "Excluding ${n_overlap} study samples that overlap the reference panel" >&2
         else
             n_study=$(bcftools query -l ~{gt_vcf} | wc -l | tr -d ' ')
         fi
@@ -295,14 +286,23 @@ task FilterFlareReadySites {
             echo "No study samples remain after excluding reference panel samples" >&2
             exit 1
         fi
+        echo "Running FLARE on ${n_study} study samples" >&2
 
-        bcftools view -T complete.sites -Oz -o ~{prefix}.ref.vcf.gz ~{ref_vcf}
-        if [ -s overlap.samples ]; then
-            bcftools view -S ^overlap.samples -T complete.sites -Oz -o ~{prefix}.gt.vcf.gz ~{gt_vcf}
-        else
-            bcftools view -T complete.sites -Oz -o ~{prefix}.gt.vcf.gz ~{gt_vcf}
-        fi
+        echo "Writing reference VCF..." >&2
+        bcftools view --force-samples -S ref.panel.samples -T complete.sites -Ob -o ~{prefix}.ref.bcf ~{ref_vcf}
+        bcftools index -c -f ~{prefix}.ref.bcf
+        bcftools convert -Oz -o ~{prefix}.ref.vcf.gz ~{prefix}.ref.bcf
         bcftools index -c -f ~{prefix}.ref.vcf.gz
+
+        echo "Writing study VCF..." >&2
+        bcftools view -T complete.sites -Ob -o ~{prefix}.gt.sites.bcf ~{gt_vcf}
+        if [ -s overlap.samples ]; then
+            bcftools view --force-samples -S ^overlap.samples -Ob -o ~{prefix}.gt.bcf ~{prefix}.gt.sites.bcf
+        else
+            cp ~{prefix}.gt.sites.bcf ~{prefix}.gt.bcf
+        fi
+        bcftools index -c -f ~{prefix}.gt.bcf
+        bcftools convert -Oz -o ~{prefix}.gt.vcf.gz ~{prefix}.gt.bcf
         bcftools index -c -f ~{prefix}.gt.vcf.gz
     >>>
 
@@ -315,7 +315,7 @@ task FilterFlareReadySites {
 
     runtime {
         cpu: 4
-        memory: "16 GiB"
+        memory: "32 GiB"
         disks: "local-disk " + disk_size + " HDD"
         bootDiskSizeGb: 10
         preemptible: 1
