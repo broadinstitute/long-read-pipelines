@@ -13,7 +13,7 @@ task PrepStudyVcfForFlare {
         Float maf = 0.01
     }
 
-    Int disk_size = 1 + 4 * ceil(size(joint_vcf, "GB"))
+    Int disk_size = 10 + 4 * ceil(size(joint_vcf, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -62,7 +62,7 @@ task PrepRefVcfForFlare {
         String prefix
     }
 
-    Int disk_size = 1 + 4 * ceil(size(ref_vcf, "GB"))
+    Int disk_size = 10 + 4 * ceil(size(ref_vcf, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -104,7 +104,7 @@ task IntersectVCFsForFlare {
 
     Float gt_size_gb = size(gt_vcf, "GB")
     Float ref_size_gb = size(ref_vcf, "GB")
-    Int disk_size = 1 + 4 * ceil(gt_size_gb + ref_size_gb)
+    Int disk_size = 10 + 4 * ceil(gt_size_gb + ref_size_gb)
 
     command <<<
         set -euxo pipefail
@@ -168,7 +168,7 @@ task ThinVCFsForFlare {
 
     Float gt_size_gb = size(gt_vcf, "GB")
     Float ref_size_gb = size(ref_vcf, "GB")
-    Int disk_size = 1 + 4 * ceil(gt_size_gb + ref_size_gb)
+    Int disk_size = 10 + 4 * ceil(gt_size_gb + ref_size_gb)
 
     command <<<
         set -euxo pipefail
@@ -225,7 +225,7 @@ task FilterFlareReadySites {
 
     Float gt_size_gb = size(gt_vcf, "GB")
     Float ref_size_gb = size(ref_vcf, "GB")
-    Int disk_size = 1 + 4 * ceil(gt_size_gb + ref_size_gb)
+    Int disk_size = 10 + 4 * ceil(gt_size_gb + ref_size_gb)
 
     command <<<
         set -euxo pipefail
@@ -308,7 +308,7 @@ task MergeGlobalAncestry {
     }
 
     Float input_size_gb = size(global_anc_files, "GB")
-    Int disk_size = 1 + 4 * ceil(input_size_gb)
+    Int disk_size = 10 + 4 * ceil(input_size_gb)
 
     command <<<
         set -euxo pipefail
