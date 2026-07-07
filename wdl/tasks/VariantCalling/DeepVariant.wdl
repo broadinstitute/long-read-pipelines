@@ -155,7 +155,7 @@ task DV {
     }
 
     String prefix = basename(bam, ".bam") + ".deepvariant"
-    String output_root = "/cromwell_root/dv_output"
+    String output_root = "dv_output"
 
     command <<<
         set -euxo pipefail
@@ -254,7 +254,7 @@ task DV_gpu {
     }
 
     String prefix = basename(bam, ".bam") + ".deepvariant"
-    String output_root = "/cromwell_root/dv_output"
+    String output_root = "dv_output"
 
     command <<<
         set -euxo pipefail
