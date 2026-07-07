@@ -1,0 +1,29 @@
+// FlareLocalAncestryInference
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-PrepStudy" [label=PrepStudy shape=cds]
+	"call-PrepRef" [label=PrepRef shape=cds]
+	"call-IntersectSites" [label=IntersectSites shape=cds]
+	"call-ThinSites" [label=ThinSites shape=cds]
+	"call-FinalizeSites" [label=FinalizeSites shape=cds]
+	"call-FilterSites" [label=FilterSites shape=cds]
+	subgraph "cluster-if-L82C5" {
+		fontname=Roboto label="if(run_flare)" rank=same
+		"call-F" [label=F shape=cds]
+		subgraph "cluster-if-L98C9" {
+			fontname=Roboto label="if(em)" rank=same
+			"decl-em_model" [label=em_model shape=plaintext]
+			"if-L98C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"if-L82C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-PrepRef" -> "call-IntersectSites"
+	"call-PrepStudy" -> "call-IntersectSites"
+	"call-IntersectSites" -> "call-ThinSites"
+	"call-ThinSites" -> "call-FinalizeSites"
+	"call-FinalizeSites" -> "call-FilterSites"
+	"call-FilterSites" -> "call-F"
+	"call-F" -> "decl-em_model"
+}
