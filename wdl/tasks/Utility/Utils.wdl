@@ -2236,7 +2236,7 @@ task InferSampleName {
         if ! grep -q '^@RG' header.txt; then echo "No read group line found!" && exit 1; fi
 
         grep '^@RG' header.txt | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g' | sort | uniq > sample.names.txt
-        if [[ $(wc -l sample.names.txt) -gt 1 ]]; then echo "Multiple sample names found!" && exit 1; fi
+        if [[ $(wc -l < sample.names.txt) -gt 1 ]]; then echo "Multiple sample names found!" && exit 1; fi
         if grep -iq "unnamedsample" sample.names.txt; then echo "Sample name found to be unnamedsample!" && exit 1; fi
     >>>
 
