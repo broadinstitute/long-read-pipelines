@@ -79,20 +79,27 @@ task SplitMultiSampleVCFTask {
         REQUESTED_SAMPLES="~{write_lines(requested_samples)}"
         SAMPLE_NAME_LIST="~{default='' sample_name_list}"
 
+        # Whether an inline sample_names list was given. Gate on the WDL-known
+        # count rather than the size of write_lines() output: write_lines([]) is
+        # not guaranteed to be a 0-byte file, so `[ -s ... ]` would spuriously
+        # take the subset path for an empty request.
+        HAVE_INLINE_SAMPLES=~{true="1" false="0" (length(requested_samples) > 0)}
+
         # sample_names and sample_name_list are mutually exclusive: reject both.
-        if [ -s "${REQUESTED_SAMPLES}" ] && [ -n "${SAMPLE_NAME_LIST}" ]; then
+        if [ "${HAVE_INLINE_SAMPLES}" -eq 1 ] && [ -n "${SAMPLE_NAME_LIST}" ]; then
             echo "ERROR: 'sample_names' and 'sample_name_list' are mutually exclusive; provide at most one." >&2
             exit 1
         fi
 
-        # Resolve the effective list of requested samples (may be empty).
-        if [ -n "${SAMPLE_NAME_LIST}" ]; then
-            SAMPLES_FILE="${SAMPLE_NAME_LIST}"
-        else
+        # Resolve the effective list of requested samples (empty => emit all).
+        SAMPLES_FILE=""
+        if [ "${HAVE_INLINE_SAMPLES}" -eq 1 ]; then
             SAMPLES_FILE="${REQUESTED_SAMPLES}"
+        elif [ -n "${SAMPLE_NAME_LIST}" ]; then
+            SAMPLES_FILE="${SAMPLE_NAME_LIST}"
         fi
 
-        if [ -s "${SAMPLES_FILE}" ]; then
+        if [ -n "${SAMPLES_FILE}" ]; then
             # Sample names present in the input VCF.
             bcftools query -l ~{input_vcf} > vcf_samples.txt
 
