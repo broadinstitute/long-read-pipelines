@@ -49,7 +49,7 @@ workflow SplitMultiSampleVCFToTerraTable {
         input:
             input_vcf = input_vcf,
             input_vcf_index = input_vcf_index,
-            num_samples = num_samples,
+            num_samples_for_disk_size_scaling = num_samples,
             sample_names = sample_names,
             sample_name_list = sample_name_list
     }
