@@ -12,7 +12,8 @@ workflow SplitMultiSampleVCF {
         input_vcf: "Multi-sample VCF file (can be compressed or uncompressed)"
         input_vcf_index: "Index file for the input VCF (required if VCF is compressed)"
         num_samples: "Number of samples in the input VCF (optional; default: 100)"
-        sample_names: "Optional list of sample names to extract. If provided, every name must occur in input_vcf; the workflow fails (listing all absent names) when any is missing. Only the listed samples are emitted; otherwise every sample is emitted."
+        sample_names: "Optional list of sample names to extract. If provided, every name must occur in input_vcf; the workflow fails (listing all absent names) when any is missing. Only the listed samples are emitted; otherwise every sample is emitted. Mutually exclusive with sample_name_list."
+        sample_name_list: "Optional file containing sample names to extract, one per line. Same semantics as sample_names. Mutually exclusive with sample_names."
     }
 
     input {
@@ -22,6 +23,7 @@ workflow SplitMultiSampleVCF {
         Int num_samples = 100
 
         Array[String]? sample_names
+        File? sample_name_list
     }
 
     call SplitMultiSampleVCFTask {
@@ -29,7 +31,8 @@ workflow SplitMultiSampleVCF {
             input_vcf = input_vcf,
             input_vcf_index = input_vcf_index,
             num_samples = num_samples,
-            sample_names = sample_names
+            sample_names = sample_names,
+            sample_name_list = sample_name_list
     }
 
     output {
@@ -47,7 +50,8 @@ task SplitMultiSampleVCFTask {
         input_vcf: "Multi-sample VCF file (can be compressed or uncompressed)"
         input_vcf_index: "Index file for the input VCF (required if VCF is compressed)"
         num_samples: "Number of samples in the input VCF (optional; default: 100)"
-        sample_names: "Optional list of sample names to extract. If provided, every name must occur in input_vcf; the task fails (listing all absent names) when any is missing. Only the listed samples are emitted; otherwise every sample is emitted."
+        sample_names: "Optional list of sample names to extract. If provided, every name must occur in input_vcf; the task fails (listing all absent names) when any is missing. Only the listed samples are emitted; otherwise every sample is emitted. Mutually exclusive with sample_name_list."
+        sample_name_list: "Optional file containing sample names to extract, one per line. Same semantics as sample_names. Mutually exclusive with sample_names."
         runtime_attr_override: "Override default runtime attributes"
     }
 
@@ -58,6 +62,7 @@ task SplitMultiSampleVCFTask {
         Int num_samples = 100
 
         Array[String]? sample_names
+        File? sample_name_list
 
         RuntimeAttr? runtime_attr_override
     }
@@ -72,8 +77,22 @@ task SplitMultiSampleVCFTask {
         mkdir -p out_dir
 
         REQUESTED_SAMPLES="~{write_lines(requested_samples)}"
+        SAMPLE_NAME_LIST="~{default='' sample_name_list}"
 
-        if [ -s "${REQUESTED_SAMPLES}" ]; then
+        # sample_names and sample_name_list are mutually exclusive: reject both.
+        if [ -s "${REQUESTED_SAMPLES}" ] && [ -n "${SAMPLE_NAME_LIST}" ]; then
+            echo "ERROR: 'sample_names' and 'sample_name_list' are mutually exclusive; provide at most one." >&2
+            exit 1
+        fi
+
+        # Resolve the effective list of requested samples (may be empty).
+        if [ -n "${SAMPLE_NAME_LIST}" ]; then
+            SAMPLES_FILE="${SAMPLE_NAME_LIST}"
+        else
+            SAMPLES_FILE="${REQUESTED_SAMPLES}"
+        fi
+
+        if [ -s "${SAMPLES_FILE}" ]; then
             # Sample names present in the input VCF.
             bcftools query -l ~{input_vcf} > vcf_samples.txt
 
@@ -84,7 +103,7 @@ task SplitMultiSampleVCFTask {
                 if ! grep -Fxq -- "${sample}" vcf_samples.txt; then
                     missing+=("${sample}")
                 fi
-            done < "${REQUESTED_SAMPLES}"
+            done < "${SAMPLES_FILE}"
 
             if [ "${#missing[@]}" -gt 0 ]; then
                 echo "ERROR: the following requested sample(s) are not present in the input VCF:" >&2
@@ -95,7 +114,7 @@ task SplitMultiSampleVCFTask {
             fi
 
             # All requested samples are present: emit only those.
-            bcftools +split ~{input_vcf} -S "${REQUESTED_SAMPLES}" -Oz2 -W=tbi -o out_dir
+            bcftools +split ~{input_vcf} -S "${SAMPLES_FILE}" -Oz2 -W=tbi -o out_dir
         else
             # No sample subset requested: emit every sample.
             bcftools +split ~{input_vcf} -Oz2 -W=tbi -o out_dir
