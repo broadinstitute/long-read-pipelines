@@ -68,6 +68,7 @@ task SplitMultiSampleVCFTask {
     }
 
     Array[String] requested_samples = select_first([sample_names, []])
+    Boolean have_inline_samples = length(requested_samples) > 0
 
     Int disk_size = 10 + num_samples_for_disk_size_scaling*ceil(size([input_vcf, input_vcf_index], "GB"))
 
@@ -83,7 +84,7 @@ task SplitMultiSampleVCFTask {
         # count rather than the size of write_lines() output: write_lines([]) is
         # not guaranteed to be a 0-byte file, so `[ -s ... ]` would spuriously
         # take the subset path for an empty request.
-        HAVE_INLINE_SAMPLES=~{true="1" false="0" (length(requested_samples) > 0)}
+        HAVE_INLINE_SAMPLES=~{true="1" false="0" have_inline_samples}
 
         # sample_names and sample_name_list are mutually exclusive: reject both.
         if [ "${HAVE_INLINE_SAMPLES}" -eq 1 ] && [ -n "${SAMPLE_NAME_LIST}" ]; then
