@@ -93,6 +93,11 @@ workflow CallVariants {
         # per-shard memory bump for pbsv discover; shard indices match the order of SplitBamByChr's output
         Array[Int] pbsv_discover_memup_shards = []
         Int? pbsv_discover_memup_gb
+
+        # per-caller SV toggles; when set, these override the run_sniffles/run_pbsv fields in sv_calling_options_json.
+        # Leave unset to fall back to the JSON config (which itself defaults to running both).
+        Boolean? run_sniffles
+        Boolean? run_pbsv
     }
 
     if ((!defined(sv_calling_options_json)) && (!defined(small_variant_calling_options_json))) {
@@ -164,6 +169,8 @@ workflow CallVariants {
         RuntimeAttr? effective_pbsv_discover_runtime_attr_override = if defined(pbsv_discover_runtime_attr_override) then pbsv_discover_runtime_attr_override else sv_options.pbsv_discover_runtime_attr_override
         RuntimeAttr? effective_pbsv_call_runtime_attr_override = if defined(pbsv_call_runtime_attr_override) then pbsv_call_runtime_attr_override else sv_options.pbsv_call_runtime_attr_override
         RuntimeAttr? effective_sniffles_runtime_attr_override = if defined(sniffles_runtime_attr_override) then sniffles_runtime_attr_override else sv_options.sniffles_runtime_attr_override
+        Boolean effective_run_sniffles = select_first([run_sniffles, sv_options.run_sniffles, true])
+        Boolean effective_run_pbsv = select_first([run_pbsv, sv_options.run_pbsv, true])
 
         call CallStructuralVariants.Work as SVjob {
             input:
@@ -182,6 +189,8 @@ workflow CallVariants {
 
                 minsvlen = sv_options.min_sv_len,
                 pbsv_discover_per_chr = sv_options.pbsv_discover_per_chr,
+                run_sniffles = effective_run_sniffles,
+                run_pbsv = effective_run_pbsv,
                 pbsv_discover_runtime_attr_override = effective_pbsv_discover_runtime_attr_override,
                 pbsv_call_runtime_attr_override = effective_pbsv_call_runtime_attr_override,
                 sniffles_runtime_attr_override = effective_sniffles_runtime_attr_override,
