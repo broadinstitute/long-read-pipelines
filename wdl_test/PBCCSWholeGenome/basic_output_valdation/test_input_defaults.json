@@ -1,0 +1,15 @@
+{
+  "PBCCSWholeGenome.aligned_bais": ["gs://broad-gp-pacbio-outgoing/results/PBFlowcell/m64297e_220215_193024/reads/ccs/aligned/m64297e_220215_193024.bam.bai", "gs://broad-gp-pacbio-outgoing/results/PBFlowcell/m64297e_220218_155034/reads/ccs/aligned/m64297e_220218_155034.bam.bai","gs://broad-gp-pacbio-outgoing/results/PBFlowcell/m64020e_220303_200256/reads/ccs/aligned/m64020e_220303_200256.bam.bai","gs://broad-gp-pacbio-outgoing/results/PBFlowcell/m64297e_220303_195935/reads/ccs/aligned/m64297e_220303_195935.bam.bai", "gs://broad-gp-pacbio-outgoing/results/PBFlowcell/m64297e_220220_005204/reads/ccs/aligned/m64297e_220220_005204.bam.bai", "gs://broad-gp-pacbio-outgoing/results/PBFlowcell/m64218e_220328_161317/reads/ccs/aligned/m64218e_220328_161317.bam.bai", "gs://broad-gp-pacbio-outgoing/results/PBFlowcell/m64218e_220330_013212/reads/ccs/aligned/m64218e_220330_013212.bam.bai"],
+  "PBCCSWholeGenome.aligned_bams": ["gs://broad-gp-pacbio-outgoing/results/PBFlowcell/m64297e_220215_193024/reads/ccs/aligned/m64297e_220215_193024.bam", "gs://broad-gp-pacbio-outgoing/results/PBFlowcell/m64297e_220218_155034/reads/ccs/aligned/m64297e_220218_155034.bam", "gs://broad-gp-pacbio-outgoing/results/PBFlowcell/m64020e_220303_200256/reads/ccs/aligned/m64020e_220303_200256.bam", "gs://broad-gp-pacbio-outgoing/results/PBFlowcell/m64297e_220303_195935/reads/ccs/aligned/m64297e_220303_195935.bam", "gs://broad-gp-pacbio-outgoing/results/PBFlowcell/m64297e_220220_005204/reads/ccs/aligned/m64297e_220220_005204.bam", "gs://broad-gp-pacbio-outgoing/results/PBFlowcell/m64218e_220328_161317/reads/ccs/aligned/m64218e_220328_161317.bam", "gs://broad-gp-pacbio-outgoing/results/PBFlowcell/m64218e_220330_013212/reads/ccs/aligned/m64218e_220330_013212.bam"],
+  "PBCCSWholeGenome.call_small_variants": true,
+  "PBCCSWholeGenome.call_small_vars_on_mitochondria": false,
+  "PBCCSWholeGenome.dvp_memory": 128,
+  "PBCCSWholeGenome.dvp_threads": 32,
+  "PBCCSWholeGenome.fast_less_sensitive_sv": true,
+  "PBCCSWholeGenome.gcs_out_root_dir": "gs://broad-dsp-lrma-pipeline-tests-cromwell/workflow_out_root_dir",
+  "PBCCSWholeGenome.participant_name": "NA24385",
+  "PBCCSWholeGenome.ref_map_file": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/grch38_noalt.txt",
+  "PBCCSWholeGenome.ref_scatter_interval_list_ids": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/size_balanced_interva_lists_ids.txt",
+  "PBCCSWholeGenome.ref_scatter_interval_list_locator": "gs://broad-dsde-methods-long-reads/resources/references/grch38_noalt/size_balanced_interva_lists.txt",
+  "PBCCSWholeGenome.run_dv_pepper_analysis": true
+}
