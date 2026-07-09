@@ -104,7 +104,7 @@ task SplitMultiSampleVCFTask {
             # Requested samples absent from the VCF = set difference (requested \ present).
             # comm -23 emits lines unique to the first (requested) sorted list.
             bcftools query -l ~{input_vcf} | sort -u > vcf_samples.sorted
-            { grep -v '^[[:space:]]*$' "${SAMPLES_FILE}" || true; } | sort -u > requested_samples.sorted
+            grep -v '^[[:space:]]*$' "${SAMPLES_FILE}" | sort -u > requested_samples.sorted
             comm -23 requested_samples.sorted vcf_samples.sorted > missing_samples.txt
 
             if [ -s missing_samples.txt ]; then
