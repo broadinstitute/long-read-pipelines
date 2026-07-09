@@ -17,10 +17,10 @@ workflow SplitMultiSampleVCFToTerraTable {
         sample_names:        "Optional list of sample names to extract. If provided, every name must occur in input_vcf; the workflow fails when any is missing. Mutually exclusive with sample_name_list."
         sample_name_list:    "Optional file of sample names to extract, one per line. Mutually exclusive with sample_names."
 
-        destination_table:   "Name of the destination Terra data table to write the per-sample rows into."
+        destination_table:   "Name of the destination Terra data table to write the per-sample rows into. Also drives auto-derivation of joint_run_table/truth_table: the truth-set token is destination_table with a leading 'TEST_joint_singlesample_results_' stripped."
         joint_run_ID:        "Entity name of the joint-call run that produced input_vcf; every row's 97_Joint_Run_ID column links to it."
-        joint_run_table:     "Entity type (data table) that joint_run_ID lives in, e.g. TEST_joint_results_pfcrosses_v2; the 97_Joint_Run_ID link targets this table."
-        truth_table:         "Truth-set entity type (data table), e.g. truth_pfcrosses_v2. Each row's Truth column links to the truth entity named by the sample prefix (row ID up to the first underscore)."
+        joint_run_table:     "Optional. Entity type (data table) that joint_run_ID lives in. When omitted, derived as 'TEST_joint_results_<SET>'. Existence of this table (and the joint_run_ID entity in it) is verified before upload."
+        truth_table:         "Optional. Truth-set entity type (data table). When omitted, derived as 'truth_<SET>'. Existence of this table (and each linked truth entity) is verified before upload. Each row's Truth column links to the truth entity named by the sample prefix (row ID up to the first underscore)."
 
         namespace:           "Optional Terra namespace of the destination workspace (auto-detected when omitted)."
         workspace:           "Optional Terra workspace name (auto-detected when omitted)."
@@ -39,14 +39,21 @@ workflow SplitMultiSampleVCFToTerraTable {
 
         String destination_table
         String joint_run_ID
-        String joint_run_table
-        String truth_table
+        String? joint_run_table
+        String? truth_table
 
         String? namespace
         String? workspace
         Boolean require_existing_id = false
         Boolean columns_must_exist = false
     }
+
+    # Auto-derive the reference-target table names from the destination table's
+    # truth-set token (e.g. TEST_joint_singlesample_results_pfcrosses_v2 -> pfcrosses_v2),
+    # unless the caller supplied them explicitly. Both are existence-checked below.
+    String truth_set = sub(destination_table, "^(TEST_)?joint_singlesample_results_", "")
+    String resolved_joint_run_table = select_first([joint_run_table, "TEST_joint_results_" + truth_set])
+    String resolved_truth_table = select_first([truth_table, "truth_" + truth_set])
 
     # 1. Split the joint VCF into one VCF (+ index) per sample.
     call Split.SplitMultiSampleVCFTask as SplitVCF {
@@ -65,16 +72,31 @@ workflow SplitMultiSampleVCFToTerraTable {
             sample_vcf_indices = SplitVCF.output_vcf_indices,
             table_name = destination_table,
             joint_run_id = joint_run_ID,
-            joint_run_table = joint_run_table,
-            truth_table = truth_table
+            joint_run_table = resolved_joint_run_table,
+            truth_table = resolved_truth_table
     }
 
-    # 3. Upload the TSV into the destination data table.
-    call Terra.UploadDataTable as Upload {
+    # 3. Sanity check: every link target must exist in Terra. Pull the joint-run
+    #    and truth tables and confirm the joint_run_ID entity and each linked truth
+    #    entity are present; fail (listing all offenders) before any upload. On
+    #    success the TSV is passed through, so Upload is gated on this check.
+    call ValidateTerraLinks {
         input:
             namespace = namespace,
             workspace = workspace,
             entities_tsv = MakeEntitiesTsv.entities_tsv,
+            sample_ids = MakeEntitiesTsv.sample_ids,
+            joint_run_table = resolved_joint_run_table,
+            joint_run_id = joint_run_ID,
+            truth_table = resolved_truth_table
+    }
+
+    # 4. Upload the validated TSV into the destination data table.
+    call Terra.UploadDataTable as Upload {
+        input:
+            namespace = namespace,
+            workspace = workspace,
+            entities_tsv = ValidateTerraLinks.validated_tsv,
             table_name = destination_table,
             require_existing_id = require_existing_id,
             columns_must_exist = columns_must_exist
@@ -84,6 +106,7 @@ workflow SplitMultiSampleVCFToTerraTable {
         Array[File] sample_vcfs = SplitVCF.output_vcfs
         Array[File] sample_vcf_indices = SplitVCF.output_vcf_indices
         File entities_tsv = MakeEntitiesTsv.entities_tsv
+        File validation_log = ValidateTerraLinks.validation_log
         File upload_log = Upload.upload_log
     }
 }
@@ -155,9 +178,11 @@ task MakeEntitiesTsv {
         # Every row links to the same joint-call run entity.
         joint_ref = ref(joint_run_table, joint_run_id)
 
+        samples = sorted(vcf_by_sample)
+
         with open("entities.tsv", "w") as out:
             out.write("entity:{}_id\tvcf\tvcf_index\t97_Joint_Run_ID\tTruth\n".format(table_name))
-            for sample in sorted(vcf_by_sample):
+            for sample in samples:
                 # Truth entity name is the sample prefix: the row ID up to the first underscore.
                 truth_name = sample.split("_", 1)[0]
                 out.write("{s}\t{v}\t{i}\t{j}\t{t}\n".format(
@@ -167,11 +192,17 @@ task MakeEntitiesTsv {
                     j=joint_ref,
                     t=ref(truth_table, truth_name),
                 ))
+
+        # Emit the row IDs so downstream validation reuses the exact same sample set.
+        with open("sample_ids.txt", "w") as out:
+            for sample in samples:
+                out.write(sample + "\n")
         CODE
     >>>
 
     output {
         File entities_tsv = "entities.tsv"
+        Array[String] sample_ids = read_lines("sample_ids.txt")
     }
 
     #########################
@@ -183,6 +214,180 @@ task MakeEntitiesTsv {
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "python:3.11-slim"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task ValidateTerraLinks {
+
+    meta {
+        description: "Verify that every entity reference the TSV will write actually exists in Terra: the joint-run table must contain the joint_run_id entity, and the truth table must contain the truth entity (sample prefix) for every sample. Fails (listing all offenders on stderr) before any upload. On success the input TSV is passed through unchanged so the uploader is gated on this check."
+        volatile: true
+    }
+
+    parameter_meta {
+        namespace:        "Optional Terra namespace of the workspace holding the link-target tables (auto-detected when omitted)."
+        workspace:        "Optional Terra workspace name (auto-detected when omitted)."
+        entities_tsv:     "The entity TSV to be uploaded; returned unchanged as validated_tsv when all checks pass."
+        sample_ids:       "Destination row IDs; the truth entity checked for each is its sample prefix (ID up to the first underscore)."
+        joint_run_table:  "Entity type that must contain joint_run_id (the 97_Joint_Run_ID link target)."
+        joint_run_id:     "Entity name that must exist in joint_run_table."
+        truth_table:      "Entity type that must contain each sample's truth entity (the Truth link target)."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
+    input {
+        String? namespace
+        String? workspace
+        File entities_tsv
+        Array[String] sample_ids
+        String joint_run_table
+        String joint_run_id
+        String truth_table
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        cp "~{write_lines(sample_ids)}" sample_ids.txt
+
+        python3 <<CODE
+        import os
+        import sys
+        import urllib.request
+
+        import firecloud.api as fapi
+
+        joint_run_table = "~{joint_run_table}"
+        joint_run_id    = "~{joint_run_id}"
+        truth_table     = "~{truth_table}"
+
+        namespace = "~{default='' namespace}"
+        workspace = "~{default='' workspace}"
+
+        def gce_project():
+            req = urllib.request.Request(
+                "http://metadata.google.internal/computeMetadata/v1/project/project-id",
+                headers={"Metadata-Flavor": "Google"},
+            )
+            try:
+                return urllib.request.urlopen(req, timeout=5).read().decode().strip()
+            except Exception as e:
+                sys.stderr.write("WARNING: could not read Google project from metadata server: {}\n".format(e))
+                return ""
+
+        def resolve_workspace(namespace, workspace):
+            if namespace and workspace:
+                return namespace, workspace
+            namespace = namespace or os.environ.get("WORKSPACE_NAMESPACE", "")
+            workspace = workspace or os.environ.get("WORKSPACE_NAME", "")
+            if namespace and workspace:
+                return namespace, workspace
+            project = os.environ.get("GOOGLE_PROJECT", "") or gce_project()
+            if not project:
+                sys.stderr.write(
+                    "ERROR: namespace/workspace not provided and the Google project could not be "
+                    "determined; cannot locate the link-target tables.\n"
+                )
+                sys.exit(1)
+            resp = fapi.list_workspaces(fields="workspace.namespace,workspace.name,workspace.googleProject")
+            if resp.status_code != 200:
+                sys.stderr.write("ERROR: could not list workspaces: HTTP {}: {}\n".format(resp.status_code, resp.text))
+                sys.exit(1)
+            matches = sorted({
+                (w["workspace"]["namespace"], w["workspace"]["name"])
+                for w in resp.json()
+                if w["workspace"].get("googleProject") == project
+            })
+            if len(matches) == 1:
+                return matches[0]
+            sys.stderr.write(
+                "ERROR: could not uniquely auto-detect the workspace for Google project '{}' "
+                "(found {} match(es)); pass namespace and workspace explicitly.\n".format(project, len(matches))
+            )
+            sys.exit(1)
+
+        def entity_names(namespace, workspace, table):
+            # Returns the set of entity names in `table`, or None if the table is unreadable.
+            resp = fapi.get_entities(namespace, workspace, table)
+            if resp.status_code != 200:
+                sys.stderr.write(
+                    "ERROR: could not read table '{}' from {}/{}: HTTP {}: {}\n".format(
+                        table, namespace, workspace, resp.status_code, resp.text)
+                )
+                return None
+            return set(e["name"] for e in resp.json())
+
+        namespace, workspace = resolve_workspace(namespace, workspace)
+
+        with open("sample_ids.txt") as fh:
+            sample_ids = [line.strip() for line in fh if line.strip()]
+
+        fail = False
+
+        # 1. Joint-run link target: table exists and contains joint_run_id.
+        joint_names = entity_names(namespace, workspace, joint_run_table)
+        if joint_names is None:
+            fail = True
+        elif joint_run_id not in joint_names:
+            sys.stderr.write(
+                "ERROR: joint-run entity '{}' not found in table '{}' ({}/{}).\n".format(
+                    joint_run_id, joint_run_table, namespace, workspace)
+            )
+            fail = True
+
+        # 2. Truth link targets: table exists and contains every sample's truth entity.
+        truth_names = entity_names(namespace, workspace, truth_table)
+        if truth_names is None:
+            fail = True
+        else:
+            wanted = sorted({s.split("_", 1)[0] for s in sample_ids})
+            missing = [t for t in wanted if t not in truth_names]
+            if missing:
+                sys.stderr.write(
+                    "ERROR: {} truth entit(y/ies) missing from table '{}' ({}/{}):\n".format(
+                        len(missing), truth_table, namespace, workspace)
+                )
+                for t in missing:
+                    sys.stderr.write("  {}\n".format(t))
+                fail = True
+
+        if fail:
+            sys.exit(1)
+
+        print("All link targets exist: joint-run '{}' in '{}', and {} truth entit(y/ies) in '{}'.".format(
+            joint_run_id, joint_run_table, len({s.split('_', 1)[0] for s in sample_ids}), truth_table))
+        CODE
+
+        # Reached only when every check passed; pass the TSV through to gate the upload.
+        cp "~{entities_tsv}" validated.tsv
+    >>>
+
+    output {
+        File validated_tsv = "validated.tsv"
+        File validation_log = stdout()
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          1,
+        mem_gb:             4,
+        disk_gb:            10,
+        boot_disk_gb:       25,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-backup-workspace:0.0.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
