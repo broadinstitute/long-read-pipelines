@@ -28,12 +28,16 @@ workflow SubsetVCFsToSamples {
     }
 
     scatter (idx in range(length(input_vcfs))) {
+
+        String prefix = basename(input_vcfs[idx], ".vcf.gz") + "_subset_" + idx
+
         call VARUTIL.SubsetVCFToSamples {
             input:
                 input_vcf = input_vcfs[idx],
                 input_vcf_index = input_vcf_indices[idx],
                 sample_names = sample_names,
                 sample_name_list = sample_name_list,
+                prefix = prefix,
                 error_if_sample_missing = error_if_sample_missing
         }
     }
