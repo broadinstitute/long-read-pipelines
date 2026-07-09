@@ -101,23 +101,15 @@ task SplitMultiSampleVCFTask {
         fi
 
         if [ -n "${SAMPLES_FILE}" ]; then
-            # Sample names present in the input VCF.
-            bcftools query -l ~{input_vcf} > vcf_samples.txt
+            # Requested samples absent from the VCF = set difference (requested \ present).
+            # comm -23 emits lines unique to the first (requested) sorted list.
+            bcftools query -l ~{input_vcf} | sort -u > vcf_samples.sorted
+            { grep -v '^[[:space:]]*$' "${SAMPLES_FILE}" || true; } | sort -u > requested_samples.sorted
+            comm -23 requested_samples.sorted vcf_samples.sorted > missing_samples.txt
 
-            # Collect every requested sample that is absent from the VCF.
-            missing=()
-            while IFS= read -r sample; do
-                [ -z "${sample}" ] && continue
-                if ! grep -Fxq -- "${sample}" vcf_samples.txt; then
-                    missing+=("${sample}")
-                fi
-            done < "${SAMPLES_FILE}"
-
-            if [ "${#missing[@]}" -gt 0 ]; then
+            if [ -s missing_samples.txt ]; then
                 echo "ERROR: the following requested sample(s) are not present in the input VCF:" >&2
-                for sample in "${missing[@]}"; do
-                    echo "  ${sample}" >&2
-                done
+                sed 's/^/  /' missing_samples.txt >&2
                 exit 1
             fi
 
