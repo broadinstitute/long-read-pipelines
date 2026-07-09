@@ -13,7 +13,7 @@ workflow SplitMultiSampleVCFToTerraTable {
     parameter_meta {
         input_vcf:           "Joint-called multi-sample VCF file (can be compressed or uncompressed)."
         input_vcf_index:     "Index file for the input VCF (required if VCF is compressed)."
-        num_samples:         "Number of samples in the input VCF (optional; default: 100)."
+        disk_space_multiplier: "Multiplier applied to the input VCF size when sizing the split task's disk (optional; default: 4)."
         sample_names:        "Optional list of sample names to extract. If provided, every name must occur in input_vcf; the workflow fails when any is missing. Mutually exclusive with sample_name_list."
         sample_name_list:    "Optional file of sample names to extract, one per line. Mutually exclusive with sample_names."
 
@@ -32,7 +32,7 @@ workflow SplitMultiSampleVCFToTerraTable {
         File input_vcf
         File? input_vcf_index
 
-        Int num_samples = 100
+        Int disk_space_multiplier = 4
 
         Array[String]? sample_names
         File? sample_name_list
@@ -60,7 +60,7 @@ workflow SplitMultiSampleVCFToTerraTable {
         input:
             input_vcf = input_vcf,
             input_vcf_index = input_vcf_index,
-            num_samples_for_disk_size_scaling = num_samples,
+            disk_space_multiplier = disk_space_multiplier,
             sample_names = sample_names,
             sample_name_list = sample_name_list
     }

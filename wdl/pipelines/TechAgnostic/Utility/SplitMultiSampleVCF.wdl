@@ -11,7 +11,7 @@ workflow SplitMultiSampleVCF {
     parameter_meta {
         input_vcf: "Multi-sample VCF file (can be compressed or uncompressed)"
         input_vcf_index: "Index file for the input VCF (required if VCF is compressed)"
-        num_samples: "Number of samples in the input VCF (optional; default: 100)"
+        disk_space_multiplier: "Multiplier applied to the input VCF size when sizing the task's disk (optional; default: 4)"
         sample_names: "Optional list of sample names to extract. If provided, every name must occur in input_vcf; the workflow fails (listing all absent names) when any is missing. Only the listed samples are emitted; otherwise every sample is emitted. Mutually exclusive with sample_name_list."
         sample_name_list: "Optional file containing sample names to extract, one per line. Same semantics as sample_names. Mutually exclusive with sample_names."
     }
@@ -20,7 +20,7 @@ workflow SplitMultiSampleVCF {
         File input_vcf
         File? input_vcf_index
 
-        Int num_samples = 100
+        Int disk_space_multiplier = 4
 
         Array[String]? sample_names
         File? sample_name_list
@@ -30,7 +30,7 @@ workflow SplitMultiSampleVCF {
         input:
             input_vcf = input_vcf,
             input_vcf_index = input_vcf_index,
-            num_samples_for_disk_size_scaling = num_samples,
+            disk_space_multiplier = disk_space_multiplier,
             sample_names = sample_names,
             sample_name_list = sample_name_list
     }
@@ -49,7 +49,7 @@ task SplitMultiSampleVCFTask {
     parameter_meta {
         input_vcf: "Multi-sample VCF file (can be compressed or uncompressed)"
         input_vcf_index: "Index file for the input VCF (required if VCF is compressed)"
-        num_samples_for_disk_size_scaling: "Expected number of samples in the input VCF; used only to scale the requested disk size (optional; default: 100)"
+        disk_space_multiplier: "Multiplier applied to the input VCF size when sizing the task's disk (optional; default: 4)"
         sample_names: "Optional list of sample names to extract. If provided, every name must occur in input_vcf; the task fails (listing all absent names) when any is missing. Only the listed samples are emitted; otherwise every sample is emitted. Mutually exclusive with sample_name_list."
         sample_name_list: "Optional file containing sample names to extract, one per line. Same semantics as sample_names. Mutually exclusive with sample_names."
         runtime_attr_override: "Override default runtime attributes"
@@ -59,7 +59,7 @@ task SplitMultiSampleVCFTask {
         File input_vcf
         File? input_vcf_index
 
-        Int num_samples_for_disk_size_scaling = 100
+        Int disk_space_multiplier = 4
 
         Array[String]? sample_names
         File? sample_name_list
@@ -70,7 +70,7 @@ task SplitMultiSampleVCFTask {
     Array[String] requested_samples = select_first([sample_names, []])
     Boolean have_inline_samples = length(requested_samples) > 0
 
-    Int disk_size = 10 + num_samples_for_disk_size_scaling*ceil(size([input_vcf, input_vcf_index], "GB"))
+    Int disk_size = 10 + disk_space_multiplier*ceil(size([input_vcf, input_vcf_index], "GB"))
 
     command <<<
         set -euxo pipefail
