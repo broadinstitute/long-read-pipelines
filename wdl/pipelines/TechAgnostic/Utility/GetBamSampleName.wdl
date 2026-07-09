@@ -6,13 +6,15 @@ workflow GetBamSampleName {
     }
     parameter_meta {
         bam: "BAM to inspect. Its header is streamed; the object itself is never downloaded."
+        gcs_requester_pays_project: "GCP project to bill when the BAM lives in a requester-pays bucket. Leave unset for normal buckets."
     }
 
     input {
         File bam
+        String? gcs_requester_pays_project
     }
 
-    call GetSampleName { input: bam = bam }
+    call GetSampleName { input: bam = bam, gcs_requester_pays_project = gcs_requester_pays_project }
 
     output {
         String sample_name      = GetSampleName.sample_name       # unique SM value(s); newline-joined if >1
@@ -26,18 +28,30 @@ task GetSampleName {
             localization_optional: true,
             description: "Streamed for its header only (not localized)."
         }
+        gcs_requester_pays_project: "GCP project to bill for requester-pays buckets. When set, the header is streamed via 'gcloud storage cat --billing-project' (htslib's gs:// backend cannot pass a billing project). When unset, htslib streams the header directly."
     }
 
     input {
         File bam
+        String? gcs_requester_pays_project
     }
+
+    String rp_project = select_first([gcs_requester_pays_project, ""])
 
     command <<<
         set -euxo pipefail
 
-        # stream only the header; htslib reads it straight from GCS
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-        samtools view --no-PG -H ~{bam} > header.txt
+
+        # stream only the header (samtools closes the pipe after the header, so the BAM is not fully transferred)
+        if [[ -n "~{rp_project}" ]]; then
+            # requester-pays: gcloud can pass a billing project; htslib's gs:// backend cannot
+            set +o pipefail
+            gcloud storage cat --billing-project="~{rp_project}" ~{bam} | samtools view --no-PG -H - > header.txt
+            set -o pipefail
+        else
+            samtools view --no-PG -H ~{bam} > header.txt
+        fi
 
         if ! grep -q '^@RG' header.txt; then echo "No @RG line found in header!" >&2; exit 1; fi
 
@@ -59,6 +73,6 @@ task GetSampleName {
         disks:          "local-disk 10 HDD"
         preemptible:    2
         maxRetries:     1
-        docker:         "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+        docker:         "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
     }
 }

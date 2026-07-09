@@ -223,7 +223,7 @@ task InferSampleName {
         if ! grep -q '^@RG' header.txt; then echo "No read group line found!" && exit 1; fi
 
         grep '^@RG' header.txt | tr '\t' '\n' | grep '^SM:' | sed 's/SM://g' | sort | uniq > sample.names.txt
-        if [[ $(wc -l sample.names.txt) -gt 1 ]]; then echo "Multiple sample names found!" && exit 1; fi
+        if [[ $(wc -l < sample.names.txt) -gt 1 ]]; then echo "Multiple sample names found!" && exit 1; fi
         if grep -iq "~{illegal_value}" sample.names.txt; then echo "Sample name found to be illegal!" && exit 1; fi
     >>>
 
