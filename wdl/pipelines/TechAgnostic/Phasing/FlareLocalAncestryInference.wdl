@@ -9,12 +9,15 @@ workflow FlareLocalAncestryInference {
         File ref_panel
         File test_vcf
         File plink_map
+
         File ref_fasta
         File ref_fasta_fai
 
         File? flare_model
 
         Boolean run_flare = true
+        Boolean enable_thinning = true
+        Boolean training_mode = false
 
         String output_prefix
 
@@ -24,69 +27,81 @@ workflow FlareLocalAncestryInference {
         Int mem_gb = 64
     }
 
-    Boolean em = !defined(flare_model)
+    Boolean em = training_mode
 
     String prep_prefix = output_prefix + ".prep"
 
-    call Flare.PrepStudyVcfForFlare as PrepStudy {
-        input:
-            joint_vcf = test_vcf,
-            ref_fasta = ref_fasta,
-            ref_fasta_fai = ref_fasta_fai,
-            prefix = prep_prefix + ".study",
-            maf = maf
+    if (enable_thinning) {
+        call Flare.PrepStudyVcfForFlare as PrepStudy {
+            input:
+                joint_vcf = test_vcf,
+                ref_fasta = ref_fasta,
+                ref_fasta_fai = ref_fasta_fai,
+                prefix = prep_prefix + ".study",
+                maf = maf
+        }
+
+        call Flare.PrepRefVcfForFlare as PrepRef {
+            input:
+                ref_vcf = ref_vcf,
+                prefix = prep_prefix + ".ref"
+        }
+
+        call Flare.IntersectVCFsForFlare as IntersectSites {
+            input:
+                gt_vcf = PrepStudy.gt_bcf,
+                gt_vcf_index = PrepStudy.gt_bcf_csi,
+                ref_vcf = PrepRef.ref_bcf,
+                ref_vcf_index = PrepRef.ref_bcf_csi,
+                prefix = prep_prefix + ".isec"
+        }
+
+        call Flare.ThinVCFsForFlare as ThinSites {
+            input:
+                gt_vcf = IntersectSites.gt_vcf_out,
+                ref_vcf = IntersectSites.ref_vcf_out,
+                prefix = prep_prefix + ".thin",
+                thin_bp = thin_bp
+        }
+
+        call Flare.IntersectVCFsForFlare as FinalizeSites {
+            input:
+                gt_vcf = ThinSites.gt_vcf_out,
+                gt_vcf_index = ThinSites.gt_vcf_csi,
+                ref_vcf = ThinSites.ref_vcf_out,
+                ref_vcf_index = ThinSites.ref_vcf_csi,
+                prefix = prep_prefix + ".flare"
+        }
+
+        call Flare.FilterFlareReadySites as FilterSites {
+            input:
+                gt_vcf = FinalizeSites.gt_vcf_out,
+                gt_vcf_index = FinalizeSites.gt_vcf_csi,
+                ref_vcf = FinalizeSites.ref_vcf_out,
+                ref_vcf_index = FinalizeSites.ref_vcf_csi,
+                ref_panel = ref_panel,
+                prefix = prep_prefix + ".ready"
+        }
     }
 
-    call Flare.PrepRefVcfForFlare as PrepRef {
-        input:
-            ref_vcf = ref_vcf,
-            prefix = prep_prefix + ".ref"
-    }
-
-    call Flare.IntersectVCFsForFlare as IntersectSites {
-        input:
-            gt_vcf = PrepStudy.gt_bcf,
-            gt_vcf_index = PrepStudy.gt_bcf_csi,
-            ref_vcf = PrepRef.ref_bcf,
-            ref_vcf_index = PrepRef.ref_bcf_csi,
-            prefix = prep_prefix + ".isec"
-    }
-
-    call Flare.ThinVCFsForFlare as ThinSites {
-        input:
-            gt_vcf = IntersectSites.gt_vcf_out,
-            ref_vcf = IntersectSites.ref_vcf_out,
-            prefix = prep_prefix + ".thin",
-            thin_bp = thin_bp
-    }
-
-    call Flare.IntersectVCFsForFlare as FinalizeSites {
-        input:
-            gt_vcf = ThinSites.gt_vcf_out,
-            gt_vcf_index = ThinSites.gt_vcf_csi,
-            ref_vcf = ThinSites.ref_vcf_out,
-            ref_vcf_index = ThinSites.ref_vcf_csi,
-            prefix = prep_prefix + ".flare"
-    }
-
-    call Flare.FilterFlareReadySites as FilterSites {
-        input:
-            gt_vcf = FinalizeSites.gt_vcf_out,
-            gt_vcf_index = FinalizeSites.gt_vcf_csi,
-            ref_vcf = FinalizeSites.ref_vcf_out,
-            ref_vcf_index = FinalizeSites.ref_vcf_csi,
-            ref_panel = ref_panel,
-            prefix = prep_prefix + ".ready"
+    if (!enable_thinning) {
+        call Flare.PrepIntegratedVcfForFlare as PrepIntegrated {
+            input:
+                joint_vcf = test_vcf,
+                ref_vcf = ref_vcf,
+                ref_panel = ref_panel,
+                prefix = prep_prefix + ".ready"
+        }
     }
 
     if (run_flare) {
         call Flare.Flare as F {
             input:
-                ref_vcf = FilterSites.ref_vcf_out,
-                ref_vcf_index = FilterSites.ref_vcf_csi,
+                ref_vcf = select_first([FilterSites.ref_vcf_out, PrepIntegrated.ref_vcf_out]),
+                ref_vcf_index = select_first([FilterSites.ref_vcf_csi, PrepIntegrated.ref_vcf_csi]),
                 ref_panel = ref_panel,
-                test_vcf = FilterSites.gt_vcf_out,
-                test_vcf_index = FilterSites.gt_vcf_csi,
+                test_vcf = select_first([FilterSites.gt_vcf_out, PrepIntegrated.gt_vcf_out]),
+                test_vcf_index = select_first([FilterSites.gt_vcf_csi, PrepIntegrated.gt_vcf_csi]),
                 plink_map = plink_map,
                 output_prefix = output_prefix,
                 em = em,
@@ -95,7 +110,7 @@ workflow FlareLocalAncestryInference {
                 mem_gb = mem_gb
         }
 
-        if (em) {
+        if (training_mode) {
             File em_model = F.model
         }
     }

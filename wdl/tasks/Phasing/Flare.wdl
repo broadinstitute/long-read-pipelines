@@ -214,6 +214,71 @@ task ThinVCFsForFlare {
 }
 
 
+task PrepIntegratedVcfForFlare {
+
+    input {
+        File joint_vcf
+        File ref_vcf
+        File ref_panel
+        String prefix
+    }
+
+    Int disk_size = 10 + 10 * ceil(size([joint_vcf, ref_vcf], "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        cut -f1 ~{ref_panel} | sort -u > ref.panel.samples
+        bcftools query -l ~{joint_vcf} | sort -u > gt.samples
+        comm -12 ref.panel.samples gt.samples > overlap.samples
+
+        n_overlap=$(wc -l < overlap.samples | tr -d ' ')
+        echo "Excluding $n_overlap study samples that also appear in the reference panel" >&2
+
+        bcftools view --force-samples -S ref.panel.samples \
+            -i 'N_MISSING==0' -Ou ~{ref_vcf} | \
+            bcftools view -e 'GT~"/"' -Oz -o ~{prefix}.ref.vcf.gz
+
+        if [ "$n_overlap" -gt 0 ]; then
+            bcftools view --force-samples -S ^overlap.samples \
+                -i 'N_MISSING==0' -Ou ~{joint_vcf} | \
+                bcftools view -e 'GT~"/"' -Oz -o ~{prefix}.gt.vcf.gz
+        else
+            bcftools view \
+                -i 'N_MISSING==0' -Ou ~{joint_vcf} | \
+                bcftools view -e 'GT~"/"' -Oz -o ~{prefix}.gt.vcf.gz
+        fi
+
+        bcftools index -c -f ~{prefix}.ref.vcf.gz
+        bcftools index -c -f ~{prefix}.gt.vcf.gz
+
+        n_study=$(bcftools query -l ~{prefix}.gt.vcf.gz | wc -l | tr -d ' ')
+        if [ "$n_study" -eq 0 ]; then
+            echo "No study samples remain after excluding reference panel overlaps" >&2
+            exit 1
+        fi
+        echo "FLARE study sample count: $n_study" >&2
+    >>>
+
+    output {
+        File gt_vcf_out = "~{prefix}.gt.vcf.gz"
+        File gt_vcf_csi = "~{prefix}.gt.vcf.gz.csi"
+        File ref_vcf_out = "~{prefix}.ref.vcf.gz"
+        File ref_vcf_csi = "~{prefix}.ref.vcf.gz.csi"
+    }
+
+    runtime {
+        cpu: 2
+        memory: "8 GiB"
+        disks: "local-disk " + disk_size + " HDD"
+        bootDiskSizeGb: 10
+        preemptible: 1
+        maxRetries: 1
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+}
+
+
 task FilterFlareReadySites {
 
     input {
@@ -423,7 +488,7 @@ task Flare {
             out=~{output_prefix} \
             nthreads=~{nthreads} \
             em=~{em} \
-            ~{if defined(flare_model) then "model=" + flare_model else ""}
+            ~{if defined(flare_model) && !em then "model=" + flare_model else ""}
 
     >>>
 
