@@ -36,17 +36,26 @@ task UploadDataTable {
     command <<<
         set -euxo pipefail
 
-        # Make the VM's Google project visible to the auto-detection logic below.
-        GOOGLE_PROJECT="${GOOGLE_PROJECT:-$(curl -s -H "Metadata-Flavor: Google" \
-            http://metadata.google.internal/computeMetadata/v1/project/project-id || true)}"
-        export GOOGLE_PROJECT
-
         python3 <<CODE
         import os
         import sys
+        import urllib.request
 
         import pandas as pd
         import firecloud.api as fapi
+
+        def gce_project():
+            # Fetch this VM's Google project from the metadata server (no curl
+            # dependency; the runtime image may not ship curl).
+            req = urllib.request.Request(
+                "http://metadata.google.internal/computeMetadata/v1/project/project-id",
+                headers={"Metadata-Flavor": "Google"},
+            )
+            try:
+                return urllib.request.urlopen(req, timeout=5).read().decode().strip()
+            except Exception as e:
+                sys.stderr.write("WARNING: could not read Google project from metadata server: {}\n".format(e))
+                return ""
 
         table_name          = "~{table_name}"
         entities_tsv        = "~{entities_tsv}"
@@ -71,10 +80,11 @@ task UploadDataTable {
             # 3. Derive from the Google project this VM runs in. In the current Terra
             #    model each workspace has its own Google project, so the project maps
             #    back to a unique workspace via the workspaces list.
-            project = os.environ.get("GOOGLE_PROJECT", "")
+            project = os.environ.get("GOOGLE_PROJECT", "") or gce_project()
             if not project:
                 sys.stderr.write(
-                    "ERROR: namespace/workspace not provided and GOOGLE_PROJECT is unset; "
+                    "ERROR: namespace/workspace not provided and the Google project could not be "
+                    "determined (GOOGLE_PROJECT unset and metadata server unavailable); "
                     "cannot auto-detect the destination workspace.\n"
                 )
                 sys.exit(1)
