@@ -2178,10 +2178,9 @@ task SubsetVCFToSamples {
         set -euxo pipefail
 
         # The input VCF is not localized (localization_optional): bcftools/htslib
-        # streams it straight from gs:// using this access token.
-        GCS_OAUTH_TOKEN=$(curl -s -H "Metadata-Flavor: Google" \
-            "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token" \
-            | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4)
+        # streams it straight from gs:// using this access token. Application
+        # Default Credentials resolve to the VM's service account.
+        GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         export GCS_OAUTH_TOKEN
 
         REQUESTED_SAMPLES="~{write_lines(requested_samples)}"

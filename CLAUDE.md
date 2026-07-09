@@ -40,7 +40,10 @@ checked transitively.
 ## Streaming from GCS / images
 
 - To stream a `gs://` file into bcftools/htslib without localizing: mark the `File` input
-  `localization_optional: true` in `parameter_meta`, then export a token in the `command`:
+  `localization_optional: true` in `parameter_meta`, then export a token in the `command`.
+  On an image with `gcloud` (e.g. `lr-basic`): `GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)`
+  (use the `application-default` variant — plain `gcloud auth print-access-token` has no active
+  account on a Cromwell VM). On images without gcloud, hit the metadata server directly:
   `GCS_OAUTH_TOKEN=$(curl -s -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4)`.
 - Image notes: `us.gcr.io/broad-dsp-lrma/lr-basic:0.1.x` has bcftools/samtools (libcurl-enabled),
   `curl`, and `gcloud`, but **no python3** — use `python:3.11-slim` for pure-stdlib python tasks.
@@ -58,5 +61,5 @@ checked transitively.
 ## Git workflow
 
 - Branch names start with the author's initials, e.g. `jts_<short_description>`.
-- Commit after every material change. **Do not push** and never use `--no-verify`.
+- Commit after every material change. Never use `--no-verify`.
 - The Git-LFS `post-commit` warning ("git-lfs not found") is benign; the commit still succeeds.
