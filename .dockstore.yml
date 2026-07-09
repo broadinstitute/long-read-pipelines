@@ -138,6 +138,9 @@ workflows:
 - name: ResetBamSampleName
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/ResetBamSampleName.wdl
+- name: GetBamSampleName
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/GetBamSampleName.wdl
 - name: LongReadsContaminationEstimation
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/LongReadsContaminationEstimation.wdl
