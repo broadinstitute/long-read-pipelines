@@ -18,7 +18,9 @@ workflow SplitMultiSampleVCFToTerraTable {
         sample_name_list:    "Optional file of sample names to extract, one per line. Mutually exclusive with sample_names."
 
         destination_table:   "Name of the destination Terra data table to write the per-sample rows into."
-        joint_run_ID:        "Identifier of the joint-call run that produced input_vcf; recorded in the 97_Joint_Run_ID column of every row."
+        joint_run_ID:        "Entity name of the joint-call run that produced input_vcf; every row's 97_Joint_Run_ID column links to it."
+        joint_run_table:     "Entity type (data table) that joint_run_ID lives in, e.g. TEST_joint_results_pfcrosses_v2; the 97_Joint_Run_ID link targets this table."
+        truth_table:         "Truth-set entity type (data table), e.g. truth_pfcrosses_v2. Each row's Truth column links to the truth entity named by the sample prefix (row ID up to the first underscore)."
 
         namespace:           "Optional Terra namespace of the destination workspace (auto-detected when omitted)."
         workspace:           "Optional Terra workspace name (auto-detected when omitted)."
@@ -37,6 +39,8 @@ workflow SplitMultiSampleVCFToTerraTable {
 
         String destination_table
         String joint_run_ID
+        String joint_run_table
+        String truth_table
 
         String? namespace
         String? workspace
@@ -60,7 +64,9 @@ workflow SplitMultiSampleVCFToTerraTable {
             sample_vcfs = SplitVCF.output_vcfs,
             sample_vcf_indices = SplitVCF.output_vcf_indices,
             table_name = destination_table,
-            joint_run_id = joint_run_ID
+            joint_run_id = joint_run_ID,
+            joint_run_table = joint_run_table,
+            truth_table = truth_table
     }
 
     # 3. Upload the TSV into the destination data table.
@@ -85,14 +91,16 @@ workflow SplitMultiSampleVCFToTerraTable {
 task MakeEntitiesTsv {
 
     meta {
-        description: "Assemble a Terra entity TSV from a set of per-sample VCFs. Each row uses the sample name (parsed from the VCF file name) as the entity ID and records the sample's VCF, its index, and the joint-call run ID."
+        description: "Assemble a Terra entity TSV from a set of per-sample VCFs. Each row uses the sample name (parsed from the VCF file name) as the entity ID and records the sample's VCF and index, an entity reference (link) to the joint-call run, and an entity reference (link) to the matching sample in the truth set."
     }
 
     parameter_meta {
         sample_vcfs:        "Per-sample VCF files (one per sample); the sample name is parsed from each file's base name."
         sample_vcf_indices: "Per-sample VCF index files, matched to sample_vcfs by sample name."
         table_name:         "Destination data table name; used to form the `entity:<table_name>_id` header column."
-        joint_run_id:       "Joint-call run ID recorded in the 97_Joint_Run_ID column of every row."
+        joint_run_id:       "Joint-call run entity name; every row's 97_Joint_Run_ID column links to it."
+        joint_run_table:    "Entity type (data table) that joint_run_id lives in; the 97_Joint_Run_ID reference targets this table."
+        truth_table:        "Truth-set entity type (data table). Each row's Truth column links to the truth entity whose name is the sample prefix (the row ID up to the first underscore)."
         runtime_attr_override: "Override default runtime attributes."
     }
 
@@ -101,6 +109,8 @@ task MakeEntitiesTsv {
         Array[String] sample_vcf_indices
         String table_name
         String joint_run_id
+        String joint_run_table
+        String truth_table
 
         RuntimeAttr? runtime_attr_override
     }
@@ -113,9 +123,12 @@ task MakeEntitiesTsv {
 
         python3 <<CODE
         import os
+        import json
 
-        table_name   = "~{table_name}"
-        joint_run_id = "~{joint_run_id}"
+        table_name      = "~{table_name}"
+        joint_run_id    = "~{joint_run_id}"
+        joint_run_table = "~{joint_run_table}"
+        truth_table     = "~{truth_table}"
 
         def sample_of(path):
             b = os.path.basename(path)
@@ -125,6 +138,12 @@ task MakeEntitiesTsv {
                     return b[:-len(ext)]
             return b
 
+        def ref(entity_type, entity_name):
+            # Terra entity reference; a JSON object cell is imported as a link
+            # (clickable reference) by the flexible TSV importer.
+            return json.dumps({"entityType": entity_type, "entityName": entity_name},
+                              separators=(",", ":"))
+
         with open("vcfs.txt") as fh:
             vcfs = [line.strip() for line in fh if line.strip()]
         with open("idxs.txt") as fh:
@@ -133,14 +152,20 @@ task MakeEntitiesTsv {
         vcf_by_sample = {sample_of(v): v for v in vcfs}
         idx_by_sample = {sample_of(i): i for i in idxs}
 
+        # Every row links to the same joint-call run entity.
+        joint_ref = ref(joint_run_table, joint_run_id)
+
         with open("entities.tsv", "w") as out:
-            out.write("entity:{}_id\tvcf\tvcf_index\t98_Run_ID\t97_Joint_Run_ID\n".format(table_name))
+            out.write("entity:{}_id\tvcf\tvcf_index\t97_Joint_Run_ID\tTruth\n".format(table_name))
             for sample in sorted(vcf_by_sample):
-                out.write("{s}\t{v}\t{i}\t{s}\t{j}\n".format(
+                # Truth entity name is the sample prefix: the row ID up to the first underscore.
+                truth_name = sample.split("_", 1)[0]
+                out.write("{s}\t{v}\t{i}\t{j}\t{t}\n".format(
                     s=sample,
                     v=vcf_by_sample[sample],
                     i=idx_by_sample.get(sample, ""),
-                    j=joint_run_id,
+                    j=joint_ref,
+                    t=ref(truth_table, truth_name),
                 ))
         CODE
     >>>
