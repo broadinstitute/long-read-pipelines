@@ -199,7 +199,9 @@ workflow SRFlowcell {
                 known_sites_vcf = ref_map["known_sites_vcf"],
                 known_sites_index = ref_map["known_sites_index"],
 
-                prefix = SM + ".baseRecalibratorReport"
+                prefix = SM + ".baseRecalibratorReport",
+                maximum_cycle_value = 1000 
+
         }
 
         call SRUTIL.ApplyBQSR as t_011_ApplyBQSR {
