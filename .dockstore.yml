@@ -186,6 +186,9 @@ workflows:
 - name: SplitMultiSampleVCFToTerraTable
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SplitMultiSampleVCFToTerraTable.wdl
+- name: SubsetVCFsToSamples
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SubsetVCFsToSamples.wdl
 - name: SRWholeGenome_Simplified
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ILMN/VariantCalling/SRWholeGenome_Simplified.wdl

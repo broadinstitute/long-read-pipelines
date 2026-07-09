@@ -2132,3 +2132,125 @@ task CopyDP_MINToDP {
     }
 }
 
+task SubsetVCFToSamples {
+
+    meta {
+        description: "Subset a (multi-sample) VCF to a specified set of samples, emitting a single multi-sample VCF that retains only those samples (no per-sample splitting). The input VCF is streamed directly from gs:// (localization_optional) rather than copied. Exactly one of sample_names or sample_name_list must be provided; every requested sample must be present in the VCF (all absent samples are listed on stderr and the task fails)."
+    }
+
+    parameter_meta {
+        input_vcf: {
+            description: "VCF to subset. Streamed directly from its gs:// location rather than localized.",
+            localization_optional: true
+        }
+        input_vcf_index: {
+            description: "Index (.tbi/.csi) for input_vcf. Streamed rather than localized.",
+            localization_optional: true
+        }
+        sample_names:      "Samples to keep, as an inline list of names. Mutually exclusive with sample_name_list; exactly one of the two must be given."
+        sample_name_list:  "Samples to keep, as a file with one sample name per line. Mutually exclusive with sample_names; exactly one of the two must be given."
+        prefix:            "Base name for the output VCF (default: the input VCF's base name)."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
+    input {
+        File input_vcf
+        File input_vcf_index
+
+        Array[String]? sample_names
+        File? sample_name_list
+
+        String? prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Array[String] requested_samples = select_first([sample_names, []])
+    Boolean have_inline_samples = length(requested_samples) > 0
+    String outbase = select_first([prefix, basename(input_vcf, ".vcf.gz")])
+
+    Int disk_size = 10 + 2*ceil(size([input_vcf, input_vcf_index], "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        # The input VCF is not localized (localization_optional): bcftools/htslib
+        # streams it straight from gs:// using this access token.
+        GCS_OAUTH_TOKEN=$(curl -s -H "Metadata-Flavor: Google" \
+            "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token" \
+            | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4)
+        export GCS_OAUTH_TOKEN
+
+        REQUESTED_SAMPLES="~{write_lines(requested_samples)}"
+        SAMPLE_NAME_LIST="~{default='' sample_name_list}"
+
+        # Gate on the WDL-known count rather than the size of write_lines() output:
+        # write_lines([]) is not guaranteed to be a 0-byte file.
+        HAVE_INLINE_SAMPLES=~{true="1" false="0" have_inline_samples}
+
+        # Exactly one of sample_names / sample_name_list must be provided.
+        if [ "${HAVE_INLINE_SAMPLES}" -eq 1 ] && [ -n "${SAMPLE_NAME_LIST}" ]; then
+            echo "ERROR: 'sample_names' and 'sample_name_list' are mutually exclusive; provide exactly one." >&2
+            exit 1
+        fi
+        if [ "${HAVE_INLINE_SAMPLES}" -eq 0 ] && [ -z "${SAMPLE_NAME_LIST}" ]; then
+            echo "ERROR: one of 'sample_names' or 'sample_name_list' must be provided." >&2
+            exit 1
+        fi
+
+        # Resolve the effective sample list file.
+        if [ "${HAVE_INLINE_SAMPLES}" -eq 1 ]; then
+            SAMPLES_FILE="${REQUESTED_SAMPLES}"
+        else
+            SAMPLES_FILE="${SAMPLE_NAME_LIST}"
+        fi
+
+        # Every requested sample must be present in the VCF; list all that are not.
+        bcftools query -l ~{input_vcf} > vcf_samples.txt
+        missing=()
+        while IFS= read -r sample; do
+            [ -z "${sample}" ] && continue
+            if ! grep -Fxq -- "${sample}" vcf_samples.txt; then
+                missing+=("${sample}")
+            fi
+        done < "${SAMPLES_FILE}"
+        if [ "${#missing[@]}" -gt 0 ]; then
+            echo "ERROR: the following requested sample(s) are not present in the input VCF:" >&2
+            for sample in "${missing[@]}"; do
+                echo "  ${sample}" >&2
+            done
+            exit 1
+        fi
+
+        # Subset to the requested samples, keeping a single multi-sample VCF.
+        bcftools view -S "${SAMPLES_FILE}" -Oz -o "~{outbase}.subset.vcf.gz" ~{input_vcf}
+        tabix -p vcf "~{outbase}.subset.vcf.gz"
+    >>>
+
+    output {
+        File subset_vcf = "~{outbase}.subset.vcf.gz"
+        File subset_vcf_index = "~{outbase}.subset.vcf.gz.tbi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       25,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.3"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
