@@ -2135,18 +2135,12 @@ task CopyDP_MINToDP {
 task SubsetVCFToSamples {
 
     meta {
-        description: "Subset a (multi-sample) VCF to a specified set of samples, emitting a single multi-sample VCF that retains only those samples (no per-sample splitting). The input VCF is streamed directly from gs:// (localization_optional) rather than copied. Exactly one of sample_names or sample_name_list must be provided. Requested samples absent from the VCF are handled per error_if_sample_missing: when true the task fails listing them all; when false it warns and continues with the samples that are present."
+        description: "Subset a (multi-sample) VCF to a specified set of samples, emitting a single multi-sample VCF that retains only those samples (no per-sample splitting). The input VCF is localized before subsetting (a full-file sample subset reads every record, so a resumable localized copy is more robust than streaming a large VCF over the network). Exactly one of sample_names or sample_name_list must be provided. Requested samples absent from the VCF are handled per error_if_sample_missing: when true the task fails listing them all; when false it warns and continues with the samples that are present."
     }
 
     parameter_meta {
-        input_vcf: {
-            description: "VCF to subset. Streamed directly from its gs:// location rather than localized.",
-            localization_optional: true
-        }
-        input_vcf_index: {
-            description: "Index (.tbi/.csi) for input_vcf. Streamed rather than localized.",
-            localization_optional: true
-        }
+        input_vcf:         "VCF to subset."
+        input_vcf_index:   "Index (.tbi/.csi) for input_vcf."
         sample_names:      "Samples to keep, as an inline list of names. Mutually exclusive with sample_name_list; exactly one of the two must be given."
         sample_name_list:  "Samples to keep, as a file with one sample name per line. Mutually exclusive with sample_names; exactly one of the two must be given."
         error_if_sample_missing: "When true (default), any requested sample absent from the VCF fails the task (all absent samples listed on stderr). When false, absent samples produce a warning and the task continues, subsetting to the samples that are present."
@@ -2176,12 +2170,6 @@ task SubsetVCFToSamples {
 
     command <<<
         set -euxo pipefail
-
-        # The input VCF is not localized (localization_optional): bcftools/htslib
-        # streams it straight from gs:// using this access token. Application
-        # Default Credentials resolve to the VM's service account.
-        GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-        export GCS_OAUTH_TOKEN
 
         REQUESTED_SAMPLES="~{write_lines(requested_samples)}"
         SAMPLE_NAME_LIST="~{default='' sample_name_list}"
