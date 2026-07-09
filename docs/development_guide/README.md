@@ -41,6 +41,22 @@ can be used to run tests in a variety of environments. The scripts are run throu
 GitHub Actions, which are configured in the .github/workflows directory. The GitHub Actions
 are triggered by pushes to the repository and pull requests. 
 
+## WDL Validation
+
+Before committing changes to any `.wdl` file, validate it with **both**
+[miniwdl](https://github.com/chanzuckerberg/miniwdl) and
+[womtool](https://github.com/broadinstitute/cromwell/releases) (the WDL validator that
+ships with Cromwell). They are complementary and neither alone is sufficient:
+
+- `miniwdl check <file.wdl>` — fast iteration, and (with `shellcheck` installed) it lints
+  the embedded `command` blocks. Use `miniwdl check --strict` to surface those lint findings.
+- `java -jar womtool.jar validate <file.wdl>` — the source of truth for Terra/Cromwell.
+  miniwdl accepts some constructs that Cromwell rejects (for example, a parenthesized boolean
+  expression inside a `~{true=... false=... expr}` placeholder), so a WDL must pass womtool
+  before it is considered valid.
+
+Validate the top-level workflow file so imported task libraries are checked transitively.
+
 ## Workflow Deployment
 
 The workflows in this repository are deployed to Terra using Dockstore. Dockstore is a
