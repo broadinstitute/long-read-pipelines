@@ -2135,7 +2135,7 @@ task CopyDP_MINToDP {
 task SubsetVCFToSamples {
 
     meta {
-        description: "Subset a (multi-sample) VCF to a specified set of samples, emitting a single multi-sample VCF that retains only those samples (no per-sample splitting). The input VCF is streamed directly from gs:// (localization_optional) rather than copied. Exactly one of sample_names or sample_name_list must be provided; every requested sample must be present in the VCF (all absent samples are listed on stderr and the task fails)."
+        description: "Subset a (multi-sample) VCF to a specified set of samples, emitting a single multi-sample VCF that retains only those samples (no per-sample splitting). The input VCF is streamed directly from gs:// (localization_optional) rather than copied. Exactly one of sample_names or sample_name_list must be provided. Requested samples absent from the VCF are handled per error_if_sample_missing: when true the task fails listing them all; when false it warns and continues with the samples that are present."
     }
 
     parameter_meta {
@@ -2149,6 +2149,7 @@ task SubsetVCFToSamples {
         }
         sample_names:      "Samples to keep, as an inline list of names. Mutually exclusive with sample_name_list; exactly one of the two must be given."
         sample_name_list:  "Samples to keep, as a file with one sample name per line. Mutually exclusive with sample_names; exactly one of the two must be given."
+        error_if_sample_missing: "When true (default), any requested sample absent from the VCF fails the task (all absent samples listed on stderr). When false, absent samples produce a warning and the task continues, subsetting to the samples that are present."
         prefix:            "Base name for the output VCF (default: the input VCF's base name)."
         runtime_attr_override: "Override default runtime attributes."
     }
@@ -2159,6 +2160,8 @@ task SubsetVCFToSamples {
 
         Array[String]? sample_names
         File? sample_name_list
+
+        Boolean error_if_sample_missing = true
 
         String? prefix
 
@@ -2205,7 +2208,9 @@ task SubsetVCFToSamples {
             SAMPLES_FILE="${SAMPLE_NAME_LIST}"
         fi
 
-        # Every requested sample must be present in the VCF; list all that are not.
+        ERROR_IF_SAMPLE_MISSING=~{true="1" false="0" error_if_sample_missing}
+
+        # Find any requested samples that are absent from the VCF.
         bcftools query -l ~{input_vcf} > vcf_samples.txt
         missing=()
         while IFS= read -r sample; do
@@ -2215,15 +2220,27 @@ task SubsetVCFToSamples {
             fi
         done < "${SAMPLES_FILE}"
         if [ "${#missing[@]}" -gt 0 ]; then
-            echo "ERROR: the following requested sample(s) are not present in the input VCF:" >&2
-            for sample in "${missing[@]}"; do
-                echo "  ${sample}" >&2
-            done
-            exit 1
+            if [ "${ERROR_IF_SAMPLE_MISSING}" -eq 1 ]; then
+                echo "ERROR: the following requested sample(s) are not present in the input VCF:" >&2
+                for sample in "${missing[@]}"; do
+                    echo "  ${sample}" >&2
+                done
+                exit 1
+            else
+                echo "WARNING: the following requested sample(s) are not present in the input VCF and will be skipped:" >&2
+                for sample in "${missing[@]}"; do
+                    echo "  ${sample}" >&2
+                done
+            fi
         fi
 
         # Subset to the requested samples, keeping a single multi-sample VCF.
-        bcftools view -S "${SAMPLES_FILE}" -Oz -o "~{outbase}.subset.vcf.gz" ~{input_vcf}
+        # In warn-and-continue mode, --force-samples lets bcftools skip absent samples.
+        if [ "${ERROR_IF_SAMPLE_MISSING}" -eq 1 ]; then
+            bcftools view -S "${SAMPLES_FILE}" -Oz -o "~{outbase}.subset.vcf.gz" ~{input_vcf}
+        else
+            bcftools view --force-samples -S "${SAMPLES_FILE}" -Oz -o "~{outbase}.subset.vcf.gz" ~{input_vcf}
+        fi
         tabix -p vcf "~{outbase}.subset.vcf.gz"
     >>>
 

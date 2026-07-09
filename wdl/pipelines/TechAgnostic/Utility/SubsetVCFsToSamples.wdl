@@ -14,6 +14,7 @@ workflow SubsetVCFsToSamples {
         input_vcf_indices: "Index files for input_vcfs, matched by position (same length and order)."
         sample_names:      "Samples to keep, as an inline list of names. Mutually exclusive with sample_name_list; exactly one of the two must be given."
         sample_name_list:  "Samples to keep, as a file with one sample name per line. Mutually exclusive with sample_names; exactly one of the two must be given."
+        error_if_sample_missing: "When true (default), a requested sample absent from any VCF fails that shard (all absent samples listed on stderr). When false, absent samples produce a warning and processing continues with the samples that are present."
     }
 
     input {
@@ -22,6 +23,8 @@ workflow SubsetVCFsToSamples {
 
         Array[String]? sample_names
         File? sample_name_list
+
+        Boolean error_if_sample_missing = true
     }
 
     scatter (idx in range(length(input_vcfs))) {
@@ -30,7 +33,8 @@ workflow SubsetVCFsToSamples {
                 input_vcf = input_vcfs[idx],
                 input_vcf_index = input_vcf_indices[idx],
                 sample_names = sample_names,
-                sample_name_list = sample_name_list
+                sample_name_list = sample_name_list,
+                error_if_sample_missing = error_if_sample_missing
         }
     }
 
