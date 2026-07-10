@@ -141,6 +141,9 @@ workflows:
 - name: GetBamSampleName
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/GetBamSampleName.wdl
+- name: GetVcfSampleName
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/GetVcfSampleName.wdl
 - name: LongReadsContaminationEstimation
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/LongReadsContaminationEstimation.wdl
