@@ -28,7 +28,7 @@ task GetSampleName {
             localization_optional: true,
             description: "Streamed for its header only (not localized)."
         }
-        gcs_requester_pays_project: "GCP project to bill for requester-pays buckets. When set, the header is streamed via 'gcloud storage cat --billing-project' (htslib's gs:// backend cannot pass a billing project). When unset, htslib streams the header directly."
+        gcs_requester_pays_project: "GCP project to bill for requester-pays buckets. When set, the header is streamed via 'gsutil -u <project> cat' (htslib's gs:// backend cannot pass a billing project). When unset, htslib streams the header directly."
     }
 
     input {
@@ -45,9 +45,9 @@ task GetSampleName {
 
         # stream only the header (samtools closes the pipe after the header, so the BAM is not fully transferred)
         if [[ -n "~{rp_project}" ]]; then
-            # requester-pays: gcloud can pass a billing project; htslib's gs:// backend cannot
+            # requester-pays: gsutil can bill a project (-u); htslib's gs:// backend cannot
             set +o pipefail
-            gcloud storage cat --billing-project="~{rp_project}" ~{bam} | samtools view --no-PG -H - > header.txt
+            gsutil -u "~{rp_project}" cat ~{bam} | samtools view --no-PG -H - > header.txt
             set -o pipefail
         else
             samtools view --no-PG -H ~{bam} > header.txt
@@ -73,6 +73,6 @@ task GetSampleName {
         disks:          "local-disk 10 HDD"
         preemptible:    2
         maxRetries:     1
-        docker:         "us.gcr.io/broad-dsp-lrma/lr-gcloud-samtools:0.1.3"
+        docker:         "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
     }
 }
