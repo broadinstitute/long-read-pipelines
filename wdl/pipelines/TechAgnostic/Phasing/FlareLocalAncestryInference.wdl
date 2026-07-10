@@ -23,11 +23,14 @@ workflow FlareLocalAncestryInference {
 
         Float maf = 0.01
         Int thin_bp = 20000
+        Int n_sample_shards = 10
+        Int seed = -99999
         Int nthreads = 16
         Int mem_gb = 64
     }
 
     Boolean em = training_mode
+    Int effective_shards = if training_mode then 1 else n_sample_shards
 
     String prep_prefix = output_prefix + ".prep"
 
@@ -94,31 +97,75 @@ workflow FlareLocalAncestryInference {
         }
     }
 
+    File ready_gt_vcf = select_first([FilterSites.gt_vcf_out, PrepIntegrated.gt_vcf_out])
+    File ready_gt_vcf_index = select_first([FilterSites.gt_vcf_csi, PrepIntegrated.gt_vcf_csi])
+    File ready_ref_vcf = select_first([FilterSites.ref_vcf_out, PrepIntegrated.ref_vcf_out])
+    File ready_ref_vcf_index = select_first([FilterSites.ref_vcf_csi, PrepIntegrated.ref_vcf_csi])
+
     if (run_flare) {
-        call Flare.Flare as F {
-            input:
-                ref_vcf = select_first([FilterSites.ref_vcf_out, PrepIntegrated.ref_vcf_out]),
-                ref_vcf_index = select_first([FilterSites.ref_vcf_csi, PrepIntegrated.ref_vcf_csi]),
-                ref_panel = ref_panel,
-                test_vcf = select_first([FilterSites.gt_vcf_out, PrepIntegrated.gt_vcf_out]),
-                test_vcf_index = select_first([FilterSites.gt_vcf_csi, PrepIntegrated.gt_vcf_csi]),
-                plink_map = plink_map,
-                output_prefix = output_prefix,
-                em = em,
-                flare_model = flare_model,
-                nthreads = nthreads,
-                mem_gb = mem_gb
+        if (effective_shards > 1) {
+            call Flare.SplitStudySamplesForFlare as SplitSamples {
+                input:
+                    gt_vcf = ready_gt_vcf,
+                    n_shards = effective_shards,
+                    prefix = prep_prefix + ".samples"
+            }
+
+            scatter (shard_idx in range(length(SplitSamples.sample_lists))) {
+                call Flare.Flare as F_shard {
+                    input:
+                        ref_vcf = ready_ref_vcf,
+                        ref_vcf_index = ready_ref_vcf_index,
+                        ref_panel = ref_panel,
+                        test_vcf = ready_gt_vcf,
+                        test_vcf_index = ready_gt_vcf_index,
+                        plink_map = plink_map,
+                        output_prefix = output_prefix + ".shard" + shard_idx,
+                        em = em,
+                        flare_model = flare_model,
+                        gt_samples = SplitSamples.sample_lists[shard_idx],
+                        seed = seed,
+                        nthreads = nthreads,
+                        mem_gb = mem_gb
+                }
+            }
+
+            call Flare.MergeFlareShardOutputs as MergeShards {
+                input:
+                    anc_vcfs = F_shard.anc_vcf,
+                    global_anc_files = F_shard.global_anc,
+                    output_prefix = output_prefix
+            }
         }
 
-        if (training_mode) {
-            File em_model = F.model
+        if (effective_shards == 1) {
+            call Flare.Flare as F {
+                input:
+                    ref_vcf = ready_ref_vcf,
+                    ref_vcf_index = ready_ref_vcf_index,
+                    ref_panel = ref_panel,
+                    test_vcf = ready_gt_vcf,
+                    test_vcf_index = ready_gt_vcf_index,
+                    plink_map = plink_map,
+                    output_prefix = output_prefix,
+                    em = em,
+                    flare_model = flare_model,
+                    seed = seed,
+                    nthreads = nthreads,
+                    mem_gb = mem_gb
+                }
+
+            if (training_mode) {
+                File em_model = F.model
+            }
         }
     }
 
     output {
-        File? global_anc = F.global_anc
-        File? anc_vcf = F.anc_vcf
+        File? global_anc = select_first([MergeShards.global_anc, F.global_anc])
+        File? anc_vcf = select_first([MergeShards.anc_vcf, F.anc_vcf])
         File? log = F.log
+        Array[File]? shard_logs = F_shard.log
         File? model = em_model
     }
 }

@@ -451,6 +451,92 @@ task MergeGlobalAncestry {
 }
 
 
+task SplitStudySamplesForFlare {
+
+    input {
+        File gt_vcf
+        Int n_shards
+        String prefix
+    }
+
+    command <<<
+        set -euxo pipefail
+
+        bcftools query -l ~{gt_vcf} > all.samples
+        n=$(wc -l < all.samples | tr -d ' ')
+        if [ "$n" -eq 0 ]; then
+            echo "No study samples found in ~{gt_vcf}" >&2
+            exit 1
+        fi
+        if [ ~{n_shards} -gt "$n" ]; then
+            echo "n_shards (~{n_shards}) exceeds study sample count ($n)" >&2
+            exit 1
+        fi
+
+        split -n l/~{n_shards} -d -a 2 all.samples ~{prefix}.shard_
+        n_lists=$(ls -1 ~{prefix}.shard_* | wc -l | tr -d ' ')
+        echo "Created $n_lists sample shards for FLARE" >&2
+    >>>
+
+    output {
+        Array[File] sample_lists = glob("~{prefix}.shard_*")
+    }
+
+    runtime {
+        cpu: 1
+        memory: "1 GiB"
+        disks: "local-disk 10 HDD"
+        bootDiskSizeGb: 10
+        preemptible: 1
+        maxRetries: 1
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+}
+
+
+task MergeFlareShardOutputs {
+
+    input {
+        Array[File] anc_vcfs
+        Array[File] global_anc_files
+        String output_prefix
+    }
+
+    Float input_size_gb = size(anc_vcfs, "GB") + size(global_anc_files, "GB")
+    Int disk_size = 20 + 4 * ceil(input_size_gb)
+
+    command <<<
+        set -euxo pipefail
+
+        bcftools merge -Oz -o ~{output_prefix}.anc.vcf.gz ~{sep=' ' anc_vcfs}
+        bcftools index -c -f ~{output_prefix}.anc.vcf.gz
+
+        global_anc_files=(~{sep=' ' global_anc_files})
+        zcat "${global_anc_files[0]}" > ~{output_prefix}.global.anc
+        for f in "${global_anc_files[@]:1}"; do
+            zcat "$f" | tail -n +2 >> ~{output_prefix}.global.anc
+        done
+        gzip -f ~{output_prefix}.global.anc
+    >>>
+
+    output {
+        File anc_vcf = "~{output_prefix}.anc.vcf.gz"
+        File anc_vcf_csi = "~{output_prefix}.anc.vcf.gz.csi"
+        File global_anc = "~{output_prefix}.global.anc.gz"
+    }
+
+    runtime {
+        cpu: 2
+        memory: "4 GiB"
+        disks: "local-disk " + disk_size + " HDD"
+        bootDiskSizeGb: 10
+        preemptible: 1
+        maxRetries: 1
+        docker: "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
+    }
+}
+
+
 task Flare {
 
     meta {
@@ -470,7 +556,9 @@ task Flare {
 
         Boolean em = true
         File? flare_model
+        File? gt_samples
 
+        Int seed = -99999
         Int nthreads = 16
         Int mem_gb = 64
 
@@ -488,7 +576,9 @@ task Flare {
             out=~{output_prefix} \
             nthreads=~{nthreads} \
             em=~{em} \
-            ~{if defined(flare_model) && !em then "model=" + flare_model else ""}
+            seed=~{seed} \
+            ~{if defined(flare_model) && !em then "model=" + flare_model else ""} \
+            ~{if defined(gt_samples) then "gt-samples=" + gt_samples else ""}
 
     >>>
 
