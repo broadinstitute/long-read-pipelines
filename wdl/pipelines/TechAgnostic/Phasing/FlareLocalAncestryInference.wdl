@@ -111,7 +111,8 @@ workflow FlareLocalAncestryInference {
                     prefix = prep_prefix + ".samples"
             }
 
-            scatter (shard_idx in range(length(SplitSamples.sample_lists))) {
+            #scatter (shard_idx in range(length(SplitSamples.sample_lists))) {
+            scatter (shard_idx in [0]) {
                 call Flare.Flare as F_shard {
                     input:
                         ref_vcf = ready_ref_vcf,

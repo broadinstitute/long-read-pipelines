@@ -560,7 +560,7 @@ task Flare {
 
         Int seed = -99999
         Int nthreads = 16
-        Int mem_gb = 64
+        Int mem_gb = 128
 
         RuntimeAttr? runtime_attr_override
     }
