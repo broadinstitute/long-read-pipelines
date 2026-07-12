@@ -595,7 +595,7 @@ task Flare {
         mem_gb:             mem_gb,
         disk_gb:            200,
         boot_disk_gb:       100,
-        preemptible_tries:  0,
+        preemptible_tries:  2,
         max_retries:        0,
         docker:             "hangsuunc/flare:v1"
     }
