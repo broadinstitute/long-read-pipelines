@@ -508,6 +508,11 @@ task MergeFlareShardOutputs {
     command <<<
         set -euxo pipefail
 
+        # FLARE does not write CSI/TBI indexes; bcftools merge requires them.
+        for f in ~{sep=' ' anc_vcfs}; do
+            bcftools index -c -f "$f"
+        done
+
         bcftools merge -Oz -o ~{output_prefix}.anc.vcf.gz ~{sep=' ' anc_vcfs}
         bcftools index -c -f ~{output_prefix}.anc.vcf.gz
 
