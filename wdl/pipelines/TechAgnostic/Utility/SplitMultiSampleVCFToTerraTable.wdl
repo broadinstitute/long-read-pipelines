@@ -114,7 +114,7 @@ workflow SplitMultiSampleVCFToTerraTable {
 task MakeEntitiesTsv {
 
     meta {
-        description: "Assemble a Terra entity TSV from a set of per-sample VCFs. Each row uses the sample name (parsed from the VCF file name) as the entity ID and records the sample's VCF and index, an entity reference (link) to the joint-call run, and an entity reference (link) to the matching sample in the truth set."
+        description: "Assemble a Terra entity TSV from a set of per-sample VCFs. Each row uses the sample name (parsed from the VCF file name) as the entity ID and records the sample's VCF and index, the run ID (98_Run_ID, same value as the entity ID), an entity reference (link) to the joint-call run, and an entity reference (link) to the matching sample in the truth set."
     }
 
     parameter_meta {
@@ -181,11 +181,11 @@ task MakeEntitiesTsv {
         samples = sorted(vcf_by_sample)
 
         with open("entities.tsv", "w") as out:
-            out.write("entity:{}_id\tvcf\tvcf_index\t97_Joint_Run_ID\tTruth\n".format(table_name))
+            out.write("entity:{}_id\tvcf\tvcf_index\t98_Run_ID\t97_Joint_Run_ID\tTruth\n".format(table_name))
             for sample in samples:
                 # Truth entity name is the sample prefix: the row ID up to the first underscore.
                 truth_name = sample.split("_", 1)[0]
-                out.write("{s}\t{v}\t{i}\t{j}\t{t}\n".format(
+                out.write("{s}\t{v}\t{i}\t{s}\t{j}\t{t}\n".format(
                     s=sample,
                     v=vcf_by_sample[sample],
                     i=idx_by_sample.get(sample, ""),
@@ -319,7 +319,7 @@ task ValidateTerraLinks {
             sys.exit(1)
 
         def entity_names(namespace, workspace, table):
-            # Returns the set of entity names in `table`, or None if the table is unreadable.
+            # Returns the set of entity names in 'table', or None if the table is unreadable.
             resp = fapi.get_entities(namespace, workspace, table)
             if resp.status_code != 200:
                 sys.stderr.write(
