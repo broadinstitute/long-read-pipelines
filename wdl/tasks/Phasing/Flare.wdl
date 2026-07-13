@@ -513,7 +513,22 @@ task MergeFlareShardOutputs {
             bcftools index -c -f "$f"
         done
 
-        bcftools merge -Oz -o ~{output_prefix}.anc.vcf.gz ~{sep=' ' anc_vcfs}
+        # bcftools merge drops non-standard meta lines such as FLARE's ##ANCESTRY.
+        first_anc_vcf=$(echo ~{sep=' ' anc_vcfs} | awk '{print $1}')
+        ancestry_line=$(bcftools view -h "$first_anc_vcf" | grep '^##ANCESTRY=' || true)
+
+        bcftools merge -Oz -o ~{output_prefix}.anc.merged.vcf.gz ~{sep=' ' anc_vcfs}
+
+        if [ -n "$ancestry_line" ]; then
+            bcftools view -h ~{output_prefix}.anc.merged.vcf.gz | \
+                awk -v line="$ancestry_line" 'BEGIN { printed=0 } /^#CHROM/ && !printed { print line; printed=1 } { print }' \
+                > ~{output_prefix}.header
+            bcftools reheader -h ~{output_prefix}.header -o ~{output_prefix}.anc.vcf.gz \
+                ~{output_prefix}.anc.merged.vcf.gz
+        else
+            mv ~{output_prefix}.anc.merged.vcf.gz ~{output_prefix}.anc.vcf.gz
+        fi
+
         bcftools index -c -f ~{output_prefix}.anc.vcf.gz
 
         global_anc_files=(~{sep=' ' global_anc_files})
