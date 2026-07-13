@@ -35,9 +35,18 @@ workflow SplitMultiSampleVCF {
             sample_name_list = sample_name_list
     }
 
+    # The task delocalizes every per-sample VCF and its index together (one glob
+    # dir), so each .tbi stays a sibling of its .vcf.gz. Split the bundle back into
+    # typed arrays here without re-globbing, preserving that co-location.
+    scatter (f in SplitMultiSampleVCFTask.output_files) {
+        Boolean is_index = (basename(f, ".tbi") != basename(f))
+        if (!is_index) { File split_vcf = f }
+        if (is_index)  { File split_idx = f }
+    }
+
     output {
-        Array[File] sample_vcfs = SplitMultiSampleVCFTask.output_vcfs
-        Array[File] sample_vcf_indices = SplitMultiSampleVCFTask.output_vcf_indices
+        Array[File] sample_vcfs = select_all(split_vcf)
+        Array[File] sample_vcf_indices = select_all(split_idx)
     }
 }
 
@@ -123,8 +132,10 @@ task SplitMultiSampleVCFTask {
     >>>
 
     output {
-        Array[File] output_vcfs = glob("out_dir/*.vcf.gz")
-        Array[File] output_vcf_indices = glob("out_dir/*.vcf.gz.tbi")
+        # Single glob so each sample's .vcf.gz and .vcf.gz.tbi delocalize into the
+        # same directory and remain siblings (downstream tools such as GATK require
+        # the index next to its VCF). Callers split this bundle by suffix.
+        Array[File] output_files = glob("out_dir/*")
     }
 
     #########################

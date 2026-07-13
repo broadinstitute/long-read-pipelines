@@ -65,11 +65,21 @@ workflow SplitMultiSampleVCFToTerraTable {
             sample_name_list = sample_name_list
     }
 
+    # The split task delocalizes each VCF and its index together; split the bundle
+    # back into typed arrays (co-location preserved so each .tbi stays beside its VCF).
+    scatter (f in SplitVCF.output_files) {
+        Boolean is_index = (basename(f, ".tbi") != basename(f))
+        if (!is_index) { File split_vcf = f }
+        if (is_index)  { File split_idx = f }
+    }
+    Array[File] colocated_vcfs = select_all(split_vcf)
+    Array[File] colocated_vcf_indices = select_all(split_idx)
+
     # 2. Build the Terra entity TSV, one row per per-sample VCF.
     call MakeEntitiesTsv {
         input:
-            sample_vcfs = SplitVCF.output_vcfs,
-            sample_vcf_indices = SplitVCF.output_vcf_indices,
+            sample_vcfs = colocated_vcfs,
+            sample_vcf_indices = colocated_vcf_indices,
             table_name = destination_table,
             joint_run_id = joint_run_ID,
             joint_run_table = resolved_joint_run_table,
@@ -103,8 +113,8 @@ workflow SplitMultiSampleVCFToTerraTable {
     }
 
     output {
-        Array[File] sample_vcfs = SplitVCF.output_vcfs
-        Array[File] sample_vcf_indices = SplitVCF.output_vcf_indices
+        Array[File] sample_vcfs = colocated_vcfs
+        Array[File] sample_vcf_indices = colocated_vcf_indices
         File entities_tsv = MakeEntitiesTsv.entities_tsv
         File validation_log = ValidateTerraLinks.validation_log
         File upload_log = Upload.upload_log

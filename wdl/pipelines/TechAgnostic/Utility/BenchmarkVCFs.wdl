@@ -522,6 +522,12 @@ task CheckForVariants {
     command <<<
         set -xeuo pipefail
 
+    # GATK needs the index as a sibling of the VCF, but Cromwell may localize the
+    # VCF and its index into different directories. Ensure the index sits next to
+    # the VCF as <vcf>.tbi before running.
+    IDX="$(dirname "~{vcf}")/$(basename "~{vcf}").tbi"
+    if [ ! -e "${IDX}" ]; then ln -s "~{vcfIndex}" "${IDX}"; fi
+
     nVariants="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V ~{vcf} -L ~{confidenceIL} ~{"-L " + stratIL} -isr INTERSECTION | tail -1)"
     if [ "$nVariants" -gt "0" ]; then echo "true" > outBool.txt; else echo "false" > outBool.txt; fi
     >>>
