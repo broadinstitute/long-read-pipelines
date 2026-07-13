@@ -164,6 +164,7 @@ workflow FlareLocalAncestryInference {
     output {
         File? global_anc = select_first([MergeShards.global_anc, F.global_anc])
         File? anc_vcf = select_first([MergeShards.anc_vcf, F.anc_vcf])
+        File? anc_vcf_csi = MergeShards.anc_vcf_csi
         File? log = F.log
         Array[File]? shard_logs = F_shard.log
         File? model = em_model
