@@ -56,7 +56,7 @@ workflow SplitMultiSampleVCFToTerraTable {
     String resolved_truth_table = select_first([truth_table, "truth_" + truth_set])
 
     # 1. Split the joint VCF into one VCF (+ index) per sample.
-    call Split.SplitMultiSampleVCFTask as SplitVCF {
+    call Split.SplitMultiSampleVCFTask as t_01_SplitVCF {
         input:
             input_vcf = input_vcf,
             input_vcf_index = input_vcf_index,
@@ -67,7 +67,7 @@ workflow SplitMultiSampleVCFToTerraTable {
 
     # The split task delocalizes each VCF and its index together; split the bundle
     # back into typed arrays (co-location preserved so each .tbi stays beside its VCF).
-    scatter (f in SplitVCF.output_files) {
+    scatter (f in t_01_SplitVCF.output_files) {
         Boolean is_index = (basename(f, ".tbi") != basename(f))
         if (!is_index) { File split_vcf = f }
         if (is_index)  { File split_idx = f }
@@ -76,7 +76,7 @@ workflow SplitMultiSampleVCFToTerraTable {
     Array[File] colocated_vcf_indices = select_all(split_idx)
 
     # 2. Build the Terra entity TSV, one row per per-sample VCF.
-    call MakeEntitiesTsv {
+    call MakeEntitiesTsv as t_02_MakeEntitiesTsv {
         input:
             sample_vcfs = colocated_vcfs,
             sample_vcf_indices = colocated_vcf_indices,
@@ -90,23 +90,23 @@ workflow SplitMultiSampleVCFToTerraTable {
     #    and truth tables and confirm the joint_run_ID entity and each linked truth
     #    entity are present; fail (listing all offenders) before any upload. On
     #    success the TSV is passed through, so Upload is gated on this check.
-    call ValidateTerraLinks {
+    call ValidateTerraLinks as t_03_ValidateTerraLinks {
         input:
             namespace = namespace,
             workspace = workspace,
-            entities_tsv = MakeEntitiesTsv.entities_tsv,
-            sample_ids = MakeEntitiesTsv.sample_ids,
+            entities_tsv = t_02_MakeEntitiesTsv.entities_tsv,
+            sample_ids = t_02_MakeEntitiesTsv.sample_ids,
             joint_run_table = resolved_joint_run_table,
             joint_run_id = joint_run_ID,
             truth_table = resolved_truth_table
     }
 
     # 4. Upload the validated TSV into the destination data table.
-    call Terra.UploadDataTable as Upload {
+    call Terra.UploadDataTable as t_04_Upload {
         input:
             namespace = namespace,
             workspace = workspace,
-            entities_tsv = ValidateTerraLinks.validated_tsv,
+            entities_tsv = t_03_ValidateTerraLinks.validated_tsv,
             table_name = destination_table,
             require_existing_id = require_existing_id,
             columns_must_exist = columns_must_exist
@@ -115,9 +115,9 @@ workflow SplitMultiSampleVCFToTerraTable {
     output {
         Array[File] sample_vcfs = colocated_vcfs
         Array[File] sample_vcf_indices = colocated_vcf_indices
-        File entities_tsv = MakeEntitiesTsv.entities_tsv
-        File validation_log = ValidateTerraLinks.validation_log
-        File upload_log = Upload.upload_log
+        File entities_tsv = t_02_MakeEntitiesTsv.entities_tsv
+        File validation_log = t_03_ValidateTerraLinks.validation_log
+        File upload_log = t_04_Upload.upload_log
     }
 }
 
