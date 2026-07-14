@@ -17,7 +17,7 @@ workflow SplitMultiSampleVCFToTerraTable {
         sample_names:        "Optional list of sample names to extract. If provided, every name must occur in input_vcf; the workflow fails when any is missing. Mutually exclusive with sample_name_list."
         sample_name_list:    "Optional file of sample names to extract, one per line. Mutually exclusive with sample_names."
 
-        destination_table:   "Name of the destination Terra data table to write the per-sample rows into. Also drives auto-derivation of joint_run_table/truth_table: the truth-set token is destination_table with a leading 'TEST_joint_singlesample_results_' stripped."
+        destination_table:   "Name of the destination Terra data table to write the per-sample rows into. Expected to follow '[TEST_]joint_results_<SET>_singlesample'. Also drives auto-derivation of joint_run_table/truth_table (unless those are given): joint_run_table is this name without the trailing '_singlesample' (TEST_ preserved), and truth_table is 'truth_<SET>'."
         joint_run_ID:        "Entity name of the joint-call run that produced input_vcf; every row's 97_Joint_Run_ID column links to it."
         joint_run_table:     "Optional. Entity type (data table) that joint_run_ID lives in. When omitted, derived as 'TEST_joint_results_<SET>'. Existence of this table (and the joint_run_ID entity in it) is verified before upload."
         truth_table:         "Optional. Truth-set entity type (data table). When omitted, derived as 'truth_<SET>'. Existence of this table (and each linked truth entity) is verified before upload. Each row's Truth column links to the truth entity named by the sample prefix (row ID up to the first underscore)."
@@ -48,11 +48,17 @@ workflow SplitMultiSampleVCFToTerraTable {
         Boolean columns_must_exist = false
     }
 
-    # Auto-derive the reference-target table names from the destination table's
-    # truth-set token (e.g. TEST_joint_singlesample_results_pfcrosses_v2 -> pfcrosses_v2),
+    # Auto-derive the reference-target table names from the destination table,
     # unless the caller supplied them explicitly. Both are existence-checked below.
-    String truth_set = sub(destination_table, "^(TEST_)?joint_singlesample_results_", "")
-    String resolved_joint_run_table = select_first([joint_run_table, "TEST_joint_results_" + truth_set])
+    # Convention: destination is "[TEST_]joint_results_<SET>_singlesample". The
+    # joint-run table is the same name without the trailing "_singlesample" (the
+    # TEST_ prefix, if any, is preserved). The truth set token is that with the
+    # optional TEST_ and joint_results_ prefix stripped; truth tables are never
+    # TEST_-prefixed. E.g. TEST_joint_results_pfcrosses_v2_singlesample ->
+    # joint-run TEST_joint_results_pfcrosses_v2, truth truth_pfcrosses_v2.
+    String joint_run_table_derived = sub(destination_table, "_singlesample$", "")
+    String truth_set = sub(joint_run_table_derived, "^(TEST_)?joint_results_", "")
+    String resolved_joint_run_table = select_first([joint_run_table, joint_run_table_derived])
     String resolved_truth_table = select_first([truth_table, "truth_" + truth_set])
 
     # 1. Split the joint VCF into one VCF (+ index) per sample.
