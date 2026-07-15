@@ -20,6 +20,14 @@ workflow BroadOnPremMalariaPipeline_2_JointVariantCalling {
         File resource_vcf_7g8_gb4
         File resource_vcf_hb3_dd2
         File resource_vcf_3d7_hb3
+
+        # VQSR model-fitting knobs (see VariantRecalibrator); defaults preserve
+        # prior behavior. Tune for small callsets where the negative model finds
+        # no "bad" variants (e.g. bad_lod_cutoff -> -2.0, snp_max_gaussians -> 4).
+        Int snp_max_gaussians = 8
+        Int indel_max_gaussians = 4
+        Int min_num_bad_variants = 1000
+        Float bad_lod_cutoff = -5.0
     }
 
     # Get ref info:
@@ -44,7 +52,11 @@ workflow BroadOnPremMalariaPipeline_2_JointVariantCalling {
             reference_dict = ref_map["dict"],
             resource_vcf_7g8_gb4 = resource_vcf_7g8_gb4,
             resource_vcf_hb3_dd2 = resource_vcf_hb3_dd2,
-            resource_vcf_3d7_hb3 = resource_vcf_3d7_hb3
+            resource_vcf_3d7_hb3 = resource_vcf_3d7_hb3,
+            snp_max_gaussians = snp_max_gaussians,
+            indel_max_gaussians = indel_max_gaussians,
+            min_num_bad_variants = min_num_bad_variants,
+            bad_lod_cutoff = bad_lod_cutoff
     }
 
     # 9 - sort, compress, and index final outputs:
