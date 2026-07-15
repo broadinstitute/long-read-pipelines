@@ -1,0 +1,29 @@
+// SplitMultiSampleVCFToTerraTable
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-t_01_SplitVCF" [label=t_01_SplitVCF shape=cds]
+	subgraph "cluster-scatter-L76C5-f" {
+		fontname=Roboto label="scatter(t_01_SplitVCF.output_files)" rank=same
+		subgraph "cluster-if-L78C9" {
+			fontname=Roboto label="if(!is_index)" rank=same
+			"if-L78C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		subgraph "cluster-if-L79C9" {
+			fontname=Roboto label="if(is_index)" rank=same
+			"if-L79C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"scatter-L76C5-f" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-colocated_vcfs" [label=colocated_vcfs shape=plaintext]
+	"decl-colocated_vcf_indices" [label=colocated_vcf_indices shape=plaintext]
+	"call-t_02_MakeEntitiesTsv" [label=t_02_MakeEntitiesTsv shape=cds]
+	"call-t_03_ValidateTerraLinks" [label=t_03_ValidateTerraLinks shape=cds]
+	"call-t_04_Upload" [label=t_04_Upload shape=cds]
+	"call-t_01_SplitVCF" -> "scatter-L76C5-f" [lhead="cluster-scatter-L76C5-f"]
+	"decl-colocated_vcf_indices" -> "call-t_02_MakeEntitiesTsv"
+	"decl-colocated_vcfs" -> "call-t_02_MakeEntitiesTsv"
+	"call-t_02_MakeEntitiesTsv" -> "call-t_03_ValidateTerraLinks"
+	"call-t_03_ValidateTerraLinks" -> "call-t_04_Upload"
+}

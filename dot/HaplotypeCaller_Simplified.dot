@@ -15,6 +15,6 @@ digraph {
 	"call-SmallVariantsScatterPrep" -> "decl-actual_interval_list"
 	"decl-actual_interval_list" -> "call-CallVariantsWithHC"
 	"call-CallVariantsWithHC" -> "call-ReblockHcGVCF"
-	"call-ReblockHcGVCF" -> "call-CollapseGVCFtoVCF"
 	"decl-actual_interval_list" -> "call-CollapseGVCFtoVCF"
+	"call-ReblockHcGVCF" -> "call-CollapseGVCFtoVCF"
 }

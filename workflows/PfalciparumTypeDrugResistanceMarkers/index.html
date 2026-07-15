@@ -48,11 +48,11 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../development_guide/">Development Guide Overview</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../development_guide/WDL_STYLE_RULES/">WDL Style Rules</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../development_guide/docker_style_guide/">Docker Style Guide</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../development_guide/repo_structure/">Repository Structure</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../development_guide/wdl_style_guide/">WDL Style Guide</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Pipeline documentation</span></p>
@@ -119,6 +119,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../tasks/SRUtils/">SRUtils</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tasks/StringTie2/">StringTie2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/TerraUtils/">TerraUtils</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tasks/Utils/">Utils</a>
                   </li>
@@ -315,6 +317,10 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../SplitMultiSampleVCF/">SplitMultiSampleVCF</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SplitMultiSampleVCFToTerraTable/">SplitMultiSampleVCFToTerraTable</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../SubsetVCFsToSamples/">SubsetVCFsToSamples</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../SvQCPlots/">SvQCPlots</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../TrainCnnFilters/">TrainCnnFilters</a>
@@ -369,6 +375,8 @@
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
+<li><code>joint_vcfs</code> (Array[File]?); <strong>description</strong>: Optional list of per-contig joint-call VCFs, given as paths/URLs (e.g. gs://...). When provided, the analyzed sample's resolved genotypes are STREAMED from these files at the drug-resistance loci and the files are never localized. Each must have a co-located tabix index (.tbi) and SnpEff (ANN) annotations, and the sample must be present in at least one of them or the workflow fails. The given GVCF is still used to fill in no-call evidence.; <strong>localization_optional</strong>: true</li>
+<li><code>sample_id</code> (String?): Optional sample ID to analyze when joint_vcfs is provided. Defaults to the single sample present in 'vcf'.</li>
 <li><code>CallDrugResistanceMutations.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>CreateDrugResistanceSummary.runtime_attr_override</code> (RuntimeAttr?)</li>
 <li><code>FunctionallyAnnotateVariants.runtime_attr_override</code> (RuntimeAttr?)</li>

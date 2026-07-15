@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Broad Institute" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>WDL Style Rules - Broad Institute Long Read Pipelines</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "WDL Style Rules";
+        var mkdocs_page_input_path = "development_guide/WDL_STYLE_RULES.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <script src="../../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Broad Institute Long Read Pipelines
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Development guide</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../">Development Guide Overview</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">WDL Style Rules</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#1-repo-layout">1. Repo layout</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#2-boilerplate-every-file">2. Boilerplate (every file)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#3-task-skeleton-canonical-order">3. Task skeleton (canonical order)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#section-order-inside-task">Section order inside task</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#tool-citation-rules-in-meta">Tool citation rules (in meta)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#4-parameter_meta-rules">4. parameter_meta rules</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#5-command-block-rules">5. command block rules</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#6-disk-sizing-convention">6. Disk sizing convention</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#rules">Rules</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#7-runtime-block-rules">7. Runtime block rules</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#8-runtimeattr-struct-do-not-redefine">8. RuntimeAttr struct (do not redefine)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#9-workflow-skeleton">9. Workflow skeleton</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#section-order-inside-workflow">Section order inside workflow</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#workflow-conventions">Workflow conventions</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#10-naming">10. Naming</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#11-output-block">11. Output block</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#12-what-to-not-do">12. What to NOT do</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#13-when-reformatting-an-existing-wdl">13. When reformatting an existing WDL</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#14-memory-and-cpu-accounting-mandatory-command-block-preamble">14. Memory and CPU accounting (mandatory command-block preamble)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#required-preamble">Required preamble</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#variables-produced">Variables produced</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#usage-patterns">Usage patterns</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#rules_1">Rules</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#15-extra-args-passthrough-mandatory-input">15. Extra-args passthrough (mandatory input)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#input-declaration">Input declaration</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#parameter_meta-entry">parameter_meta entry</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#usage-in-command">Usage in command</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#rules_2">Rules</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#16-output-documentation">16. Output documentation</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#required-metaoutputs">Required: meta.outputs</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#rules_3">Rules</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#engine-note">Engine note</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#17-workflow-call-aliasing-mandatory">17. Workflow call aliasing (mandatory)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#format">Format</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#examples">Examples</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#rules_4">Rules</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../docker_style_guide/">Docker Style Guide</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../repo_structure/">Repository Structure</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Pipeline documentation</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="#">Sp malaria</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../pipeline_documentation/sp_malaria/workspace_markdown_doc/">_P. falciparum_ Short Read Whole Genome Workspace</a>
+                </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Tasks</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/AlignReads/">AlignReads</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/BroadOnPremMalariaPipelineTasks/">BroadOnPremMalariaPipelineTasks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Clair/">Clair</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/FastQC/">FastQC</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Finalize/">Finalize</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Fingerprinting/">Fingerprinting</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Flare/">Flare</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/FunctionalAnnotation/">FunctionalAnnotation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/GeneralUtils/">GeneralUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Hail/">Hail</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/MASSeq/">MASSeq</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/MalariaReports/">MalariaReports</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/MalariaReportsSnapshots/">MalariaReportsSnapshots</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Medaka/">Medaka</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/NanoPlot/">NanoPlot</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/ONTPepper/">ONTPepper</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/ONTUtils/">ONTUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/PBUtils/">PBUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Postprocessing_Tasks/">Postprocessing_Tasks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Preprocessing_Tasks/">Preprocessing_Tasks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/QCAssessment/">QCAssessment</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Quast/">Quast</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/SGKit/">SGKit</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/SRJointGenotyping/">SRJointGenotyping</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/SRJointGenotypingPopulationScale/">SRJointGenotypingPopulationScale</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/SRUtils/">SRUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/StringTie2/">StringTie2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/TerraUtils/">TerraUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/Utils/">Utils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/VariantUtils/">VariantUtils</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tasks/cnv_common_tasks/">cnv_common_tasks</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Workflows</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/AlignAndCheckFingerprintCCS/">AlignAndCheckFingerprintCCS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/AlignedMetrics/">AlignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/AnnotateTranscriptomeWithGuide/">AnnotateTranscriptomeWithGuide</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/AssignChildLongReads/">AssignChildLongReads</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/BackupWorkspace/">BackupWorkspace</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/BenchmarkVCFs/">BenchmarkVCFs</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling/">BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/BroadOnPremMalariaPipeline_2_JointVariantCalling/">BroadOnPremMalariaPipeline_2_JointVariantCalling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CCSPepper/">CCSPepper</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CallAssemblyVariants/">CallAssemblyVariants</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CallVariantsIllumina/">CallVariantsIllumina</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CallVariantsONT/">CallVariantsONT</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CallVariantsPBCCS/">CallVariantsPBCCS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/Canu/">Canu</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CleanupIntermediate/">CleanupIntermediate</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CollectPacBioAlignedMetrics/">CollectPacBioAlignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CollectParentsKmerStats/">CollectParentsKmerStats</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CollectSMRTCellUnalignedMetrics/">CollectSMRTCellUnalignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/CompareVcfBenchmarks/">CompareVcfBenchmarks</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ConvertToHailMT/">ConvertToHailMT</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ConvertToZarrStore/">ConvertToZarrStore</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/DeepTrio/">DeepTrio</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/DeepVariant/">DeepVariant</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/DownloadFromFTP/">DownloadFromFTP</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/DownloadFromSRA/">DownloadFromSRA</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/DownloadFromWeb/">DownloadFromWeb</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ExpandedDrugResistanceMarkerAggregation/">ExpandedDrugResistanceMarkerAggregation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ExpandedDrugResistanceMarkerExtraction/">ExpandedDrugResistanceMarkerExtraction</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ExtractRegionsFromBam/">ExtractRegionsFromBam</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ExtractSnpBarcodeFromVcfFile/">ExtractSnpBarcodeFromVcfFile</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/FPCheckAoU/">FPCheckAoU</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/FindBamIdentity/">FindBamIdentity</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/FlareLocalAncestryInference/">FlareLocalAncestryInference</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/Flye/">Flye</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/GLNexus/">GLNexus</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/Guppy/">Guppy</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/HaplotypeCaller/">HaplotypeCaller</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/HaplotypeCaller_Simplified/">HaplotypeCaller_Simplified</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/Hifiasm/">Hifiasm</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/LRCNVs/">LRCNVs</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/LRConvertBCF/">LRConvertBCF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/LRJointCallGVCFs/">LRJointCallGVCFs</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/Longbow/">Longbow</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/MalariaReportsWorkflow/">MalariaReportsWorkflow</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ONTAssembleWithCanu/">ONTAssembleWithCanu</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ONTAssembleWithFlye/">ONTAssembleWithFlye</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ONTBasecall/">ONTBasecall</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ONTFlowcell/">ONTFlowcell</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ONTFlowcellFromMultipleBasecalls/">ONTFlowcellFromMultipleBasecalls</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ONTMethylation/">ONTMethylation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ONTProcessBasecall/">ONTProcessBasecall</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ONTWholeGenome/">ONTWholeGenome</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PBAssembleWithHifiasm/">PBAssembleWithHifiasm</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PBCCSIsoSeq/">PBCCSIsoSeq</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PBCCSWholeGenome/">PBCCSWholeGenome</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PBFlowcell/">PBFlowcell</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PBMASIsoSeqDemultiplex/">PBMASIsoSeqDemultiplex</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PBMASIsoSeqQuantify/">PBMASIsoSeqQuantify</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PBSV/">PBSV</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PanelProcessMalariaBarcodesForRh/">PanelProcessMalariaBarcodesForRh</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/Pf_Niare_HaplotypeCaller/">Pf_Niare_HaplotypeCaller</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PfalciparumDrugResistanceSummary/">PfalciparumDrugResistanceSummary</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PfalciparumHrp2Hrp3Status/">PfalciparumHrp2Hrp3Status</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PfalciparumPolygenomicityBarcodeEstimate/">PfalciparumPolygenomicityBarcodeEstimate</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/PfalciparumTypeDrugResistanceMarkers/">PfalciparumTypeDrugResistanceMarkers</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/ProcessMalariaBarcodesDemo/">ProcessMalariaBarcodesDemo</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/QCAssessmentDepthBased/">QCAssessmentDepthBased</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/RemoveSingleOrganismContamination/">RemoveSingleOrganismContamination</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRBamToFq/">SRBamToFq</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRFlowcell/">SRFlowcell</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRFlowcell_Simplified/">SRFlowcell_Simplified</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRIndexBam/">SRIndexBam</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRJointCallGVCFsWithGenomicsDB/">SRJointCallGVCFsWithGenomicsDB</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRJointCallGVCFsWithGenomicsDBPopulationScale/">SRJointCallGVCFsWithGenomicsDBPopulationScale</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS/">SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VETS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR/">SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRWholeGenome/">SRWholeGenome</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRWholeGenome_Pf_Niare_VETS/">SRWholeGenome_Pf_Niare_VETS</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRWholeGenome_Pf_Niare_VQSR/">SRWholeGenome_Pf_Niare_VQSR</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SRWholeGenome_Simplified/">SRWholeGenome_Simplified</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SampleLevelAlignedMetrics/">SampleLevelAlignedMetrics</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/Sniffles2/">Sniffles2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SplitMultiSampleVCF/">SplitMultiSampleVCF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SplitMultiSampleVCFToTerraTable/">SplitMultiSampleVCFToTerraTable</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SubsetVCFsToSamples/">SubsetVCFsToSamples</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SvQCPlots/">SvQCPlots</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/TrainCnnFilters/">TrainCnnFilters</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/TrioBinChildLongReads/">TrioBinChildLongReads</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/VerifyFingerprint/">VerifyFingerprint</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Broad Institute Long Read Pipelines</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a> &raquo;</li>
+          <li>Development guide &raquo;</li>
+      <li>WDL Style Rules</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/broadinstitute/long-read-pipelines/edit/master/docs/development_guide/WDL_STYLE_RULES.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="wdl-style-rules">WDL Style Rules</h1>
+<p>Authoritative ruleset for writing and reformatting WDL files in this repo, derived from the conventions in <code>broadinstitute/long-read-pipelines</code>. These rules are intended to be machine-readable: an LLM (or a human reviewer) following them should produce WDL files that are stylistically indistinguishable from the canonical examples.</p>
+<hr />
+<h2 id="1-repo-layout">1. Repo layout</h2>
+<pre><code>wdl/
+├── structs/Structs.wdl                       # shared RuntimeAttr struct, lives at one canonical path
+├── tasks/&lt;Category&gt;/&lt;Name&gt;.wdl               # task modules grouped by function (Alignment, QC, Utility, ...)
+└── pipelines/&lt;Tech&gt;/&lt;Category&gt;/&lt;Name&gt;.wdl    # workflows; &lt;Tech&gt; = PacBio | ONT | ILMN | TechAgnostic
+</code></pre>
+<p>Filename = task or workflow name, CamelCase, <code>.wdl</code>.</p>
+<p>Keep task blocks in a separate <code>.wdl</code> file from the workflow block that calls them (tasks under <code>tasks/</code>, workflows under <code>pipelines/</code>). This keeps workflows modular, readable, and maintainable, and lets multiple workflows share one task module.</p>
+<hr />
+<h2 id="2-boilerplate-every-file">2. Boilerplate (every file)</h2>
+<pre><code class="language-wdl">version 1.0
+
+import &quot;../../structs/Structs.wdl&quot;                        # task file (depth 2)
+# or
+import &quot;../../../tasks/Utility/Utils.wdl&quot; as Utils        # pipeline file (depth 3), always aliased
+</code></pre>
+<ul>
+<li><code>version 1.0</code> always.</li>
+<li>Tasks import <code>Structs.wdl</code> only.</li>
+<li>Pipelines import every task module they call, <strong>with an <code>as &lt;Alias&gt;</code></strong>. Common aliases: <code>PB</code>, <code>Utils</code>, <code>FF</code> (Finalize), <code>AM</code> (AlignedMetrics), etc.</li>
+<li>Relative paths only. Count <code>../</code> from the file's depth.</li>
+</ul>
+<hr />
+<h2 id="3-task-skeleton-canonical-order">3. Task skeleton (canonical order)</h2>
+<pre><code class="language-wdl">task ExampleTask {
+
+    meta {
+        description: &quot;One-line summary of what task does.&quot;
+
+        # Required when task wraps a specific named tool:
+        tool:          &quot;samtools sort&quot;
+        tool_version:  &quot;1.23.1&quot;
+        tool_url:      &quot;https://www.htslib.org/&quot;
+        tool_citation: &quot;Danecek P, Bonfield JK, Liddle J, et al. Twelve years of SAMtools and BCFtools. GigaScience. 2021;10(2):giab008.&quot;
+
+        # Optional:
+        author: &quot;Jonn Smith&quot;
+        email:  &quot;jonn@broadinstitute.org&quot;
+
+        # Required when task has an output {} block — see §16:
+        outputs: {
+            output_bam: &quot;Coordinate-sorted BAM&quot;,
+            output_bai: &quot;BAM index (.bam.bai)&quot;
+        }
+    }
+
+    parameter_meta {
+        input_bam:             &quot;BAM to operate on&quot;
+        prefix:                &quot;basename for outputs&quot;
+        extra_args:            &quot;Additional command-line args appended verbatim to the samtools sort invocation&quot;
+        runtime_attr_override: &quot;Override the default runtime attributes&quot;
+    }
+
+    input {
+        File input_bam
+        String prefix
+
+        String extra_args = &quot;&quot;
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 10 + ceil(5.0 * size(input_bam, &quot;GB&quot;))
+
+    command &lt;&lt;&lt;
+        set -euxo pipefail
+
+        # ---- Resource detection (required preamble) ----
+        NUM_CPUS=$(grep '^processor' /proc/cpuinfo | tail -n1 | awk '{print $NF+1}')
+        RAM_IN_GB=$(free -g | grep &quot;^Mem&quot; | awk '{print $2}')
+
+        # Reserve 1 GB for OS + container overhead.
+        USABLE_RAM_GB=$((RAM_IN_GB - 1))
+        [[ &quot;${USABLE_RAM_GB}&quot; -lt 1 ]] &amp;&amp; USABLE_RAM_GB=1
+
+        # Per-thread RAM (used by samtools sort -m, etc.)
+        MEM_PER_THREAD_GB=$(( USABLE_RAM_GB / NUM_CPUS ))
+        [[ &quot;${MEM_PER_THREAD_GB}&quot; -lt 1 ]] &amp;&amp; MEM_PER_THREAD_GB=1
+
+        # Java heap (used by GATK/Picard). Same as USABLE_RAM_GB; alias for clarity.
+        JAVA_MEM_GB=${USABLE_RAM_GB}
+
+        echo &quot;NUM_CPUS=${NUM_CPUS}  RAM_IN_GB=${RAM_IN_GB}  USABLE_RAM_GB=${USABLE_RAM_GB}  MEM_PER_THREAD_GB=${MEM_PER_THREAD_GB}  JAVA_MEM_GB=${JAVA_MEM_GB}&quot;
+        # ---- end preamble ----
+
+        samtools sort -@ ${NUM_CPUS} -m ${MEM_PER_THREAD_GB}G ~{extra_args} ~{input_bam} -o ~{prefix}.bam
+        samtools index -@ ${NUM_CPUS} ~{prefix}.bam
+    &gt;&gt;&gt;
+
+    output {
+        File output_bam = &quot;~{prefix}.bam&quot;
+        File output_bai = &quot;~{prefix}.bam.bai&quot;
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        boot_disk_gb:       25,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             &quot;us.gcr.io/broad-dsp-lrma/lr-utils:0.1.8&quot;
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + &quot; GiB&quot;
+        disks: &quot;local-disk &quot; +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + &quot; HDD&quot;
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+</code></pre>
+<h3 id="section-order-inside-task">Section order inside <code>task</code></h3>
+<ol>
+<li><code>meta { ... }</code> (description; optional tool citation; optional author/email; required <code>outputs:</code> when task has outputs)</li>
+<li><code>parameter_meta { ... }</code> — entry per input, including <code>extra_args</code> and <code>runtime_attr_override</code></li>
+<li><code>input { ... }</code> — required first, optional (<code>Type?</code>) after a blank line, <code>String extra_args = ""</code> then <code>RuntimeAttr? runtime_attr_override</code> last</li>
+<li>Private declarations (e.g. <code>Int disk_size = ...</code>)</li>
+<li><code>command &lt;&lt;&lt; ... &gt;&gt;&gt;</code> — first line <code>set -euxo pipefail</code>, then the resource-detection preamble (§14)</li>
+<li><code>output { ... }</code></li>
+<li><code>#########################</code> separator (literal, exactly as shown)</li>
+<li><code>RuntimeAttr default_attr = object { ... }</code></li>
+<li><code>RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])</code></li>
+<li><code>runtime { ... }</code> — column-aligned <code>select_first</code> per field</li>
+</ol>
+<h3 id="tool-citation-rules-in-meta">Tool citation rules (in <code>meta</code>)</h3>
+<ul>
+<li><strong>Mandatory</strong> when task wraps a specific named tool (samtools, minimap2, GATK, bcftools, fastqc, etc.). Skip only for pure-utility tasks (<code>ChunkManifest</code>, <code>MakeChrIntervalList</code>, ad-hoc bash glue).</li>
+<li>Keys:</li>
+<li><code>tool</code> — canonical name of primary binary invoked (matches <code>~{extra_args}</code> target from §15).</li>
+<li><code>tool_version</code> — pinned version. Must match the docker tag.</li>
+<li><code>tool_url</code> — upstream homepage or GitHub.</li>
+<li><code>tool_citation</code> — full bibliographic citation if the tool has a publication. Drop if none.</li>
+<li>When task chains multiple tools (sort + index), cite the <strong>primary</strong> tool only — same one <code>extra_args</code> flows to.</li>
+<li>Update <code>tool_version</code> whenever the docker tag bumps.</li>
+</ul>
+<hr />
+<h2 id="4-parameter_meta-rules">4. <code>parameter_meta</code> rules</h2>
+<ul>
+<li>Document every input. Either short string <code>name: "desc"</code> or object form for tagged inputs:
+  <code>wdl
+  file: {
+      description: "file to finalize",
+      localization_optional: true
+  }</code></li>
+<li>Align colons vertically when reasonable (cosmetic — not enforced).</li>
+<li><code>extra_args</code> documented as <code>"Additional command-line args appended verbatim to the &lt;tool&gt; invocation"</code> — replace <code>&lt;tool&gt;</code> with the actual binary name.</li>
+<li><code>runtime_attr_override</code> always documented as <code>"Override the default runtime attributes"</code>.</li>
+</ul>
+<hr />
+<h2 id="5-command-block-rules">5. <code>command</code> block rules</h2>
+<ul>
+<li><code>command &lt;&lt;&lt; ... &gt;&gt;&gt;</code> (heredoc form, not <code>command { ... }</code>). Required for <code>~{var}</code> substitution.</li>
+<li>First line: <code>set -euxo pipefail</code>. Immediately followed by the §14 resource-detection preamble.</li>
+<li>Interpolate WDL values with <code>~{var}</code>, never <code>${var}</code> (<code>${}</code> reserved for bash inside the heredoc).</li>
+<li>For Python multi-line: use <code>python3 &lt;&lt;CODE ... CODE</code> heredoc; <code>~{var}</code> still expands inside.</li>
+</ul>
+<hr />
+<h2 id="6-disk-sizing-convention">6. Disk sizing convention</h2>
+<p><strong>Default: 5× total input file size, plus a 10 GB constant for output + scratch.</strong></p>
+<pre><code class="language-wdl">Int disk_size = 10 + ceil(5.0 * size(input_bam, &quot;GB&quot;))
+</code></pre>
+<p>Multiple inputs:</p>
+<pre><code class="language-wdl">Int disk_size = 10 + ceil(5.0 * (size(input_bam, &quot;GB&quot;) + size(ref_fasta, &quot;GB&quot;)))
+</code></pre>
+<p>Array inputs:</p>
+<pre><code class="language-wdl">Int disk_size = 10 + ceil(5.0 * size(reads, &quot;GB&quot;))
+</code></pre>
+<h3 id="rules">Rules</h3>
+<ul>
+<li><strong>Constant</strong> <code>10</code> GB floor covers output + tmp + docker layer.</li>
+<li><strong>Multiplier 5.0</strong> = input localization + intermediates + output + scratch slack. Default for any new task.</li>
+<li><strong>Override the 5× when task obviously breaks it:</strong></li>
+<li>Alignment / sort / BAM-rewriting with large intermediate SAMs: bump to ~10× (<code>1 + 10*ceil(...)</code>).</li>
+<li>Assembly / k-mer counting: hard-code (e.g. 3000 GB SSD).</li>
+<li>Pure-passthrough (rename, index-only): fixed small disk (<code>disk_gb: 10</code>).</li>
+<li>Always <code>ceil(...)</code>.</li>
+<li><code>5.0 * size(...)</code> returns <code>Float</code>; <code>ceil</code> converts to <code>Int</code>.</li>
+<li>Plug into <code>default_attr</code>:
+  <code>wdl
+  disk_gb: disk_size,</code></li>
+</ul>
+<hr />
+<h2 id="7-runtime-block-rules">7. Runtime block rules</h2>
+<ul>
+<li><strong>Always two-step:</strong> literal <code>object</code> → <code>select_first</code> merge with <code>runtime_attr_override</code>.</li>
+<li>Field set is fixed: <code>cpu_cores</code>, <code>mem_gb</code>, <code>disk_gb</code>, <code>boot_disk_gb</code>, <code>preemptible_tries</code>, <code>max_retries</code>, <code>docker</code>. Same seven fields, same order, every task.</li>
+<li><code>boot_disk_gb: 25</code> is the default.</li>
+<li><code>docker:</code> images live under <code>us.gcr.io/broad-dsp-lrma/lr-&lt;name&gt;:&lt;version&gt;</code> (LRP convention) or a public image (e.g. <code>staphb/fastqc:0.12.1</code>). Pin a tag — never <code>:latest</code>.</li>
+<li>Disk type: <code>HDD</code> by default. <code>SSD</code> when IO-bound. <code>LOCAL</code> only for very heavy IO (note: LOCAL provisions in 375 GB units).</li>
+<li><code>memory:</code> always suffixed <code>" GiB"</code>. <code>disks:</code> always prefixed <code>"local-disk "</code> and suffixed disk type.</li>
+<li>Column-align the <code>select_first</code> calls in <code>runtime {}</code> — preserve this when reformatting.</li>
+</ul>
+<hr />
+<h2 id="8-runtimeattr-struct-do-not-redefine">8. <code>RuntimeAttr</code> struct (do not redefine)</h2>
+<pre><code class="language-wdl">struct RuntimeAttr {
+    Float?  mem_gb
+    Int?    cpu_cores
+    Int?    disk_gb
+    Int?    boot_disk_gb
+    Int?    preemptible_tries
+    Int?    max_retries
+    String? docker
+}
+</code></pre>
+<p>All optional. Lives in <code>structs/Structs.wdl</code>. Imported, never redefined.</p>
+<hr />
+<h2 id="9-workflow-skeleton">9. Workflow skeleton</h2>
+<pre><code class="language-wdl">version 1.0
+
+import &quot;../../../tasks/Utility/PBUtils.wdl&quot;  as PB
+import &quot;../../../tasks/Utility/Utils.wdl&quot;    as Utils
+import &quot;../../../tasks/Utility/Finalize.wdl&quot; as FF
+
+workflow ExampleWorkflow {
+
+    meta {
+        description: &quot;Multi-sentence overview. What goes in, what comes out, key intermediate steps.&quot;
+
+        outputs: {
+            final_bam:        &quot;Coordinate-sorted, demultiplexed alignment&quot;,
+            final_bam_index:  &quot;Index for final_bam&quot;
+        }
+    }
+
+    parameter_meta {
+        ccs_bams:         &quot;GCS path to CCS BAM files&quot;
+        ref_map_file:     &quot;table indicating reference sequence and auxiliary file locations&quot;
+        gcs_out_root_dir: &quot;GCS bucket to store outputs&quot;
+    }
+
+    input {
+        Array[File] ccs_bams
+        File ref_map_file
+        String participant_name
+        String gcs_out_root_dir
+    }
+
+    Map[String, String] ref_map = read_map(ref_map_file)
+    String outdir = sub(gcs_out_root_dir, &quot;/$&quot;, &quot;&quot;) + &quot;/ExampleWorkflow/~{participant_name}&quot;
+
+    # ... calls, scatters, conditionals (see §17 for required call-alias convention) ...
+
+    call FF.FinalizeToFile as t_NN_FinalizeBam { input: outdir = outdir, file = t_MM_SomeTask.bam }
+
+    output {
+        # re-export key final files / GCS paths; document each in meta.outputs
+    }
+}
+</code></pre>
+<h3 id="section-order-inside-workflow">Section order inside <code>workflow</code></h3>
+<ol>
+<li><code>meta { ... }</code> (description; required <code>outputs:</code> when workflow has an <code>output {}</code> block — see §16)</li>
+<li><code>parameter_meta { ... }</code> — entry per workflow input</li>
+<li><code>input { ... }</code></li>
+<li>Private declarations (e.g. <code>Map[String, String] ref_map = read_map(...)</code>, <code>String outdir = ...</code>)</li>
+<li><code>call</code> / <code>scatter</code> / <code>if</code> blocks (every call aliased <code>t_NN_</code> — see §17)</li>
+<li><code>output { ... }</code></li>
+</ol>
+<h3 id="workflow-conventions">Workflow conventions</h3>
+<ul>
+<li>Top-level <code>outdir</code>: strip trailing slash with <code>sub(gcs_out_root_dir, "/$", "")</code> then append workflow name + participant.</li>
+<li>Call site formatting (call-alias rules in §17):</li>
+<li>Short call → one line: <code>call X.Y as t_NN_Name { input: a = b, c = d }</code></li>
+<li>Long call → block form, <code>input:</code> on its own indented line, args column-aligned:
+    <code>wdl
+    call PB.Align as t_NN_AlignTranscripts {
+        input:
+            bam          = t_MM_ClusterTranscripts.clustered_bam,
+            ref_fasta    = ref_map['fasta'],
+            sample_name  = participant_name,
+            map_preset   = "ISOSEQ",
+            prefix       = "~{participant_name}.~{BC}",
+            runtime_attr_override = { "cpu_cores": 32 }
+    }</code></li>
+<li>Per-call <code>runtime_attr_override</code> is an inline <code>object</code> literal — preferred over forking a task to bump CPU.</li>
+<li>Finalization tasks (<code>FF.FinalizeToFile</code>, <code>FF.FinalizeToDir</code>) live at the <strong>end</strong> of each scatter/branch, with <code>outdir</code> paths assembled from the top-level <code>outdir</code>.</li>
+<li>Use <code>select_first([...])</code> to merge optional outputs from conditional branches.</li>
+</ul>
+<hr />
+<h2 id="10-naming">10. Naming</h2>
+<table>
+<thead>
+<tr>
+<th>Thing</th>
+<th>Convention</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Task names</td>
+<td><code>CamelCase</code> verbs/nouns: <code>AlignReads</code>, <code>ChangeReadGroup</code>, <code>MakeChrIntervalList</code></td>
+</tr>
+<tr>
+<td>Workflow names</td>
+<td><code>CamelCase</code>, often <code>&lt;Tech&gt;&lt;Description&gt;</code>: <code>PBCCSIsoSeq</code></td>
+</tr>
+<tr>
+<td>WDL input vars</td>
+<td><code>snake_case</code>: <code>input_bam</code>, <code>ref_fasta</code>, <code>gcs_out_root_dir</code></td>
+</tr>
+<tr>
+<td>Output vars</td>
+<td><code>snake_case</code>: <code>aligned_bam</code>, <code>aligned_bai</code></td>
+</tr>
+<tr>
+<td>Call aliases (in workflows)</td>
+<td><strong><code>t_NN_&lt;CamelCase&gt;</code></strong> — see §17</td>
+</tr>
+<tr>
+<td>File prefixes</td>
+<td>from a <code>prefix</code> input, default usually <code>"out"</code></td>
+</tr>
+</tbody>
+</table>
+<p>Read groups / sample fields stay uppercase (<code>RG</code>, <code>ID</code>, <code>SM</code>, <code>PL</code>, <code>LB</code>) — biology convention, not WDL convention.</p>
+<hr />
+<h2 id="11-output-block">11. Output block</h2>
+<ul>
+<li>One declaration per produced file, snake_case.</li>
+<li>Use <code>glob("...")</code> for <code>Array[File]</code> outputs whose count is dynamic.</li>
+<li>Use <code>read_map("map.txt")</code> / <code>read_tsv(...)</code> / <code>read_lines(...)</code> to surface scalars or tables as typed WDL outputs.</li>
+<li>Every output must be documented in <code>meta.outputs</code> (§16).</li>
+</ul>
+<hr />
+<h2 id="12-what-to-not-do">12. What to NOT do</h2>
+<ul>
+<li>No <code>version development</code> or <code>version 1.1</code> — repo is on <code>1.0</code>.</li>
+<li>No <code>command { ... }</code> braces — always heredoc.</li>
+<li>No bare <code>runtime { docker: "..." cpu: 4 ... }</code> — always go through <code>RuntimeAttr</code>/<code>select_first</code>.</li>
+<li>No hardcoded image tags like <code>:latest</code>.</li>
+<li>No <code>bash</code> outside the heredoc.</li>
+<li>No imports without aliases in pipelines.</li>
+<li>No undocumented inputs (<code>parameter_meta</code> must list every input).</li>
+<li>No undocumented outputs (<code>meta.outputs</code> must list every output).</li>
+<li>No mixing <code>${}</code> and <code>~{}</code>. <code>~{}</code> is WDL; <code>${}</code> is bash. Conflating them silently corrupts substitution.</li>
+<li>No un-aliased <code>call</code> statements in workflows — every call uses the <code>t_NN_</code> prefix (§17).</li>
+<li>No threading WDL-side <code>runtime_attr.cpu_cores</code> / <code>mem_gb</code> into the <code>command</code> body — derive from <code>/proc/cpuinfo</code> and <code>free -g</code> (§14).</li>
+</ul>
+<hr />
+<h2 id="13-when-reformatting-an-existing-wdl">13. When reformatting an existing WDL</h2>
+<ol>
+<li>Fix <code>version 1.0</code> if missing.</li>
+<li>Reorder sections per §3 (meta → parameter_meta → input → private decls → command → output → separator → default_attr → runtime_attr → runtime).</li>
+<li>Convert <code>command { ... }</code> to <code>command &lt;&lt;&lt; ... &gt;&gt;&gt;</code> and <code>${}</code> interpolations to <code>~{}</code>.</li>
+<li>Replace any ad-hoc <code>runtime { cpu: X memory: Y ... }</code> with the <code>RuntimeAttr</code> two-step + <code>select_first</code> pattern (§7).</li>
+<li>Add <code>RuntimeAttr? runtime_attr_override</code> to <code>input {}</code> and document in <code>parameter_meta</code>.</li>
+<li>Compute <code>disk_size</code> from inputs (§6, default 5×), drop hardcoded <code>disk_gb</code> numbers unless tiny static task or override case.</li>
+<li>Pin docker tags. Move custom-built images to <code>us.gcr.io/broad-dsp-lrma/lr-&lt;name&gt;:&lt;ver&gt;</code> only if that's the project's registry — otherwise keep public tag.</li>
+<li>Add the <code>#########################</code> separator before the runtime block.</li>
+<li>Column-align the runtime <code>select_first</code> calls.</li>
+<li>Insert the §14 resource-detection preamble immediately after <code>set -euxo pipefail</code>. Replace hard-coded thread counts and memory flags with <code>${NUM_CPUS}</code>, <code>${JAVA_MEM_GB}</code>, <code>${USABLE_RAM_GB}</code>, <code>${MEM_PER_THREAD_GB}</code>. Delete legacy <code>np=$(...)</code>, <code>MEM_FOR_SORT=$(...)</code> snippets.</li>
+<li>Add <code>String extra_args = ""</code> to <code>input</code> block; add corresponding <code>parameter_meta</code> entry; append <code>~{extra_args}</code> to the primary tool invocation per §15.</li>
+<li>Add <code>outputs: { ... }</code> to <code>meta {}</code> block — one entry per <code>output {}</code> declaration. Add <code>tool</code> / <code>tool_version</code> / <code>tool_url</code> / <code>tool_citation</code> keys to <code>meta {}</code> when the task wraps a named tool (§3, §16).</li>
+<li><strong>Workflows:</strong> count total <code>call</code> statements, pick alias width (2 or 3 digits), rewrite each call's alias to <code>t_&lt;NN&gt;_&lt;DescriptiveName&gt;</code> and propagate the rename through all downstream references (§17). Run <code>miniwdl check &lt;file&gt;</code> to catch dangling references.</li>
+</ol>
+<hr />
+<h2 id="14-memory-and-cpu-accounting-mandatory-command-block-preamble">14. Memory and CPU accounting (mandatory command-block preamble)</h2>
+<p><strong>Every <code>command &lt;&lt;&lt;</code> block starts with a standard preamble that detects CPUs and RAM, reserves 1 GB for OS, and exports the derived variables.</strong> Compute these even when the current task body doesn't use all of them — keeps tasks reformat-safe.</p>
+<h3 id="required-preamble">Required preamble</h3>
+<p>Insert immediately after <code>set -euxo pipefail</code>:</p>
+<pre><code class="language-bash">set -euxo pipefail
+
+# ---- Resource detection (required preamble) ----
+NUM_CPUS=$(grep '^processor' /proc/cpuinfo | tail -n1 | awk '{print $NF+1}')
+RAM_IN_GB=$(free -g | grep &quot;^Mem&quot; | awk '{print $2}')
+
+# Reserve 1 GB for OS + container overhead.
+USABLE_RAM_GB=$((RAM_IN_GB - 1))
+[[ &quot;${USABLE_RAM_GB}&quot; -lt 1 ]] &amp;&amp; USABLE_RAM_GB=1
+
+# Per-thread RAM (used by samtools sort -m, etc.)
+MEM_PER_THREAD_GB=$(( USABLE_RAM_GB / NUM_CPUS ))
+[[ &quot;${MEM_PER_THREAD_GB}&quot; -lt 1 ]] &amp;&amp; MEM_PER_THREAD_GB=1
+
+# Java heap (used by GATK/Picard). Same as USABLE_RAM_GB; alias for clarity.
+JAVA_MEM_GB=${USABLE_RAM_GB}
+
+echo &quot;NUM_CPUS=${NUM_CPUS}  RAM_IN_GB=${RAM_IN_GB}  USABLE_RAM_GB=${USABLE_RAM_GB}  MEM_PER_THREAD_GB=${MEM_PER_THREAD_GB}  JAVA_MEM_GB=${JAVA_MEM_GB}&quot;
+# ---- end preamble ----
+</code></pre>
+<h3 id="variables-produced">Variables produced</h3>
+<table>
+<thead>
+<tr>
+<th>Var</th>
+<th>Meaning</th>
+<th>Typical consumer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NUM_CPUS</code></td>
+<td>Logical CPUs visible to container</td>
+<td><code>-@</code>, <code>-t</code>, <code>--threads</code>, <code>-j</code></td>
+</tr>
+<tr>
+<td><code>RAM_IN_GB</code></td>
+<td>Total RAM in container (<code>free -g</code>)</td>
+<td>Debug/logging</td>
+</tr>
+<tr>
+<td><code>USABLE_RAM_GB</code></td>
+<td><code>RAM_IN_GB - 1</code>, floored at 1</td>
+<td>Single-process tools</td>
+</tr>
+<tr>
+<td><code>MEM_PER_THREAD_GB</code></td>
+<td><code>USABLE_RAM_GB / NUM_CPUS</code>, floored at 1</td>
+<td><code>samtools sort -m</code>, <code>bwa -K</code></td>
+</tr>
+<tr>
+<td><code>JAVA_MEM_GB</code></td>
+<td>Alias of <code>USABLE_RAM_GB</code></td>
+<td><code>-Xmx</code>, <code>-Xms</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="usage-patterns">Usage patterns</h3>
+<p><strong>Java tools (GATK, Picard):</strong></p>
+<pre><code class="language-bash">gatk --java-options &quot;-Xmx${JAVA_MEM_GB}g -Xms${JAVA_MEM_GB}g&quot; HaplotypeCaller \
+    -I ~{input_bam} -R ~{ref_fasta} -O ~{prefix}.vcf.gz
+</code></pre>
+<p>Set <code>-Xmx</code> and <code>-Xms</code> equal — avoids GC heap-resize churn.</p>
+<p><strong>samtools sort (per-thread <code>-m</code>):</strong></p>
+<pre><code class="language-bash">samtools sort -@ ${NUM_CPUS} -m ${MEM_PER_THREAD_GB}G ~{input_bam} -o ~{prefix}.bam
+</code></pre>
+<p><strong>Generic multi-threaded tool:</strong></p>
+<pre><code class="language-bash">some_tool --threads ${NUM_CPUS} --memory ${USABLE_RAM_GB} ...
+</code></pre>
+<h3 id="rules_1">Rules</h3>
+<ul>
+<li>Preamble mandatory in every <code>command</code> block — even tiny tasks.</li>
+<li>Never pass full <code>runtime.memory</code> to tool. Always use <code>USABLE_RAM_GB</code> / <code>JAVA_MEM_GB</code>.</li>
+<li>Compute at runtime from <code>/proc/cpuinfo</code> and <code>free -g</code>. Do <strong>not</strong> thread WDL-side <code>runtime_attr.cpu_cores</code> / <code>mem_gb</code> into command — stale after <code>runtime_attr_override</code>.</li>
+<li>OS reserve: <strong>always 1 GB</strong>. No exceptions.</li>
+<li>Per-thread divides happen <strong>after</strong> OS reserve, never before.</li>
+<li>All floors at 1 GB (avoids <code>-m 0G</code>, <code>-Xmx0g</code>).</li>
+</ul>
+<hr />
+<h2 id="15-extra-args-passthrough-mandatory-input">15. Extra-args passthrough (mandatory input)</h2>
+<p><strong>Every task takes an optional <code>String</code> input that's appended verbatim to the primary tool invocation.</strong></p>
+<h3 id="input-declaration">Input declaration</h3>
+<p>Add to every task's <code>input</code> block, immediately before <code>RuntimeAttr? runtime_attr_override</code>:</p>
+<pre><code class="language-wdl">input {
+    File input_bam
+    String prefix
+
+    String extra_args = &quot;&quot;
+
+    RuntimeAttr? runtime_attr_override
+}
+</code></pre>
+<ul>
+<li>Name: <strong><code>extra_args</code></strong>. Always. No synonyms.</li>
+<li>Type: <code>String</code> with default <code>""</code>. Not <code>String?</code>.</li>
+<li>One per task. If a task wraps multiple distinct tools (rare — split it), only the <strong>primary</strong> tool gets <code>extra_args</code>.</li>
+</ul>
+<h3 id="parameter_meta-entry"><code>parameter_meta</code> entry</h3>
+<pre><code class="language-wdl">parameter_meta {
+    input_bam:             &quot;...&quot;
+    prefix:                &quot;...&quot;
+    extra_args:            &quot;Additional command-line args appended verbatim to the samtools sort invocation&quot;
+    runtime_attr_override: &quot;Override the default runtime attributes&quot;
+}
+</code></pre>
+<p>Replace <code>samtools sort</code> with the actual binary name.</p>
+<h3 id="usage-in-command">Usage in <code>command</code></h3>
+<p>Append <code>~{extra_args}</code> to the <strong>primary</strong> tool invocation, after the structured flags:</p>
+<pre><code class="language-bash">samtools sort -@ ${NUM_CPUS} -m ${MEM_PER_THREAD_GB}G ~{extra_args} ~{input_bam} -o ~{prefix}.bam
+</code></pre>
+<pre><code class="language-bash">gatk --java-options &quot;-Xmx${JAVA_MEM_GB}g -Xms${JAVA_MEM_GB}g&quot; HaplotypeCaller \
+    -I ~{input_bam} \
+    -R ~{ref_fasta} \
+    -O ~{prefix}.vcf.gz \
+    ~{extra_args}
+</code></pre>
+<pre><code class="language-bash">minimap2 -ayYL --MD --eqx -x ~{map_preset} -t ${NUM_CPUS} ~{extra_args} ~{ref_fasta} ~{reads} &gt; tmp.sam
+</code></pre>
+<h3 id="rules_2">Rules</h3>
+<ul>
+<li><code>~{extra_args}</code> placement: <strong>before positional arguments</strong>, <strong>after</strong> the structured flags the task controls. Lets users override defaults via tool's last-flag-wins semantics.</li>
+<li>Do <strong>not</strong> quote <code>~{extra_args}</code> in bash — that collapses multi-flag strings into one argv element. Plain <code>~{extra_args}</code> lets the shell tokenize.</li>
+<li>Do <strong>not</strong> validate or sanitize. Pass through verbatim.</li>
+<li>If task has multiple sequential tool calls (e.g. sort + index), <code>extra_args</code> applies to the primary invocation only. Document in <code>parameter_meta</code>.</li>
+<li>Default <code>""</code> is safe — empty interpolation drops to nothing in bash.</li>
+</ul>
+<hr />
+<h2 id="16-output-documentation">16. Output documentation</h2>
+<p>WDL 1.0 has no formal output <code>parameter_meta</code>. Use the <code>meta</code> block with a free-form <code>outputs</code> key. Engines (Cromwell, miniwdl) preserve arbitrary <code>meta</code> keys.</p>
+<h3 id="required-metaoutputs">Required: <code>meta.outputs</code></h3>
+<p>Every task and workflow with an <code>output {}</code> block must document each output:</p>
+<pre><code class="language-wdl">meta {
+    description: &quot;...&quot;
+    tool: &quot;samtools sort&quot;
+    tool_version: &quot;1.23.1&quot;
+    tool_url: &quot;https://www.htslib.org/&quot;
+
+    outputs: {
+        output_bam: &quot;Coordinate-sorted BAM&quot;,
+        output_bai: &quot;BAM index (.bam.bai)&quot;
+    }
+}
+</code></pre>
+<h3 id="rules_3">Rules</h3>
+<ul>
+<li>Key: <strong><code>outputs</code></strong>. Always. Inside <code>meta {}</code>, not a separate top-level block.</li>
+<li>Value: object literal with one key per <code>output {}</code> declaration. Key names must <strong>match</strong> the <code>output</code> variable names exactly.</li>
+<li>Value type: short string description. Object form allowed for tagged outputs but strings preferred.</li>
+<li>Order: same order as the <code>output {}</code> block.</li>
+<li>If output is a glob result, document the glob pattern in the description: <code>"All per-contig interval files matching contig.*.intervals"</code>.</li>
+<li>Workflows: document <strong>only outputs declared in the workflow's own <code>output {}</code> block.</strong> Don't re-document task outputs.</li>
+</ul>
+<h3 id="engine-note">Engine note</h3>
+<p>Cromwell and miniwdl ignore unknown <code>meta</code> keys at execution. They surface them in <code>womtool inputs</code> / <code>miniwdl check</code> JSON output, so downstream doc generators can scrape them.</p>
+<hr />
+<h2 id="17-workflow-call-aliasing-mandatory">17. Workflow call aliasing (mandatory)</h2>
+<p><strong>Every <code>call</code> in a workflow file is aliased.</strong> Alias prefix is <code>t_NN_</code> (or <code>t_NNN_</code>), where the number is the call's position in lexical source order.</p>
+<h3 id="format">Format</h3>
+<pre><code>t_&lt;NN&gt;_&lt;DescriptiveName&gt;
+</code></pre>
+<ul>
+<li><code>&lt;NN&gt;</code> = zero-padded ordinal of the <code>call</code> statement in the file, counting from top to bottom in source order, starting at <code>01</code>.</li>
+<li>Width:</li>
+<li><code>2</code> digits (<code>t_01_</code>, <code>t_99_</code>) when the workflow contains <strong>fewer than 100</strong> <code>call</code> statements.</li>
+<li><code>3</code> digits (<code>t_001_</code>, <code>t_999_</code>) when ≥ 100.</li>
+<li>Pick width once per file based on total count; do not mix widths in one workflow.</li>
+<li><code>&lt;DescriptiveName&gt;</code> = CamelCase, describes purpose at this call site. Mirrors §10 alias rules.</li>
+</ul>
+<h3 id="examples">Examples</h3>
+<pre><code class="language-wdl">call Utils.MergeBams as t_01_MergeAllReads { input: bams = ccs_bams, prefix = sample }
+
+call PB.Demultiplex as t_02_Demultiplex {
+    input:
+        bam          = t_01_MergeAllReads.merged_bam,
+        prefix       = sample,
+        barcode_file = barcode_file
+}
+
+scatter (demux_bam in t_02_Demultiplex.demux_bams) {
+    call PB.RefineTranscriptReads as t_03_RefineTranscriptReads { input: bam = demux_bam }
+    call PB.ClusterTranscripts    as t_04_ClusterTranscripts    { input: bam = t_03_RefineTranscriptReads.refined_bam }
+    call PB.Align                 as t_05_AlignTranscripts      { input: bam = t_04_ClusterTranscripts.clustered_bam }
+}
+
+call FF.FinalizeToFile as t_06_FinalizeBam { input: outdir = outdir, file = t_05_AlignTranscripts.aligned_bam }
+</code></pre>
+<h3 id="rules_4">Rules</h3>
+<ul>
+<li><strong>Every <code>call</code> gets an alias.</strong> No exception, even single-use calls and calls to differently-named tasks.</li>
+<li><strong>Numbering is by <code>call</code> statement, not runtime invocation.</strong> A single <code>call</code> inside a <code>scatter</code> still consumes one number, regardless of how many shards execute.</li>
+<li><strong>Order is source-file lexical order, top to bottom.</strong> Calls nested inside <code>scatter</code>, <code>if</code>, or sub-block count in the order they textually appear.</li>
+<li><strong>Sub-workflow calls (<code>call SubWorkflow as ...</code>)</strong> count too — same <code>t_NN_</code> prefix.</li>
+<li><strong>Don't renumber on minor edits.</strong> When inserting a new call mid-file, renumber every subsequent call. This is intentional friction; the renumbering keeps order monotonic and <code>t_NN_</code> references in <code>input:</code> blocks consistent.</li>
+<li><strong>Downstream references update with the alias.</strong> Renaming <code>t_03_Foo</code> → <code>t_04_Foo</code> requires updating every <code>t_03_Foo.&lt;output&gt;</code> reference. Use editor find-replace; verify with <code>miniwdl check</code>.</li>
+<li><strong>Workflow outputs that re-export task outputs</strong> also use the <code>t_NN_</code> alias: <code>File final_bam = t_05_AlignTranscripts.aligned_bam</code>.</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../" class="btn btn-neutral float-left" title="Development Guide Overview"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../docker_style_guide/" class="btn btn-neutral float-right" title="Docker Style Guide">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>Copyright (c) 2023, Broad Institute</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/broadinstitute/long-read-pipelines" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../docker_style_guide/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme_extra.js" defer></script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

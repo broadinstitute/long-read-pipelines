@@ -56,6 +56,8 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#testing">Testing</a>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#wdl-validation">WDL Validation</a>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#workflow-deployment">Workflow Deployment</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#contributing-guidelines">Contributing Guidelines</a>
@@ -72,11 +74,11 @@
     </li>
     </ul>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="WDL_STYLE_RULES/">WDL Style Rules</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="docker_style_guide/">Docker Style Guide</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="repo_structure/">Repository Structure</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="wdl_style_guide/">WDL Style Guide</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Pipeline documentation</span></p>
@@ -143,6 +145,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../tasks/SRUtils/">SRUtils</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../tasks/StringTie2/">StringTie2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../tasks/TerraUtils/">TerraUtils</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../tasks/Utils/">Utils</a>
                   </li>
@@ -319,6 +323,10 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../workflows/SplitMultiSampleVCF/">SplitMultiSampleVCF</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../workflows/SplitMultiSampleVCFToTerraTable/">SplitMultiSampleVCFToTerraTable</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../workflows/SubsetVCFsToSamples/">SubsetVCFsToSamples</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../workflows/SvQCPlots/">SvQCPlots</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../workflows/TrainCnnFilters/">TrainCnnFilters</a>
@@ -370,7 +378,7 @@ information on how to contribute to the repository.</p>
 and intended for use with Google Cloud Platform via the scientific workflow engine, Cromwell.
 The WDL scripts are divided into three subdirectories: <code>tasks</code>, <code>structs</code>, and <code>pipelines</code>;
 then further divided by sequencing platform and analysis type.
-See <a href="wdl_style_guide/">Repository Structure</a> for more information on directory structure.</p>
+See <a href="repo_structure/">Repository Structure</a> for more information on directory structure.</p>
 <h2 id="docker-containers">Docker Containers</h2>
 <p>The WDL workflows in this repository are designed to be run using Docker containers. 
 This provides a number of advantages, including the ability to run the workflows on a 
@@ -386,6 +394,20 @@ scripts for running tests using Tox. Tox is a Python-based test automation tool 
 can be used to run tests in a variety of environments. The scripts are run through
 GitHub Actions, which are configured in the .github/workflows directory. The GitHub Actions
 are triggered by pushes to the repository and pull requests. </p>
+<h2 id="wdl-validation">WDL Validation</h2>
+<p>Before committing changes to any <code>.wdl</code> file, validate it with <strong>both</strong>
+<a href="https://github.com/chanzuckerberg/miniwdl">miniwdl</a> and
+<a href="https://github.com/broadinstitute/cromwell/releases">womtool</a> (the WDL validator that
+ships with Cromwell). They are complementary and neither alone is sufficient:</p>
+<ul>
+<li><code>miniwdl check &lt;file.wdl&gt;</code> — fast iteration, and (with <code>shellcheck</code> installed) it lints
+  the embedded <code>command</code> blocks. Use <code>miniwdl check --strict</code> to surface those lint findings.</li>
+<li><code>java -jar womtool.jar validate &lt;file.wdl&gt;</code> — the source of truth for Terra/Cromwell.
+  miniwdl accepts some constructs that Cromwell rejects (for example, a parenthesized boolean
+  expression inside a <code>~{true=... false=... expr}</code> placeholder), so a WDL must pass womtool
+  before it is considered valid.</li>
+</ul>
+<p>Validate the top-level workflow file so imported task libraries are checked transitively.</p>
 <h2 id="workflow-deployment">Workflow Deployment</h2>
 <p>The workflows in this repository are deployed to Terra using Dockstore. Dockstore is a
 platform for sharing Docker containers and workflows. The workflows are registered using the
@@ -400,7 +422,7 @@ the Dockstore repository.</p>
 <h2 id="contributing-guidelines">Contributing Guidelines</h2>
 <p>Please adhere to the following best practices if contributing to this repository:</p>
 <ol>
-<li><strong>Read Style Guide</strong>: Before making any changes to the code, it's important to read the style guide. The style guide contains information on how to write code that is consistent with the rest of the codebase. See <a href="wdl_style_guide/">WDL Style Guide</a> and <a href="docker_style_guide/">Docker Style Guide</a> for more information.</li>
+<li><strong>Read Style Guide</strong>: Before making any changes to the code, it's important to read the style guide. The style guide contains information on how to write code that is consistent with the rest of the codebase. See <a href="WDL_STYLE_RULES/">WDL Style Rules</a> and <a href="docker_style_guide/">Docker Style Guide</a> for more information.</li>
 <li><strong>Create a new branch</strong>: When making contributions to a repository, it's important to create a new branch for each change you make. The name of the branch should begin with your initials followed by an underscore and a short description of the change. For example, if Janet Sully is making a change to the README file, the name might be <code>js_update_readme</code>.</li>
 <li><strong>Keep commits small and focused</strong>: When making changes to the code, it's important to keep your commits small and focused on a specific task. This makes it easier for others to review your changes and also makes it easier to roll back changes if necessary.</li>
 <li><strong>Write clear commit messages</strong>: When committing changes to the repository, it's important to write clear and concise commit messages that describe what changes were made. This helps others understand the changes you made and why you made them.</li>
@@ -430,7 +452,7 @@ the Dockstore repository.</p>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href=".." class="btn btn-neutral float-left" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="docker_style_guide/" class="btn btn-neutral float-right" title="Docker Style Guide">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="WDL_STYLE_RULES/" class="btn btn-neutral float-right" title="WDL Style Rules">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -461,7 +483,7 @@ the Dockstore repository.</p>
       <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="docker_style_guide/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="WDL_STYLE_RULES/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

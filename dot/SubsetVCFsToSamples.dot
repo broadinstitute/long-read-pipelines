@@ -1,0 +1,11 @@
+// SubsetVCFsToSamples
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	subgraph "cluster-scatter-L30C5-idx" {
+		fontname=Roboto label="scatter(range(length(input_vcfs)))" rank=same
+		"call-SubsetVCFToSamples" [label=SubsetVCFToSamples shape=cds]
+		"scatter-L30C5-idx" [label="" height=0 margin=0 style=invis width=0]
+	}
+}

@@ -48,11 +48,11 @@
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../development_guide/">Development Guide Overview</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../development_guide/WDL_STYLE_RULES/">WDL Style Rules</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../development_guide/docker_style_guide/">Docker Style Guide</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../development_guide/repo_structure/">Repository Structure</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../../development_guide/wdl_style_guide/">WDL Style Guide</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">Pipeline documentation</span></p>
@@ -119,6 +119,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../SRUtils/">SRUtils</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../StringTie2/">StringTie2</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../TerraUtils/">TerraUtils</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Utils/">Utils</a>
                   </li>
@@ -502,6 +504,22 @@
     </li>
         </ul>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#subsetvcftosamples">SubsetVCFToSamples</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_25">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_25">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_24">Optional</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_12">Defaults</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_25">Outputs</a>
+    </li>
+        </ul>
+    </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../cnv_common_tasks/">cnv_common_tasks</a>
@@ -674,6 +692,10 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/Sniffles2/">Sniffles2</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/SplitMultiSampleVCF/">SplitMultiSampleVCF</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SplitMultiSampleVCFToTerraTable/">SplitMultiSampleVCFToTerraTable</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../workflows/SubsetVCFsToSamples/">SubsetVCFsToSamples</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../workflows/SvQCPlots/">SvQCPlots</a>
                   </li>
@@ -1280,6 +1302,33 @@
 <ul>
 <li><code>gvcf_out</code> (File)</li>
 <li><code>gvcf_out_tbi</code> (File)</li>
+</ul>
+<h2 id="subsetvcftosamples">SubsetVCFToSamples</h2>
+<dl>
+<dt>description</dt>
+<dd>Subset a (multi-sample) VCF to a specified set of samples, emitting a single multi-sample VCF that retains only those samples (no per-sample splitting). The input VCF is localized before subsetting (a full-file sample subset reads every record, so a resumable localized copy is more robust than streaming a large VCF over the network). Exactly one of sample_names or sample_name_list must be provided. Requested samples absent from the VCF are handled per error_if_sample_missing: when true the task fails listing them all; when false it warns and continues with the samples that are present.</dd>
+</dl>
+<h3 id="inputs_25">Inputs</h3>
+<h4 id="required_25">Required</h4>
+<ul>
+<li><code>input_vcf</code> (File, <strong>required</strong>): VCF to subset.</li>
+<li><code>input_vcf_index</code> (File, <strong>required</strong>): Index (.tbi/.csi) for input_vcf.</li>
+</ul>
+<h4 id="optional_24">Optional</h4>
+<ul>
+<li><code>prefix</code> (String?): Base name for the output VCF (default: the input VCF's base name).</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
+<li><code>sample_name_list</code> (File?): Samples to keep, as a file with one sample name per line. Mutually exclusive with sample_names; exactly one of the two must be given.</li>
+<li><code>sample_names</code> (Array[String]?): Samples to keep, as an inline list of names. Mutually exclusive with sample_name_list; exactly one of the two must be given.</li>
+</ul>
+<h4 id="defaults_12">Defaults</h4>
+<ul>
+<li><code>error_if_sample_missing</code> (Boolean, default=true): When true (default), any requested sample absent from the VCF fails the task (all absent samples listed on stderr). When false, absent samples produce a warning and the task continues, subsetting to the samples that are present.</li>
+</ul>
+<h3 id="outputs_25">Outputs</h3>
+<ul>
+<li><code>subset_vcf</code> (File)</li>
+<li><code>subset_vcf_index</code> (File)</li>
 </ul>
               
             </div>

@@ -4,4 +4,17 @@ digraph {
 	node [fontname=Roboto]
 	edge [color="#00000080"]
 	"call-SplitMultiSampleVCFTask" [label=SplitMultiSampleVCFTask shape=cds]
+	subgraph "cluster-scatter-L41C5-f" {
+		fontname=Roboto label="scatter(SplitMultiSampleVCFTask.output_files)" rank=same
+		subgraph "cluster-if-L43C9" {
+			fontname=Roboto label="if(!is_index)" rank=same
+			"if-L43C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		subgraph "cluster-if-L44C9" {
+			fontname=Roboto label="if(is_index)" rank=same
+			"if-L44C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"scatter-L41C5-f" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-SplitMultiSampleVCFTask" -> "scatter-L41C5-f" [lhead="cluster-scatter-L41C5-f"]
 }
