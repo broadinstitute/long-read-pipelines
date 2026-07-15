@@ -3,6 +3,18 @@ version 1.0
 import "../../structs/Structs.wdl"
 
 task VariantRecalibrator {
+    meta {
+        description: "Run GATK VariantRecalibrator/ApplyRecalibration (VQSR) over the joint-call VCF for SNPs then indels. The VQSR model-fitting knobs are exposed so small callsets (where the negative model can otherwise find no 'bad' variants) can be tuned at runtime."
+    }
+
+    parameter_meta {
+        snp_max_gaussians:    "SNP model --maxGaussians (default 8). Lower it for small callsets that cannot support 8 Gaussians."
+        indel_max_gaussians:  "Indel model --maxGaussians (default 4)."
+        min_num_bad_variants: "--minNumBadVariants for both models (GATK default 1000). Lower to accept a small negative training set."
+        bad_lod_cutoff:       "--badLodCutoff for both models (GATK default -5.0). Raise toward 0 (e.g. -2.0) so more variants enter the negative training set when none score below -5."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
     input {
         String prefix
 
@@ -19,6 +31,11 @@ task VariantRecalibrator {
         File resource_vcf_3d7_hb3_index
         File resource_vcf_hb3_dd2_index
         File resource_vcf_7g8_gb4_index
+
+        Int snp_max_gaussians = 8
+        Int indel_max_gaussians = 4
+        Int min_num_bad_variants = 1000
+        Float bad_lod_cutoff = -5.0
 
         RuntimeAttr? runtime_attr_override
     }
@@ -59,7 +76,9 @@ task VariantRecalibrator {
                 -an SOR \
                 -an DP \
                 -an MQ \
-                --maxGaussians 8 \
+                --maxGaussians ~{snp_max_gaussians} \
+                --minNumBadVariants ~{min_num_bad_variants} \
+                --badLodCutoff ~{bad_lod_cutoff} \
                 --MQCapForLogitJitterTransform 70
 
         java -Xmx${java_memory_size_mb}M -jar /usr/GenomeAnalysisTK.jar \
@@ -86,7 +105,9 @@ task VariantRecalibrator {
                 -an QD \
                 -an FS \
                 -an MQ \
-                --maxGaussians 4 \
+                --maxGaussians ~{indel_max_gaussians} \
+                --minNumBadVariants ~{min_num_bad_variants} \
+                --badLodCutoff ~{bad_lod_cutoff} \
                 --MQCapForLogitJitterTransform 70
 
         java -Xmx${java_memory_size_mb}M -jar /usr/GenomeAnalysisTK.jar \
