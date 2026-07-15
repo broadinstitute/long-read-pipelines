@@ -2132,3 +2132,122 @@ task CopyDP_MINToDP {
     }
 }
 
+task SubsetVCFToSamples {
+
+    meta {
+        description: "Subset a (multi-sample) VCF to a specified set of samples, emitting a single multi-sample VCF that retains only those samples (no per-sample splitting). The input VCF is localized before subsetting (a full-file sample subset reads every record, so a resumable localized copy is more robust than streaming a large VCF over the network). Exactly one of sample_names or sample_name_list must be provided. Requested samples absent from the VCF are handled per error_if_sample_missing: when true the task fails listing them all; when false it warns and continues with the samples that are present."
+    }
+
+    parameter_meta {
+        input_vcf:         "VCF to subset."
+        input_vcf_index:   "Index (.tbi/.csi) for input_vcf."
+        sample_names:      "Samples to keep, as an inline list of names. Mutually exclusive with sample_name_list; exactly one of the two must be given."
+        sample_name_list:  "Samples to keep, as a file with one sample name per line. Mutually exclusive with sample_names; exactly one of the two must be given."
+        error_if_sample_missing: "When true (default), any requested sample absent from the VCF fails the task (all absent samples listed on stderr). When false, absent samples produce a warning and the task continues, subsetting to the samples that are present."
+        prefix:            "Base name for the output VCF (default: the input VCF's base name)."
+        runtime_attr_override: "Override default runtime attributes."
+    }
+
+    input {
+        File input_vcf
+        File input_vcf_index
+
+        Array[String]? sample_names
+        File? sample_name_list
+
+        Boolean error_if_sample_missing = true
+
+        String? prefix
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Array[String] requested_samples = select_first([sample_names, []])
+    Boolean have_inline_samples = length(requested_samples) > 0
+    String outbase = select_first([prefix, basename(input_vcf, ".vcf.gz")])
+
+    Int disk_size = 10 + 2*ceil(size([input_vcf, input_vcf_index], "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        REQUESTED_SAMPLES="~{write_lines(requested_samples)}"
+        SAMPLE_NAME_LIST="~{default='' sample_name_list}"
+
+        # Gate on the WDL-known count rather than the size of write_lines() output:
+        # write_lines([]) is not guaranteed to be a 0-byte file.
+        HAVE_INLINE_SAMPLES=~{true="1" false="0" have_inline_samples}
+
+        # Exactly one of sample_names / sample_name_list must be provided.
+        if [ "${HAVE_INLINE_SAMPLES}" -eq 1 ] && [ -n "${SAMPLE_NAME_LIST}" ]; then
+            echo "ERROR: 'sample_names' and 'sample_name_list' are mutually exclusive; provide exactly one." >&2
+            exit 1
+        fi
+        if [ "${HAVE_INLINE_SAMPLES}" -eq 0 ] && [ -z "${SAMPLE_NAME_LIST}" ]; then
+            echo "ERROR: one of 'sample_names' or 'sample_name_list' must be provided." >&2
+            exit 1
+        fi
+
+        # Resolve the effective sample list file.
+        if [ "${HAVE_INLINE_SAMPLES}" -eq 1 ]; then
+            SAMPLES_FILE="${REQUESTED_SAMPLES}"
+        else
+            SAMPLES_FILE="${SAMPLE_NAME_LIST}"
+        fi
+
+        ERROR_IF_SAMPLE_MISSING=~{true="1" false="0" error_if_sample_missing}
+
+        # Requested samples absent from the VCF = set difference (requested \ present).
+        # comm -23 emits lines unique to the first (requested) sorted list.
+        bcftools query -l ~{input_vcf} | sort -u > vcf_samples.sorted
+        grep -v '^[[:space:]]*$' "${SAMPLES_FILE}" | sort -u > requested_samples.sorted
+        comm -23 requested_samples.sorted vcf_samples.sorted > missing_samples.txt
+
+        if [ -s missing_samples.txt ]; then
+            if [ "${ERROR_IF_SAMPLE_MISSING}" -eq 1 ]; then
+                echo "ERROR: the following requested sample(s) are not present in the input VCF:" >&2
+                sed 's/^/  /' missing_samples.txt >&2
+                exit 1
+            else
+                echo "WARNING: the following requested sample(s) are not present in the input VCF and will be skipped:" >&2
+                sed 's/^/  /' missing_samples.txt >&2
+            fi
+        fi
+
+        # Subset to the requested samples, keeping a single multi-sample VCF.
+        # In warn-and-continue mode, --force-samples lets bcftools skip absent samples.
+        if [ "${ERROR_IF_SAMPLE_MISSING}" -eq 1 ]; then
+            bcftools view -S "${SAMPLES_FILE}" -Oz -o "~{outbase}.subset.vcf.gz" ~{input_vcf}
+        else
+            bcftools view --force-samples -S "${SAMPLES_FILE}" -Oz -o "~{outbase}.subset.vcf.gz" ~{input_vcf}
+        fi
+        tabix -p vcf "~{outbase}.subset.vcf.gz"
+    >>>
+
+    output {
+        File subset_vcf = "~{outbase}.subset.vcf.gz"
+        File subset_vcf_index = "~{outbase}.subset.vcf.gz.tbi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       25,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.3"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
