@@ -59,6 +59,14 @@ workflow Run {
 
         if (shard_id != "alts") {
         if (!use_gpu) {
+            Boolean is_t2t_chrX = length(how_to_shard_wg_for_calling) < 20 && shard_id == "18_X"
+            Boolean is_t2t_shard8 = length(how_to_shard_wg_for_calling) < 20 && shard_id == "9_15"
+            Boolean is_38_chr1  = length(how_to_shard_wg_for_calling) > 20 && shard_id == "1-p"
+            Boolean is_38_shard3  = length(how_to_shard_wg_for_calling) > 20 && shard_id == "11-q_17-q"
+
+            Boolean pay_fee_and_go = is_t2t_chrX || is_38_chr1 || is_t2t_shard8 || is_38_shard3
+            Int use_this_memory = if ( pay_fee_and_go ) then 384 else dv_memory
+            # RuntimeAttr preemption_override = {"preemptible_tries": if ( pay_fee_and_go ) then 0 else 1}
             call DV as DeepV {
                 input:
                     bam           = shard_bam,
@@ -72,8 +80,9 @@ workflow Run {
                     model_type = model_for_dv_andor_pepper,
 
                     threads = select_first([dv_threads]),
-                    memory  = select_first([dv_memory]),
-                    zones = zones
+                    memory  = use_this_memory, # select_first([dv_memory]),
+                    zones = zones,
+                    # runtime_attr_override = preemption_override
             }
         }
 
@@ -155,7 +164,7 @@ task DV {
     }
 
     String prefix = basename(bam, ".bam") + ".deepvariant"
-    String output_root = "/cromwell_root/dv_output"
+    String output_root = "/mnt/disks/cromwell_root/dv_output"
 
     command <<<
         set -euxo pipefail
@@ -164,7 +173,7 @@ task DV {
 
         mkdir -p "~{output_root}"
 
-        export MONITOR_MOUNT_POINT="/cromwell_root/"
+        export MONITOR_MOUNT_POINT="/mnt/disks/cromwell_root/"
         bash /opt/vm_local_monitoring_script.sh &> resources.log &
         job_id=$(ps -aux | grep -F 'vm_local_monitoring_script.sh' | head -1 | awk '{print $2}')
 
@@ -216,8 +225,6 @@ task DV {
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
-        noAddress: true
-
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
         disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
@@ -254,7 +261,7 @@ task DV_gpu {
     }
 
     String prefix = basename(bam, ".bam") + ".deepvariant"
-    String output_root = "/cromwell_root/dv_output"
+    String output_root = "/mnt/disks/cromwell_root/dv_output"
 
     command <<<
         set -euxo pipefail
@@ -263,7 +270,7 @@ task DV_gpu {
 
         mkdir -p "~{output_root}"
 
-        export MONITOR_MOUNT_POINT="/cromwell_root/"
+        export MONITOR_MOUNT_POINT="/mnt/disks/cromwell_root/"
         bash vm_local_monitoring_script.sh &> resources.log &
         job_id=$(ps -aux | grep -F 'vm_local_monitoring_script.sh' | head -1 | awk '{print $2}')
         gpustat -a -i 1 &> gpu.usages.log &
@@ -324,8 +331,6 @@ task DV_gpu {
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
-        noAddress: true
-
         cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
         memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
         disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " SSD"
