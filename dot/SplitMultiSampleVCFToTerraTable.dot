@@ -22,8 +22,8 @@ digraph {
 	"call-t_03_ValidateTerraLinks" [label=t_03_ValidateTerraLinks shape=cds]
 	"call-t_04_Upload" [label=t_04_Upload shape=cds]
 	"call-t_01_SplitVCF" -> "scatter-L76C5-f" [lhead="cluster-scatter-L76C5-f"]
-	"decl-colocated_vcf_indices" -> "call-t_02_MakeEntitiesTsv"
 	"decl-colocated_vcfs" -> "call-t_02_MakeEntitiesTsv"
+	"decl-colocated_vcf_indices" -> "call-t_02_MakeEntitiesTsv"
 	"call-t_02_MakeEntitiesTsv" -> "call-t_03_ValidateTerraLinks"
 	"call-t_03_ValidateTerraLinks" -> "call-t_04_Upload"
 }

@@ -78,6 +78,8 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional">Optional</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults">Defaults</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs">Outputs</a>
@@ -367,6 +369,10 @@
               
                 <h1 id="broadonpremmalariapipelinetasks">BroadOnPremMalariaPipelineTasks</h1>
 <h2 id="variantrecalibrator">VariantRecalibrator</h2>
+<dl>
+<dt>description</dt>
+<dd>Run GATK VariantRecalibrator/ApplyRecalibration (VQSR) over the joint-call VCF for SNPs then indels. The VQSR model-fitting knobs are exposed so small callsets (where the negative model can otherwise find no 'bad' variants) can be tuned at runtime.</dd>
+</dl>
 <h3 id="inputs">Inputs</h3>
 <h4 id="required">Required</h4>
 <ul>
@@ -384,7 +390,14 @@
 </ul>
 <h4 id="optional">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
+</ul>
+<h4 id="defaults">Defaults</h4>
+<ul>
+<li><code>bad_lod_cutoff</code> (Float, default=-5.0): --badLodCutoff for both models (GATK default -5.0). Raise toward 0 (e.g. -2.0) so more variants enter the negative training set when none score below -5.</li>
+<li><code>indel_max_gaussians</code> (Int, default=4): Indel model --maxGaussians (default 4).</li>
+<li><code>min_num_bad_variants</code> (Int, default=1000): --minNumBadVariants for both models (GATK default 1000). Lower to accept a small negative training set.</li>
+<li><code>snp_max_gaussians</code> (Int, default=8): SNP model --maxGaussians (default 8). Lower it for small callsets that cannot support 8 Gaussians.</li>
 </ul>
 <h3 id="outputs">Outputs</h3>
 <ul>
