@@ -1145,8 +1145,13 @@ task EvalIndelLengthAllBins {
             exit 1
         fi
 
+        # Assemble in bins.tsv order (not glob/lexical order) so the row order is
+        # independent of concurrency and matches the serial version.
         printf 'label\ttp_call\ttp_base\tfn\tfp\n' > counts.tsv
-        cat bin_counts/*.txt >> counts.tsv
+        while IFS=$'\t' read -r label jexl; do
+            [ -z "${label}" ] && continue
+            cat "bin_counts/${label}.txt" >> counts.tsv
+        done < bins.tsv
 
         # Summarise all bins into one CSV (schema matches SummariseForIndelSelection).
         # IndelLength parsing mirrors that task's GetSelectionValue: NA for the
