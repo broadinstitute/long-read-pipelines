@@ -1151,67 +1151,6 @@ task EvalIndelLengthAllBins {
     }
 }
 
-task SummariseForIndelSelection {
-    input {
-        String evalLabel
-        String truthLabel
-        String? stratLabel
-        String indelLabel
-        String engine
-        String igvSession
-        Int TP_CALL
-        Int TP_BASE
-        Int FP
-        Int FN
-        Int? preemptible
-
-    }
-
-    command <<<
-        set -xeuo pipefail
-
-        Rscript -<<"EOF" ~{TP_CALL} ~{TP_BASE} ~{FN} ~{FP} ~{evalLabel} ~{truthLabel} ~{indelLabel} ~{engine} ~{default="" stratLabel} ~{igvSession}
-        GetSelectionValue<-function(name, target) {
-
-                  if(target=="insertion" || target=="deletion") {
-                    return(NA)
-                  }
-                  pos_start<-regexpr(target,name)
-                  sub = substring(name,pos_start+attr(pos_start,"match.length")+1,nchar(name))
-                  split_sub = strsplit(sub,"_")
-                  val = if(grepl("^m",split_sub[[1]][[1]])) -as.double(gsub("m","",split_sub[[1]][[1]])) else as.double(split_sub[[1]][[1]])
-                }
-
-        args <-commandArgs(trailingOnly = TRUE)
-        indel_options <-c("deletion","insertion","indel_fine","indel_coarse")
-        indel_type <- mapply(grepl,indel_options,args[7])
-        indel_type <- indel_options[indel_type[indel_options]]
-        indel_length <- GetSelectionValue(args[7],indel_type)
-        if (length(args)<10) {
-          stratifier <- NA
-        } else {
-          stratifier <- args[9]
-        }
-        table <- data.frame("Name"=args[5], "Truth_Set"=args[6],"Comparison_Engine"=args[8],"Stratifier"=stratifier,
-                            "IndelLength"= indel_length,
-                            "Recall"=as.numeric(args[2])/(as.numeric(args[2])+as.numeric(args[3])),"Precision"=as.numeric(args[1])/(as.numeric(args[1])+as.numeric(args[4])),"TP_Base"=as.numeric(args[2]),"TP_Eval"=as.numeric(args[1]),
-                            "FP"=as.numeric(args[4]),"FN"=as.numeric(args[3]),"IGV_Session"=args[length(args)],"Summary_Type"=indel_type)
-        table$F1_Score <- 2*table$Precision*table$Recall/(table$Precision+table$Recall)
-        write.csv(table,paste(args[8],".",indel_type,".summary.csv",sep=""),row.names = FALSE)
-        EOF
-    >>>
-
-    runtime {
-            docker: "rocker/tidyverse"
-            preemptible: select_first([preemptible,0])
-            disks: "local-disk 10 HDD"
-        }
-
-    output {
-        File summaryOut = glob("*.summary.csv")[0]
-    }
-
-}
 
 #create csv file of statistics based on TP,FP,FN
 task SummariseForVariantSelection {
