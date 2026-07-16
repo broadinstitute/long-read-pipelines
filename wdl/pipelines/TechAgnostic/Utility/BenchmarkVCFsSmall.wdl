@@ -307,8 +307,10 @@ workflow BenchmarkVCFsSmall {
                         annotationNames = annotationNames,
                         reference = ref_map["fasta"],
                         refDict = ref_map["dict"],
-                        refIndex = ref_map["fai"],
-                        preemptible = preemptible
+                        refIndex = ref_map["fai"]
+                        # Intentionally on-demand (not preemptible): this is the
+                        # longest task and it has no checkpoint, so a preemption
+                        # would restart the whole bin loop from scratch.
                 }
             }
         }
@@ -1078,11 +1080,15 @@ task EvalIndelLengthAllBins {
 
         Int? preemptible
         Int? memoryMaybe
+        Int? cpuMaybe
     }
 
     Int memoryDefault = 2
     Int memoryJava = select_first([memoryMaybe,memoryDefault])
-    Int memoryRam = memoryJava+2
+    # Bins run concurrently, one GATK JVM (-Xmx memoryJava) per worker, so the VM
+    # needs roughly cpu * memoryJava plus a couple GB of overhead.
+    Int cpu = select_first([cpuMaybe, 4])
+    Int memoryRam = cpu*memoryJava + 2
 
     Int disk_size = 10 + ceil(4.2 * size(vcf, "GB") + 2.2 * size(vcfIndex, "GB") + size(reference, "GB"))
 
@@ -1095,22 +1101,52 @@ task EvalIndelLengthAllBins {
             VCF=annotated.vcf.gz
         fi
 
+        # Pre-filter to simple indels ONCE (keeping both samples). Every per-bin
+        # selection then scans this small file instead of re-scanning the full,
+        # potentially hundreds-of-thousands-of-variant, eval VCF 4x per bin.
+        gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V "${VCF}" -O indels.vcf.gz -select "vc.isSimpleIndel()"
+
         # One line per indel-length bin: <label>\t<jexl>
         paste "~{write_lines(indelLabels)}" "~{write_lines(indelJexl)}" > bins.tsv
+        mkdir -p bin_counts
 
-        printf 'label\ttp_call\ttp_base\tfn\tfp\n' > counts.tsv
+        # Count TP_CALL/TP_BASE/FN/FP for one indel-length bin; each bin writes a
+        # uniquely-named file so concurrent workers never race.
+        run_bin() {
+            local label="$1" jexl="$2"
+            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V indels.vcf.gz -O "sel.${label}.TP_CALL.vcf.gz" -select "${jexl} && ~{selectTPCall}" -sn ~{sampleCall}
+            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V indels.vcf.gz -O "sel.${label}.TP_BASE.vcf.gz" -select "${jexl} && ~{selectTPBase}" -sn ~{sampleBase}
+            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V indels.vcf.gz -O "sel.${label}.FN.vcf.gz" -select "${jexl} && ~{selectFN}" -sn ~{sampleBase}
+            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V indels.vcf.gz -O "sel.${label}.FP.vcf.gz" -select "${jexl} && ~{selectFP}" -sn ~{sampleCall}
+            local tpc tpb fn fp
+            tpc="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V "sel.${label}.TP_CALL.vcf.gz" | tail -1)"
+            tpb="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V "sel.${label}.TP_BASE.vcf.gz" | tail -1)"
+            fn="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V "sel.${label}.FN.vcf.gz" | tail -1)"
+            fp="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V "sel.${label}.FP.vcf.gz" | tail -1)"
+            printf '%s\t%s\t%s\t%s\t%s\n' "${label}" "${tpc}" "${tpb}" "${fn}" "${fp}" > "bin_counts/${label}.txt"
+        }
+
+        # Run bins concurrently, bounded to ~{cpu} workers (a failed worker
+        # propagates via `wait -n` under `set -e`).
+        running=0
         while IFS=$'\t' read -r label jexl; do
             [ -z "${label}" ] && continue
-            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V "${VCF}" -O sel.TP_CALL.vcf.gz -select "${jexl} && ~{selectTPCall}" -sn ~{sampleCall}
-            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V "${VCF}" -O sel.TP_BASE.vcf.gz -select "${jexl} && ~{selectTPBase}" -sn ~{sampleBase}
-            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V "${VCF}" -O sel.FN.vcf.gz -select "${jexl} && ~{selectFN}" -sn ~{sampleBase}
-            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V "${VCF}" -O sel.FP.vcf.gz -select "${jexl} && ~{selectFP}" -sn ~{sampleCall}
-            TP_CALL="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V sel.TP_CALL.vcf.gz | tail -1)"
-            TP_BASE="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V sel.TP_BASE.vcf.gz | tail -1)"
-            FN="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V sel.FN.vcf.gz | tail -1)"
-            FP="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V sel.FP.vcf.gz | tail -1)"
-            printf '%s\t%s\t%s\t%s\t%s\n' "${label}" "${TP_CALL}" "${TP_BASE}" "${FN}" "${FP}" >> counts.tsv
+            run_bin "${label}" "${jexl}" &
+            running=$((running+1))
+            if [ "${running}" -ge ~{cpu} ]; then wait -n; running=$((running-1)); fi
         done < bins.tsv
+        wait
+
+        # Every bin must have produced a count file.
+        n_expected="$(grep -cve '^[[:space:]]*$' bins.tsv)"
+        n_got="$(find bin_counts -type f | wc -l)"
+        if [ "${n_got}" -ne "${n_expected}" ]; then
+            echo "ERROR: expected ${n_expected} bin count files, got ${n_got}" >&2
+            exit 1
+        fi
+
+        printf 'label\ttp_call\ttp_base\tfn\tfp\n' > counts.tsv
+        cat bin_counts/*.txt >> counts.tsv
 
         # Summarise all bins into one CSV (schema matches SummariseForIndelSelection).
         # IndelLength parsing mirrors that task's GetSelectionValue: NA for the
@@ -1138,6 +1174,7 @@ task EvalIndelLengthAllBins {
     runtime {
         docker: "us.gcr.io/broad-gatk/gatk:"+gatkTag
         preemptible: select_first([preemptible,0])
+        cpu: cpu
         disks: "local-disk " + disk_size + " HDD"
         bootDiskSizeGb: 16
         memory: memoryRam + " GB"
