@@ -1104,7 +1104,10 @@ task EvalIndelLengthAllBins {
         # Pre-filter to simple indels ONCE (keeping both samples). Every per-bin
         # selection then scans this small file instead of re-scanning the full,
         # potentially hundreds-of-thousands-of-variant, eval VCF 4x per bin.
-        gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V "${VCF}" -O indels.vcf.gz -select "vc.isSimpleIndel()"
+        # These intermediates are only counted (never region-queried), so skip
+        # output index creation: GATK 4.0.11 otherwise crashes writing the tabix
+        # index for empty / contig-sparse subsets (sequenceNames.size() mismatch).
+        gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V "${VCF}" -O indels.vcf.gz -select "vc.isSimpleIndel()" --create-output-variant-index false
 
         # One line per indel-length bin: <label>\t<jexl>
         paste "~{write_lines(indelLabels)}" "~{write_lines(indelJexl)}" > bins.tsv
@@ -1114,10 +1117,10 @@ task EvalIndelLengthAllBins {
         # uniquely-named file so concurrent workers never race.
         run_bin() {
             local label="$1" jexl="$2"
-            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V indels.vcf.gz -O "sel.${label}.TP_CALL.vcf.gz" -select "${jexl} && ~{selectTPCall}" -sn ~{sampleCall}
-            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V indels.vcf.gz -O "sel.${label}.TP_BASE.vcf.gz" -select "${jexl} && ~{selectTPBase}" -sn ~{sampleBase}
-            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V indels.vcf.gz -O "sel.${label}.FN.vcf.gz" -select "${jexl} && ~{selectFN}" -sn ~{sampleBase}
-            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V indels.vcf.gz -O "sel.${label}.FP.vcf.gz" -select "${jexl} && ~{selectFP}" -sn ~{sampleCall}
+            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V indels.vcf.gz -O "sel.${label}.TP_CALL.vcf.gz" -select "${jexl} && ~{selectTPCall}" -sn ~{sampleCall} --create-output-variant-index false
+            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V indels.vcf.gz -O "sel.${label}.TP_BASE.vcf.gz" -select "${jexl} && ~{selectTPBase}" -sn ~{sampleBase} --create-output-variant-index false
+            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V indels.vcf.gz -O "sel.${label}.FN.vcf.gz" -select "${jexl} && ~{selectFN}" -sn ~{sampleBase} --create-output-variant-index false
+            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V indels.vcf.gz -O "sel.${label}.FP.vcf.gz" -select "${jexl} && ~{selectFP}" -sn ~{sampleCall} --create-output-variant-index false
             local tpc tpb fn fp
             tpc="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V "sel.${label}.TP_CALL.vcf.gz" | tail -1)"
             tpb="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V "sel.${label}.TP_BASE.vcf.gz" | tail -1)"
