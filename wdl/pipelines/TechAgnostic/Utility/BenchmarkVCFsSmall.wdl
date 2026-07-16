@@ -1124,7 +1124,12 @@ task EvalIndelLengthAllBins {
             fn="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V "sel.${label}.FN.vcf.gz" | tail -1)"
             fp="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V "sel.${label}.FP.vcf.gz" | tail -1)"
             printf '%s\t%s\t%s\t%s\t%s\n' "${label}" "${tpc}" "${tpb}" "${fn}" "${fp}" > "bin_counts/${label}.txt"
+            # Progress line (grep 'PROGRESS:' in this task's stderr to monitor).
+            echo "$(date -u '+%H:%M:%S') PROGRESS: $(find bin_counts -type f | wc -l)/${TOTAL_BINS} indel bins complete (last: ${label})" >&2
         }
+
+        TOTAL_BINS="$(grep -cve '^[[:space:]]*$' bins.tsv)"
+        echo "$(date -u '+%H:%M:%S') PROGRESS: starting ${TOTAL_BINS} indel bins across ~{cpu} workers" >&2
 
         # Run bins concurrently, bounded to ~{cpu} workers (a failed worker
         # propagates via `wait -n` under `set -e`).
