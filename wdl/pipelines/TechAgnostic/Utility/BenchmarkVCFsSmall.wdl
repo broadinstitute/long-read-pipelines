@@ -282,6 +282,35 @@ workflow BenchmarkVCFsSmall {
                     gatkTag = gatkTag,
                     preemptible = preemptible
             }
+
+            # Small-genome variant: loop all 55 indel-length bins inside one
+            # right-sized VM instead of fanning them into ~165 tiny VMs.
+            if (doIndelLengthStratification) {
+                call EvalIndelLengthAllBins {
+                    input:
+                        vcf = StandardVcfEval.outVcf,
+                        vcfIndex = StandardVcfEval.outVcfIndex,
+                        indelLabels = indelLabels,
+                        indelJexl = indelJexl,
+                        selectTPCall="CALL == 'TP'",
+                        selectTPBase="BASE == 'TP'",
+                        selectFN="(BASE == 'FN' || BASE == 'FN_CA')",
+                        selectFP="(CALL == 'FP' || CALL == 'FP_CA')",
+                        sampleCall="CALLS",
+                        sampleBase="BASELINE",
+                        engine="VcfEval",
+                        evalLabel = evalLabel,
+                        truthLabel = truthLabel,
+                        stratLabel = stratLabel,
+                        gatkTag = gatkTag,
+                        gatkJarForAnnotation = gatkJarForAnnotation,
+                        annotationNames = annotationNames,
+                        reference = ref_map["fasta"],
+                        refDict = ref_map["dict"],
+                        refIndex = ref_map["fai"],
+                        preemptible = preemptible
+                }
+            }
         }
 
         String areVariants = if(CheckForVariantsTruth.variantsFound && CheckForVariantsEval.variantsFound) then "yes" else "no"
@@ -312,38 +341,6 @@ workflow BenchmarkVCFsSmall {
     }
 
 
-    # Small-genome variant: instead of fanning the 55 indel-length bins into
-    # 55 x (Eval + WriteXML + Summarise) tasks per eval-combo (which dominates
-    # cost via VM startup/RAM-hours), loop all bins inside a single right-sized
-    # task per eval-combo. One VM does what ~165 VMs did.
-    scatter (annotatedVcfs in annotatedVcfsList) {
-        if (defined(annotatedVcfs.vcfVcfEval) && defined(annotatedVcfs.vcfVcfEvalIndex) && doIndelLengthStratification) {
-            call EvalIndelLengthAllBins {
-                input:
-                    vcf = annotatedVcfs.vcfVcfEval,
-                    vcfIndex = annotatedVcfs.vcfVcfEvalIndex,
-                    indelLabels = indelLabels,
-                    indelJexl = indelJexl,
-                    selectTPCall="CALL == 'TP'",
-                    selectTPBase="BASE == 'TP'",
-                    selectFN="(BASE == 'FN' || BASE == 'FN_CA')",
-                    selectFP="(CALL == 'FP' || CALL == 'FP_CA')",
-                    sampleCall="CALLS",
-                    sampleBase="BASELINE",
-                    engine="VcfEval",
-                    evalLabel = annotatedVcfs.evalLabel,
-                    truthLabel = annotatedVcfs.truthLabel,
-                    stratLabel = annotatedVcfs.stratLabel,
-                    gatkTag = gatkTag,
-                    gatkJarForAnnotation = gatkJarForAnnotation,
-                    annotationNames = annotationNames,
-                    reference = ref_map["fasta"],
-                    refDict = ref_map["dict"],
-                    refIndex = ref_map["fai"],
-                    preemptible = preemptible
-            }
-        }
-    }
 
 
 
