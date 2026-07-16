@@ -117,6 +117,9 @@ workflows:
 - name: BenchmarkVCFs
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/BenchmarkVCFs.wdl
+- name: BenchmarkVCFsSmall
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/BenchmarkVCFsSmall.wdl
 - name: CompareVcfBenchmarks
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CompareVcfBenchmarks.wdl
