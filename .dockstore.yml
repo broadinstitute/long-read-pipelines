@@ -225,3 +225,9 @@ workflows:
 - name: SaigeMetaStratified
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Association/SaigeMetaStratified.wdl
+- name: Pf7JointGenotyping
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/Z_One_Off_Analyses/Pf7JointGenotyping.wdl
+- name: Pf7SingleSampleVariantCalling
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/Z_One_Off_Analyses/Pf7SingleSampleVariantCalling.wdl
