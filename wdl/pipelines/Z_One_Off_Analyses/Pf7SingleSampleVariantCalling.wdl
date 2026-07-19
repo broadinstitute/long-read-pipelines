@@ -13,10 +13,13 @@ version 1.0
 ##   VQSLOD<2.0 filter in core, keep non-core, merge              -> filtered VCF
 ##
 ## NOTE ON SINGLE-SAMPLE VQSR: VariantRecalibrator is built for cohort-scale data
-## and may fail ("no data / zero variance in annotations") on a single sample.
-## The Pf7 headline callset is a JOINT-genotyped multisample VCF — for that, run
-## Pf7JointGenotyping.wdl over the full cohort. This workflow produces the
-## single-sample VCF for the sample-level QC / comparison case.
+## and may fail ("No data found" / zero-variance annotations) on a single sample —
+## most often the INDEL negative model. VQSR here is BEST-EFFORT: it is attempted
+## as-is, but on failure the workflow does NOT error — it ends early in success
+## with gVCF + genotyped VCF, sets vqsr_succeeded=false, and leaves filtered_vcf
+## (and the VQSLOD intermediates) absent. The Pf7 headline callset is a JOINT-
+## genotyped multisample VCF (Pf7JointGenotyping.wdl) — that is where VQSR has the
+## scale it needs. This workflow covers the sample-level QC / comparison case.
 ##
 ## Each task uses only tools in its image: GATK tasks in the gatk image,
 ## VCF-wrangling (concat/filter/merge) in the bcftools image.
@@ -70,12 +73,18 @@ workflow Pf7SingleSampleVariantCalling {
            vqsr_prior = vqsr_prior, vqsr_max_gaussians = vqsr_max_gaussians, gatk_docker = gatk_docker
   }
 
-  # 4) VQSLOD<threshold in core, keep non-core, merge -> final single-sample VCF
-  call FilterMerge {
-    input: cohort_name = sample_name,
-           snp_vqslod_vcf = VQSRAnnotate.snp_vqslod_vcf, snp_vqslod_vcf_index = VQSRAnnotate.snp_vqslod_vcf_index,
-           indel_vqslod_vcf = VQSRAnnotate.indel_vqslod_vcf, indel_vqslod_vcf_index = VQSRAnnotate.indel_vqslod_vcf_index,
-           core_bed = core_bed, vqslod_threshold = vqslod_threshold, bcftools_docker = bcftools_docker
+  # 4) Only if VQSR succeeded: VQSLOD<threshold in core, keep non-core, merge ->
+  #    filtered VCF. If VQSR failed (single-sample indel model etc.), this is
+  #    skipped and the workflow still ends in SUCCESS — filtered_vcf is absent.
+  if (VQSRAnnotate.vqsr_ok) {
+    call FilterMerge {
+      input: cohort_name = sample_name,
+             snp_vqslod_vcf = select_first([VQSRAnnotate.snp_vqslod_vcf]),
+             snp_vqslod_vcf_index = select_first([VQSRAnnotate.snp_vqslod_vcf_index]),
+             indel_vqslod_vcf = select_first([VQSRAnnotate.indel_vqslod_vcf]),
+             indel_vqslod_vcf_index = select_first([VQSRAnnotate.indel_vqslod_vcf_index]),
+             core_bed = core_bed, vqslod_threshold = vqslod_threshold, bcftools_docker = bcftools_docker
+    }
   }
 
   output {
@@ -83,8 +92,10 @@ workflow Pf7SingleSampleVariantCalling {
     File gvcf_index           = HaplotypeCallerGVCF.gvcf_index
     File genotyped_vcf        = GenotypeSample.vcf
     File genotyped_vcf_index  = GenotypeSample.vcf_index
-    File filtered_vcf         = FilterMerge.filtered_vcf
-    File filtered_vcf_index   = FilterMerge.filtered_vcf_index
+    # VQSR is best-effort on a single sample; these are absent when it fails.
+    Boolean vqsr_succeeded    = VQSRAnnotate.vqsr_ok
+    File? filtered_vcf        = FilterMerge.filtered_vcf
+    File? filtered_vcf_index  = FilterMerge.filtered_vcf_index
   }
 }
 
@@ -171,21 +182,40 @@ task VQSRAnnotate {
     Int disk_gb = 50
   }
   command <<<
-    set -euo pipefail
+    # Attempt VQSR as-is. Single-sample runs may fail — especially the INDEL
+    # negative model ("No data found": too few indels to train). Tolerate it:
+    # do NOT fail the task. On any VQSR error, drop partial outputs and report
+    # vqsr_ok=false, exit 0, so the workflow ends early in success with no
+    # filtered VCF. NOTE: set -e is intentionally OFF so we can catch failures.
+    set -uo pipefail
+    ok=true
     for mode in SNP INDEL; do
       tag=$(echo "$mode" | tr '[:upper:]' '[:lower:]')
-      gatk --java-options "-Xmx~{memory_gb - 4}g" VariantRecalibrator \
+      if ! gatk --java-options "-Xmx~{memory_gb - 4}g" VariantRecalibrator \
         -R ~{ref_fasta} -V ~{cohort_vcf} -mode "$mode" \
         --resource:pfcrosses,known=false,training=true,truth=true,prior=~{vqsr_prior} ~{pfcrosses_pass_vcf} \
         -an QD -an FS -an SOR -an MQRankSum -an ReadPosRankSum \
         --trust-all-polymorphic --max-gaussians ~{vqsr_max_gaussians} \
-        -O "$tag.recal" --tranches-file "$tag.tranches"
-      gatk --java-options "-Xmx~{memory_gb - 4}g" ApplyVQSR \
+        -O "$tag.recal" --tranches-file "$tag.tranches" ; then
+        echo "VQSR VariantRecalibrator failed for mode=$mode (likely too few $mode variants for a single sample)" >&2
+        ok=false; break
+      fi
+      if ! gatk --java-options "-Xmx~{memory_gb - 4}g" ApplyVQSR \
         -R ~{ref_fasta} -V ~{cohort_vcf} -mode "$mode" \
         --recal-file "$tag.recal" --tranches-file "$tag.tranches" \
         --truth-sensitivity-filter-level 100.0 \
-        -O "$tag.vqslod.vcf.gz"
+        -O "$tag.vqslod.vcf.gz" ; then
+        echo "VQSR ApplyVQSR failed for mode=$mode" >&2
+        ok=false; break
+      fi
     done
+
+    if [ "$ok" != "true" ]; then
+      # incomplete -> remove any partial VQSLOD outputs so the optional outputs resolve to absent
+      rm -f snp.vqslod.vcf.gz snp.vqslod.vcf.gz.tbi indel.vqslod.vcf.gz indel.vqslod.vcf.gz.tbi
+    fi
+    echo "$ok" > vqsr_ok.txt
+    exit 0
   >>>
   runtime {
     docker: gatk_docker
@@ -193,10 +223,11 @@ task VQSRAnnotate {
     disks: "local-disk " + disk_gb + " HDD"
   }
   output {
-    File snp_vqslod_vcf = "snp.vqslod.vcf.gz"
-    File snp_vqslod_vcf_index = "snp.vqslod.vcf.gz.tbi"
-    File indel_vqslod_vcf = "indel.vqslod.vcf.gz"
-    File indel_vqslod_vcf_index = "indel.vqslod.vcf.gz.tbi"
+    Boolean vqsr_ok = read_boolean("vqsr_ok.txt")
+    File? snp_vqslod_vcf = "snp.vqslod.vcf.gz"
+    File? snp_vqslod_vcf_index = "snp.vqslod.vcf.gz.tbi"
+    File? indel_vqslod_vcf = "indel.vqslod.vcf.gz"
+    File? indel_vqslod_vcf_index = "indel.vqslod.vcf.gz.tbi"
   }
 }
 
