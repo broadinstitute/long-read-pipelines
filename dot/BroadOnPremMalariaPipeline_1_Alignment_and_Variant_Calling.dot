@@ -34,13 +34,17 @@ digraph {
 	"call-t_014_HaplotypeCallerGvcfMode" [label=t_014_HaplotypeCallerGvcfMode shape=cds]
 	"call-t_015_VariantRecalibrator" [label=t_015_VariantRecalibrator shape=cds]
 	"call-t_016_SortCompressIndexRawVCF" [label=t_016_SortCompressIndexRawVCF shape=cds]
-	"call-t_017_SortCompressIndexVCF" [label=t_017_SortCompressIndexVCF shape=cds]
+	subgraph "cluster-if-L251C5" {
+		fontname=Roboto label="if(t_015_VariantRecalibrator.vqsr_ok)" rank=same
+		"call-t_017_SortCompressIndexVCF" [label=t_017_SortCompressIndexVCF shape=cds]
+		"if-L251C5" [label="" height=0 margin=0 style=invis width=0]
+	}
 	"call-t_018_SortCompressIndexGVCF" [label=t_018_SortCompressIndexGVCF shape=cds]
 	"call-t_002_RevertSam" -> "call-t_003_Bam2Fastq"
 	"call-t_003_Bam2Fastq" -> "decl-fq_e1"
 	"call-t_003_Bam2Fastq" -> "decl-fq_e2"
-	"decl-fq_e2" -> "call-t_005_FilterOutHumanReads"
 	"decl-fq_e1" -> "call-t_005_FilterOutHumanReads"
+	"decl-fq_e2" -> "call-t_005_FilterOutHumanReads"
 	"call-t_004_GetRawReadGroup" -> "decl-RG"
 	"call-t_005_FilterOutHumanReads" -> "call-t_006_AlignReads"
 	"call-t_006_AlignReads" -> "call-t_007_ChangeReadGroup"
@@ -59,6 +63,7 @@ digraph {
 	"call-t_013_IndexBQSR" -> "call-t_014_HaplotypeCallerGvcfMode"
 	"call-t_013_HaplotypeCaller" -> "call-t_015_VariantRecalibrator"
 	"call-t_013_HaplotypeCaller" -> "call-t_016_SortCompressIndexRawVCF"
+	"call-t_015_VariantRecalibrator" -> "if-L251C5" [lhead="cluster-if-L251C5"]
 	"call-t_015_VariantRecalibrator" -> "call-t_017_SortCompressIndexVCF"
 	"call-t_014_HaplotypeCallerGvcfMode" -> "call-t_018_SortCompressIndexGVCF"
 }

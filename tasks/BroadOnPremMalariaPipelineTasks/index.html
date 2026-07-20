@@ -86,7 +86,7 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#sortcompressindexvcf">SortCompressIndexVcf</a>
+    <li class="toctree-l2"><a class="reference internal" href="#variantrecalibratorbesteffort">VariantRecalibratorBestEffort</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#inputs_1">Inputs</a>
         <ul>
@@ -94,9 +94,25 @@
     </li>
     <li class="toctree-l4"><a class="reference internal" href="#optional_1">Optional</a>
     </li>
+    <li class="toctree-l4"><a class="reference internal" href="#defaults_1">Defaults</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#outputs_1">Outputs</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#sortcompressindexvcf">SortCompressIndexVcf</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#inputs_2">Inputs</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#required_2">Required</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#optional_2">Optional</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#outputs_2">Outputs</a>
     </li>
         </ul>
     </li>
@@ -403,17 +419,53 @@
 <ul>
 <li><code>vcf</code> (File)</li>
 </ul>
-<h2 id="sortcompressindexvcf">SortCompressIndexVcf</h2>
+<h2 id="variantrecalibratorbesteffort">VariantRecalibratorBestEffort</h2>
+<dl>
+<dt>description</dt>
+<dd>Best-effort VQSR: identical GATK VariantRecalibrator/ApplyRecalibration commands as VariantRecalibrator, but attempted non-fatally. On any VQSR failure (typically the INDEL negative model on small callsets: 'No data found') the task deletes partial outputs, reports vqsr_ok=false, and exits 0 so the workflow can end cleanly without a recalibrated VCF.</dd>
+</dl>
 <h3 id="inputs_1">Inputs</h3>
 <h4 id="required_1">Required</h4>
 <ul>
 <li><code>input_vcf</code> (File, <strong>required</strong>)</li>
+<li><code>prefix</code> (String, <strong>required</strong>)</li>
+<li><code>reference_dict</code> (File, <strong>required</strong>)</li>
+<li><code>reference_fai</code> (File, <strong>required</strong>)</li>
+<li><code>reference_fasta</code> (File, <strong>required</strong>)</li>
+<li><code>resource_vcf_3d7_hb3</code> (File, <strong>required</strong>)</li>
+<li><code>resource_vcf_3d7_hb3_index</code> (File, <strong>required</strong>)</li>
+<li><code>resource_vcf_7g8_gb4</code> (File, <strong>required</strong>)</li>
+<li><code>resource_vcf_7g8_gb4_index</code> (File, <strong>required</strong>)</li>
+<li><code>resource_vcf_hb3_dd2</code> (File, <strong>required</strong>)</li>
+<li><code>resource_vcf_hb3_dd2_index</code> (File, <strong>required</strong>)</li>
 </ul>
 <h4 id="optional_1">Optional</h4>
 <ul>
-<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+<li><code>runtime_attr_override</code> (RuntimeAttr?): Override default runtime attributes.</li>
+</ul>
+<h4 id="defaults_1">Defaults</h4>
+<ul>
+<li><code>bad_lod_cutoff</code> (Float, default=-5.0): --badLodCutoff for both models (GATK default -5.0).</li>
+<li><code>indel_max_gaussians</code> (Int, default=4): Indel model --maxGaussians (default 4).</li>
+<li><code>min_num_bad_variants</code> (Int, default=1000): --minNumBadVariants for both models (GATK default 1000).</li>
+<li><code>snp_max_gaussians</code> (Int, default=8): SNP model --maxGaussians (default 8).</li>
 </ul>
 <h3 id="outputs_1">Outputs</h3>
+<ul>
+<li><code>vqsr_ok</code> (Boolean)</li>
+<li><code>vcf</code> (File?)</li>
+</ul>
+<h2 id="sortcompressindexvcf">SortCompressIndexVcf</h2>
+<h3 id="inputs_2">Inputs</h3>
+<h4 id="required_2">Required</h4>
+<ul>
+<li><code>input_vcf</code> (File, <strong>required</strong>)</li>
+</ul>
+<h4 id="optional_2">Optional</h4>
+<ul>
+<li><code>runtime_attr_override</code> (RuntimeAttr?)</li>
+</ul>
+<h3 id="outputs_2">Outputs</h3>
 <ul>
 <li><code>vcf</code> (File)</li>
 <li><code>vcf_index</code> (File)</li>

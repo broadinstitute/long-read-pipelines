@@ -70,8 +70,8 @@ digraph {
 	"call-Pepper" -> "call-MergeDeepVariantVCFs"
 	"call-Pepper" -> "call-MergeBams"
 	"call-MakeChrIntervalList" -> "scatter-L206C13-c" [lhead="cluster-scatter-L206C13-c"]
-	"call-PickGcpZones" -> "call-RunPBSV"
 	"call-SubsetBam" -> "call-RunPBSV"
+	"call-PickGcpZones" -> "call-RunPBSV"
 	"call-SubsetBam" -> "call-InferSampleName"
 	"call-RunPBSV" -> "call-MergePBSVVCFs"
 	"call-PickGcpZones" -> "call-PBSVslow"
