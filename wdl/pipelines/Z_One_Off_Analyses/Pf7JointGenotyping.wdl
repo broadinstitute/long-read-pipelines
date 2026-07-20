@@ -50,7 +50,10 @@ workflow Pf7JointGenotyping {
     Float  vqslod_threshold = 2.0
 
     String gatk_docker = "broadinstitute/gatk:4.1.4.0"
-    String bcftools_docker = "quay.io/biocontainers/bcftools:1.13--h3a49de5_0"
+    # lr-basic is Debian-based (GNU coreutils: MakeIntervals needs `split -d`) and ships
+    # bcftools. The quay biocontainers bcftools image is Alpine/BusyBox, whose `split`
+    # lacks -d, so MakeIntervals died with `split: invalid option -- 'd'`.
+    String bcftools_docker = "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.1"
   }
 
   # 1) tile genome into interval_size windows, then bin into <=max_shards shard TSVs
