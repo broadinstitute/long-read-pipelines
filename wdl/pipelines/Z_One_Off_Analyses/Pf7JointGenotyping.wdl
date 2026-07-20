@@ -45,6 +45,11 @@ workflow Pf7JointGenotyping {
     Int    interval_size   = 10000
     Int    interval_pad    = 500
     Int    max_shards      = 10
+    # Contigs dropped from joint genotyping. The Pf organellar contigs are excluded:
+    # the mitochondrion (Pf3D7_MIT_v3, 5,967 bp) is shorter than one padded interval
+    # and GenomicsDBImport rejects the apicoplast window (Pf3D7_API_v3:1-10000 +ip),
+    # which failed the last shard. Nuclear-only joint calling is the intended scope.
+    Array[String] contigs_to_exclude = ["Pf3D7_API_v3", "Pf3D7_MIT_v3"]
     Float  vqsr_prior      = 15.0
     Int    vqsr_max_gaussians = 8
     Float  vqslod_threshold = 2.0
@@ -59,7 +64,8 @@ workflow Pf7JointGenotyping {
   # 1) tile genome into interval_size windows, then bin into <=max_shards shard TSVs
   call MakeIntervals {
     input: ref_fasta_fai = ref_fasta_fai, interval_size = interval_size,
-           max_shards = max_shards, bcftools_docker = bcftools_docker
+           max_shards = max_shards, contigs_to_exclude = contigs_to_exclude,
+           bcftools_docker = bcftools_docker
   }
 
   # 2) derive the sample-name-map ONCE from the gVCF headers (streams the gVCFs,
@@ -118,14 +124,21 @@ task MakeIntervals {
     File ref_fasta_fai
     Int interval_size
     Int max_shards
+    Array[String] contigs_to_exclude = []
     String bcftools_docker
   }
   command <<<
     set -euo pipefail
+    # Tile each contig into fixed windows (contig<TAB>start<TAB>end, 1-based inclusive),
+    # skipping any contig named in contigs_to_exclude (e.g. Pf organellar contigs, whose
+    # short/padded windows break downstream GenomicsDBImport).
     awk -v W=~{interval_size} 'BEGIN{OFS="\t"}
+      NR==FNR { ex[$1]=1; next }                 # first file: excluded contig names
+      ($1 in ex) { next }                        # skip excluded contigs
       { len=$2; s=1; while (s<=len){ e=s+W-1; if(e>len)e=len; print $1,s,e; s=e+1 } }' \
-      ~{ref_fasta_fai} > intervals.tsv
+      ~{write_lines(contigs_to_exclude)} ~{ref_fasta_fai} > intervals.tsv
 
+    echo "excluded contigs: ~{sep=' ' contigs_to_exclude}" 1>&2
     N=$(wc -l < intervals.tsv)
     S=~{max_shards}; if [ "$N" -lt "$S" ]; then S=$N; fi
     PER=$(( (N + S - 1) / S ))                 # ceil(N/S) intervals per shard
