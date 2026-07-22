@@ -3,16 +3,16 @@ digraph {
 	compound=true rankdir=LR
 	node [fontname=Roboto]
 	edge [color="#00000080"]
-	subgraph "cluster-if-L61C5" {
+	subgraph "cluster-if-L66C5" {
 		fontname=Roboto label="if(length(aligned_bams) > 1)" rank=same
-		subgraph "cluster-scatter-L62C9-pair" {
+		subgraph "cluster-scatter-L67C9-pair" {
 			fontname=Roboto label="scatter(zip(aligned_bams,aligned_bais))" rank=same
 			"call-InferSampleName" [label=InferSampleName shape=cds]
-			"scatter-L62C9-pair" [label="" height=0 margin=0 style=invis width=0]
+			"scatter-L67C9-pair" [label="" height=0 margin=0 style=invis width=0]
 		}
 		"call-CheckOnSamplenames" [label=CheckOnSamplenames shape=cds]
 		"call-MergeAllReads" [label=MergeAllReads shape=cds]
-		"if-L61C5" [label="" height=0 margin=0 style=invis width=0]
+		"if-L66C5" [label="" height=0 margin=0 style=invis width=0]
 	}
 	"decl-bam" [label=bam shape=plaintext]
 	"decl-bai" [label=bai shape=plaintext]
@@ -44,27 +44,27 @@ digraph {
 	"call-CallVariantsWithHaplotypeCaller" -> "call-RenameRawHcGvcf"
 	"call-RenameRawHcVcf" -> "call-NormalizeVcfPreVqsr"
 	"call-NormalizeVcfPreVqsr" -> "call-VariantRecalibratorIndel"
-	"call-VariantRecalibratorIndel" -> "call-ApplyVqsrIndel"
 	"call-NormalizeVcfPreVqsr" -> "call-ApplyVqsrIndel"
+	"call-VariantRecalibratorIndel" -> "call-ApplyVqsrIndel"
 	"call-ApplyVqsrIndel" -> "call-VariantRecalibratorSnp"
-	"call-ApplyVqsrIndel" -> "call-ApplyVqsrSnp"
 	"call-VariantRecalibratorSnp" -> "call-ApplyVqsrSnp"
+	"call-ApplyVqsrIndel" -> "call-ApplyVqsrSnp"
 	"call-ApplyVqsrSnp" -> "call-MergeMultiAllelicSitesPostRecalibration"
 	"call-MergeMultiAllelicSitesPostRecalibration" -> "decl-keyfile"
 	"decl-keyfile" -> "call-FinalizeRawHCVcf"
 	"call-RenameRawHcVcf" -> "call-FinalizeRawHCVcf"
 	"decl-keyfile" -> "call-FinalizeRawHCTbi"
 	"call-RenameRawHcVcf" -> "call-FinalizeRawHCTbi"
-	"call-RenameRawHcGvcf" -> "call-FinalizeHCGVcf"
 	"decl-keyfile" -> "call-FinalizeHCGVcf"
-	"call-RenameRawHcGvcf" -> "call-FinalizeHCGTbi"
+	"call-RenameRawHcGvcf" -> "call-FinalizeHCGVcf"
 	"decl-keyfile" -> "call-FinalizeHCGTbi"
-	"call-CallVariantsWithHaplotypeCaller" -> "call-FinalizeHCBamOut"
+	"call-RenameRawHcGvcf" -> "call-FinalizeHCGTbi"
 	"decl-keyfile" -> "call-FinalizeHCBamOut"
-	"call-CallVariantsWithHaplotypeCaller" -> "call-FinalizeHCBaiOut"
+	"call-CallVariantsWithHaplotypeCaller" -> "call-FinalizeHCBamOut"
 	"decl-keyfile" -> "call-FinalizeHCBaiOut"
-	"call-MergeMultiAllelicSitesPostRecalibration" -> "call-FinalizeRecalibratedVcf"
+	"call-CallVariantsWithHaplotypeCaller" -> "call-FinalizeHCBaiOut"
 	"decl-keyfile" -> "call-FinalizeRecalibratedVcf"
-	"call-MergeMultiAllelicSitesPostRecalibration" -> "call-FinalizeRecalibratedVcfIndex"
+	"call-MergeMultiAllelicSitesPostRecalibration" -> "call-FinalizeRecalibratedVcf"
 	"decl-keyfile" -> "call-FinalizeRecalibratedVcfIndex"
+	"call-MergeMultiAllelicSitesPostRecalibration" -> "call-FinalizeRecalibratedVcfIndex"
 }

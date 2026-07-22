@@ -143,6 +143,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../BenchmarkVCFs/">BenchmarkVCFs</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../BenchmarkVCFsSmall/">BenchmarkVCFsSmall</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling/">BroadOnPremMalariaPipeline_1_Alignment_and_Variant_Calling</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../BroadOnPremMalariaPipeline_2_JointVariantCalling/">BroadOnPremMalariaPipeline_2_JointVariantCalling</a>
@@ -250,6 +252,10 @@
                   <li class="toctree-l1"><a class="reference internal" href="../PBSV/">PBSV</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../PanelProcessMalariaBarcodesForRh/">PanelProcessMalariaBarcodesForRh</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Pf7JointGenotyping/">Pf7JointGenotyping</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../Pf7SingleSampleVariantCalling/">Pf7SingleSampleVariantCalling</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../Pf_Niare_HaplotypeCaller/">Pf_Niare_HaplotypeCaller</a>
                   </li>
@@ -416,7 +422,9 @@
 <ul>
 <li><code>call_vars_on_mitochondria</code> (Boolean, default=false): If true, will call variants on the mitochondrial contig.</li>
 <li><code>contigs_names_to_ignore</code> (Array[String], default=["Pf3D7_API_v3"]): Array of names of contigs to ignore for the purposes of reporting variants.</li>
+<li><code>indel_max_gaussians</code> (Int, default=4)</li>
 <li><code>mito_contig</code> (String, default="Pf3D7_MIT_v3"): Name of the mitochondrial contig.</li>
+<li><code>snp_max_gaussians</code> (Int, default=4)</li>
 <li><code>CallVariantsWithHaplotypeCaller.call_vars_on_mitochondria</code> (Boolean, default=false): If true, will call variants on the mitochondrial contig.</li>
 <li><code>NormalizeVcfPreVqsr.batch_size</code> (Int, default=100)</li>
 <li><code>RenameRawHcVcf.is_gvcf</code> (Boolean, default=false)</li>

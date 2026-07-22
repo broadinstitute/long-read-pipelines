@@ -1,0 +1,21 @@
+// Pf7JointGenotyping
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-MakeIntervals" [label=MakeIntervals shape=cds]
+	"call-CreateSampleNameMap" [label=CreateSampleNameMap shape=cds]
+	subgraph "cluster-scatter-L79C3-shard_tsv" {
+		fontname=Roboto label="scatter(MakeIntervals.shard_tsvs)" rank=same
+		"call-GenotypeShard" [label=GenotypeShard shape=cds]
+		"scatter-L79C3-shard_tsv" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-GatherVcfs" [label=GatherVcfs shape=cds]
+	"call-VQSRAnnotate" [label=VQSRAnnotate shape=cds]
+	"call-FilterMerge" [label=FilterMerge shape=cds]
+	"call-MakeIntervals" -> "scatter-L79C3-shard_tsv" [lhead="cluster-scatter-L79C3-shard_tsv"]
+	"call-CreateSampleNameMap" -> "call-GenotypeShard"
+	"call-GenotypeShard" -> "call-GatherVcfs"
+	"call-GatherVcfs" -> "call-VQSRAnnotate"
+	"call-VQSRAnnotate" -> "call-FilterMerge"
+}

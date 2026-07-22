@@ -33,6 +33,6 @@ digraph {
 	"call-CallVariantsWithHC" -> "call-MergeVariantCalledBamOuts"
 	"call-MergeVariantCalledBamOuts" -> "call-IndexBamout"
 	"call-MergeGVCFs" -> "call-ReblockHcGVCF"
-	"call-ReblockHcGVCF" -> "call-CollapseGVCFtoVCF"
 	"decl-actual_interval_list" -> "call-CollapseGVCFtoVCF"
+	"call-ReblockHcGVCF" -> "call-CollapseGVCFtoVCF"
 }

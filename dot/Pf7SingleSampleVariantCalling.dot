@@ -1,0 +1,18 @@
+// Pf7SingleSampleVariantCalling
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-HaplotypeCallerGVCF" [label=HaplotypeCallerGVCF shape=cds]
+	"call-GenotypeSample" [label=GenotypeSample shape=cds]
+	"call-VQSRAnnotate" [label=VQSRAnnotate shape=cds]
+	subgraph "cluster-if-L79C3" {
+		fontname=Roboto label="if(VQSRAnnotate.vqsr_ok)" rank=same
+		"call-FilterMerge" [label=FilterMerge shape=cds]
+		"if-L79C3" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-HaplotypeCallerGVCF" -> "call-GenotypeSample"
+	"call-GenotypeSample" -> "call-VQSRAnnotate"
+	"call-VQSRAnnotate" -> "if-L79C3" [lhead="cluster-if-L79C3"]
+	"call-VQSRAnnotate" -> "call-FilterMerge"
+}

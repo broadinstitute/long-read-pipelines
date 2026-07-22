@@ -16,6 +16,6 @@ digraph {
 	}
 	"call-GetFileManifest" -> "call-ComputeDiskSize"
 	"call-ComputeDiskSize" -> "if-L48C9" [lhead="cluster-if-L48C9"]
-	"call-GetFileManifest" -> "call-DownloadFTPFile"
 	"call-ComputeDiskSize" -> "call-DownloadFTPFile"
+	"call-GetFileManifest" -> "call-DownloadFTPFile"
 }

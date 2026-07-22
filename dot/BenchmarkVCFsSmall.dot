@@ -1,0 +1,137 @@
+// BenchmarkVCFsSmall
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	subgraph "cluster-if-L82C5" {
+		fontname=Roboto label="if(defined(analysisRegion))" rank=same
+		"call-CreateIntervalList" [label=CreateIntervalList shape=cds]
+		"if-L82C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-if-L100C5" {
+		fontname=Roboto label="if(length(actualStratLabels) != length(actualStratIntervals))" rank=same
+		"call-Error6" [label=Error6 shape=cds]
+		"if-L100C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-if-L107C5" {
+		fontname=Roboto label="if(length(actualSelectorLabels) != length(actualSelectorJEXL))" rank=same
+		"call-Error7" [label=Error7 shape=cds]
+		"if-L107C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-if-L114C5" {
+		fontname=Roboto label="if(defined(hapMap))" rank=same
+		"call-Match" [label=Match shape=cds]
+		"if-L114C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-if-L160C5" {
+		fontname=Roboto label="if(defined(jexlVariantSelectors))" rank=same
+		subgraph "cluster-scatter-L161C9-select" {
+			fontname=Roboto label="scatter(zip(actualSelectorLabels,actualSelectorJEXL))" rank=same
+			"scatter-L161C9-select" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"if-L160C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-actualVariantSelectors" [label=actualVariantSelectors shape=plaintext]
+	subgraph "cluster-if-L174C5" {
+		fontname=Roboto label="if(defined(stratIntervals))" rank=same
+		subgraph "cluster-scatter-L175C9-actStratIL" {
+			fontname=Roboto label="scatter(actualStratIntervals)" rank=same
+			subgraph "cluster-if-L180C13" {
+				fontname=Roboto label="if(string_conversion_of_actStratIL != \"\")" rank=same
+				"call-StratConvertIntervals" [label=StratConvertIntervals shape=cds]
+				"if-L180C13" [label="" height=0 margin=0 style=invis width=0]
+			}
+			"scatter-L175C9-actStratIL" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"if-L174C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-stratBeds" [label=stratBeds shape=plaintext]
+	"decl-stratILs" [label=stratILs shape=plaintext]
+	subgraph "cluster-scatter-L197C5-strat" {
+		fontname=Roboto label="scatter(zip(zip(stratILs,stratBeds),actualStratLabels))" rank=same
+		"scatter-L197C5-strat" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-ConfidenceConvertIntervals" [label=ConfidenceConvertIntervals shape=cds]
+	subgraph "cluster-scatter-L214C5-stratifier" {
+		fontname=Roboto label="scatter(stratifiers)" rank=same
+		subgraph "cluster-if-L219C9" {
+			fontname=Roboto label="if(stratifier.label != \"\" && tmp_strat_interval_list != \"\")" rank=same
+			"if-L219C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"decl-outputPrefix" [label=outputPrefix shape=plaintext]
+		"call-CheckForVariantsEval" [label=CheckForVariantsEval shape=cds]
+		"call-CheckForVariantsTruth" [label=CheckForVariantsTruth shape=cds]
+		subgraph "cluster-if-L247C9" {
+			fontname=Roboto label="if(CheckForVariantsTruth.variantsFound && CheckForVariantsEval.variantsFound)" rank=same
+			"call-StandardVcfEval" [label=StandardVcfEval shape=cds]
+			"call-VcfEvalWriteXMLfile" [label=VcfEvalWriteXMLfile shape=cds]
+			"call-CountUNKVcfEval" [label=CountUNKVcfEval shape=cds]
+			subgraph "cluster-if-L288C13" {
+				fontname=Roboto label="if(doIndelLengthStratification)" rank=same
+				"call-EvalIndelLengthAllBins" [label=EvalIndelLengthAllBins shape=cds]
+				"if-L288C13" [label="" height=0 margin=0 style=invis width=0]
+			}
+			"if-L247C9" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"decl-areVariants" [label=areVariants shape=plaintext]
+		"call-SummariseVcfEval" [label=SummariseVcfEval shape=cds]
+		"scatter-L214C5-stratifier" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-scatter-L333C5-i" {
+		fontname=Roboto label="scatter(range(length(stratifiers)))" rank=same
+		"decl-annotatedVcfsList" [label=annotatedVcfsList shape=plaintext]
+		"scatter-L333C5-i" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-scatter-L350C5-selectorCombo" {
+		fontname=Roboto label="scatter(cross(annotatedVcfsList,actualVariantSelectors))" rank=same
+		"scatter-L350C5-selectorCombo" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-scatter-L355C5-evalStratSelectorCombo" {
+		fontname=Roboto label="scatter(evalStratSelectorCombos)" rank=same
+		subgraph "cluster-if-L356C17" {
+			fontname=Roboto label="if(defined(evalStratSelectorCombo.annotatedVcfs.vcfVcfEval) && defined(evalStratSelectorCombo.annotatedVcfs.vcfVcfEvalIndex))" rank=same
+			"call-EvalSelectorVcfEval" [label=EvalSelectorVcfEval shape=cds]
+			"call-VcfEvalSelectorWriteXMLfile" [label=VcfEvalSelectorWriteXMLfile shape=cds]
+			"call-VcfEvalSummariseForVariantSelection" [label=VcfEvalSummariseForVariantSelection shape=cds]
+			"if-L356C17" [label="" height=0 margin=0 style=invis width=0]
+		}
+		"scatter-L355C5-evalStratSelectorCombo" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"decl-summaries" [label=summaries shape=plaintext]
+	"call-CombineSummaries" [label=CombineSummaries shape=cds]
+	"call-CreateIntervalList" -> "call-StratConvertIntervals"
+	"call-StratConvertIntervals" -> "decl-stratBeds"
+	"call-StratConvertIntervals" -> "decl-stratILs"
+	"decl-stratBeds" -> "scatter-L197C5-strat" [lhead="cluster-scatter-L197C5-strat"]
+	"decl-stratILs" -> "scatter-L197C5-strat" [lhead="cluster-scatter-L197C5-strat"]
+	"call-CreateIntervalList" -> "call-ConfidenceConvertIntervals"
+	"call-ConfidenceConvertIntervals" -> "call-CheckForVariantsEval"
+	"call-ConfidenceConvertIntervals" -> "call-CheckForVariantsTruth"
+	"call-CheckForVariantsTruth" -> "if-L247C9" [lhead="cluster-if-L247C9"]
+	"call-CheckForVariantsEval" -> "if-L247C9" [lhead="cluster-if-L247C9"]
+	"call-ConfidenceConvertIntervals" -> "call-StandardVcfEval"
+	"decl-outputPrefix" -> "call-StandardVcfEval"
+	"call-ConfidenceConvertIntervals" -> "call-VcfEvalWriteXMLfile"
+	"call-StandardVcfEval" -> "call-VcfEvalWriteXMLfile"
+	"decl-outputPrefix" -> "call-VcfEvalWriteXMLfile"
+	"call-StandardVcfEval" -> "call-CountUNKVcfEval"
+	"call-StandardVcfEval" -> "call-EvalIndelLengthAllBins"
+	"call-CheckForVariantsTruth" -> "decl-areVariants"
+	"call-CheckForVariantsEval" -> "decl-areVariants"
+	"decl-areVariants" -> "call-SummariseVcfEval"
+	"call-CountUNKVcfEval" -> "call-SummariseVcfEval"
+	"call-StandardVcfEval" -> "call-SummariseVcfEval"
+	"call-VcfEvalWriteXMLfile" -> "call-SummariseVcfEval"
+	"call-ConfidenceConvertIntervals" -> "decl-annotatedVcfsList"
+	"decl-outputPrefix" -> "decl-annotatedVcfsList"
+	"call-StandardVcfEval" -> "decl-annotatedVcfsList"
+	"decl-annotatedVcfsList" -> "scatter-L350C5-selectorCombo" [lhead="cluster-scatter-L350C5-selectorCombo"]
+	"decl-actualVariantSelectors" -> "scatter-L350C5-selectorCombo" [lhead="cluster-scatter-L350C5-selectorCombo"]
+	"call-EvalSelectorVcfEval" -> "call-VcfEvalSelectorWriteXMLfile"
+	"call-EvalSelectorVcfEval" -> "call-VcfEvalSummariseForVariantSelection"
+	"call-VcfEvalSelectorWriteXMLfile" -> "call-VcfEvalSummariseForVariantSelection"
+	"call-EvalIndelLengthAllBins" -> "decl-summaries"
+	"call-SummariseVcfEval" -> "decl-summaries"
+	"call-VcfEvalSummariseForVariantSelection" -> "decl-summaries"
+	"decl-summaries" -> "call-CombineSummaries"
+}
