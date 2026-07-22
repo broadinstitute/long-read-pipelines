@@ -204,27 +204,27 @@ workflows:
 - name: Flare
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/FlareLocalAncestryInference.wdl
-- name: MergeFlareGlobalAncestry
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/MergeFlareGlobalAncestry.wdl
-- name: SaigeStep0
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Association/SaigeStep0.wdl
-- name: SaigeStep1
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Association/SaigeStep1.wdl
-- name: SaigeStep2
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Association/SaigeStep2.wdl
-- name: SaigePrepPopulationLists
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Association/SaigePrepPopulationLists.wdl
-- name: SaigeMeta
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Association/SaigeMeta.wdl
-- name: SaigeMetaStratified
-  subclass: wdl
-  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Association/SaigeMetaStratified.wdl
+#- name: MergeFlareGlobalAncestry
+#  subclass: wdl
+#  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Phasing/MergeFlareGlobalAncestry.wdl
+#- name: SaigeStep0
+#  subclass: wdl
+#  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Association/SaigeStep0.wdl
+#- name: SaigeStep1
+#  subclass: wdl
+#  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Association/SaigeStep1.wdl
+#- name: SaigeStep2
+#  subclass: wdl
+#  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Association/SaigeStep2.wdl
+#- name: SaigePrepPopulationLists
+#  subclass: wdl
+#  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Association/SaigePrepPopulationLists.wdl
+#- name: SaigeMeta
+#  subclass: wdl
+#  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Association/SaigeMeta.wdl
+#- name: SaigeMetaStratified
+#  subclass: wdl
+#  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Association/SaigeMetaStratified.wdl
 - name: Pf7JointGenotyping
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/Z_One_Off_Analyses/Pf7JointGenotyping.wdl
