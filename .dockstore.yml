@@ -117,6 +117,9 @@ workflows:
 - name: BenchmarkVCFs
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/BenchmarkVCFs.wdl
+- name: BenchmarkVCFsSmall
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/BenchmarkVCFsSmall.wdl
 - name: CompareVcfBenchmarks
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/CompareVcfBenchmarks.wdl
@@ -222,3 +225,9 @@ workflows:
 #- name: SaigeMetaStratified
 #  subclass: wdl
 #  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Association/SaigeMetaStratified.wdl
+- name: Pf7JointGenotyping
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/Z_One_Off_Analyses/Pf7JointGenotyping.wdl
+- name: Pf7SingleSampleVariantCalling
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/Z_One_Off_Analyses/Pf7SingleSampleVariantCalling.wdl

@@ -46,6 +46,11 @@ workflow SRWholeGenome_Pf_Niare_VQSR {
         Boolean call_vars_on_mitochondria = false
         String mito_contig = "Pf3D7_MIT_v3"
         Array[String] contigs_names_to_ignore = ["Pf3D7_API_v3"]  ## Required for ignoring any filtering - this is kind of a hack - TODO: fix the task!
+
+        # VQSR SNP/INDEL model --max-gaussians (default 4). Lower for small / low-variance
+        # callsets that fail to converge.
+        Int snp_max_gaussians   = 4
+        Int indel_max_gaussians = 4
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
@@ -222,6 +227,7 @@ workflow SRWholeGenome_Pf_Niare_VQSR {
             ref_dict          = ref_map['dict'],
             sites_only_vcf = vqsr_sites_vcf,
             sites_only_vcf_index = vqsr_sites_vcf_index,
+            max_gaussians = indel_max_gaussians,
             prefix = participant_name + ".norm",
     }
 
@@ -244,6 +250,7 @@ workflow SRWholeGenome_Pf_Niare_VQSR {
             ref_dict          = ref_map['dict'],
             sites_only_vcf = vqsr_sites_vcf,
             sites_only_vcf_index = vqsr_sites_vcf_index,
+            max_gaussians = snp_max_gaussians,
             prefix = participant_name + ".norm",
     }
 
