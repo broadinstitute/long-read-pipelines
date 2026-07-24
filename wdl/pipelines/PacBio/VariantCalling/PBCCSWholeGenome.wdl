@@ -4,7 +4,6 @@ import "../../../tasks/Utility/PBUtils.wdl" as PB
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/VariantCalling/CallVariantsPBCCS.wdl" as VAR
 import "../../../tasks/Utility/Finalize.wdl" as FF
-
 import "../../../tasks/QC/SampleLevelAlignedMetrics.wdl" as COV
 
 workflow PBCCSWholeGenome {
@@ -31,6 +30,9 @@ workflow PBCCSWholeGenome {
         run_dv_pepper_analysis:  "to turn on DV-Pepper analysis or not (non-trivial increase in cost and runtime)"
         ref_scatter_interval_list_locator: "A file holding paths to interval_list files; needed only when running DV-Pepper"
         ref_scatter_interval_list_ids:     "A file that gives short IDs to the interval_list files; needed only when running DV-Pepper"
+
+        call_trs: "whether to call TRs"
+        trs_catalog: "optionally specify a non-default catalog to use when calling TRs, for use with TRGT"
     }
 
     input {
