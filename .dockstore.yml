@@ -90,6 +90,9 @@ workflows:
 - name: LRCNVs
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/LRCNVs.wdl
+- name: HiFiCNV
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/HiFiCNV.wdl
 - name: LRJointCallGVCFs
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/VariantCalling/LRJointCallGVCFs.wdl
