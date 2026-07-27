@@ -29,6 +29,7 @@ workflow HiFiCNV {
     }
     output {
         String vcf      = FinalizeVCF.gcs_path
+        String vcf_tbi  = FinalizeVcfIndex.gcs_path
         String bedgraph = FinalizeBedGraph.gcs_path
         String depth_bw = FinalizeBigWig.gcs_path
         String log      = FinalizeLog.gcs_path
@@ -51,6 +52,7 @@ workflow HiFiCNV {
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/~{workflow_name}/~{InferSampleName.sample_name}"
     call FF.FinalizeToFile as FinalizeLog      { input: outdir = outdir, file = PacBioHiFiCNV.log }
     call FF.FinalizeToFile as FinalizeVCF      { input: outdir = outdir, file = PacBioHiFiCNV.vcf }
+    call FF.FinalizeToFile as FinalizeVcfIndex { input: outdir = outdir, file = PacBioHiFiCNV.vcf_tbi }
     call FF.FinalizeToFile as FinalizeBedGraph { input: outdir = outdir, file = PacBioHiFiCNV.bedgraph }
     call FF.FinalizeToFile as FinalizeBigWig   { input: outdir = outdir, file = PacBioHiFiCNV.depth_bw }
 }
@@ -72,6 +74,7 @@ task PacBioHiFiCNV {
 
     output {
         File vcf = "~{output_prefix}.${sample_name}.vcf.gz"
+        File vcf_tbi = "~{output_prefix}.${sample_name}.vcf.gz.tbi"
         File bedgraph = "~{output_prefix}.${sample_name}.copynum.bedgraph"
         File log = "~{output_prefix}.log"
         File depth_bw = "~{output_prefix}.${sample_name}.depth.bw"
@@ -94,6 +97,12 @@ task PacBioHiFiCNV {
             --expected-cn ~{sex_specific_cn} \
             --threads "${num_core}" \
             --output-prefix ~{output_prefix}
+
+        # hificnv does not always emit a VCF index; create a tabix index if one
+        # was not produced, so the .vcf.gz can be random-accessed downstream.
+        if [ ! -f ~{output_prefix}.~{sample_name}.vcf.gz.tbi ]; then
+            tabix -p vcf ~{output_prefix}.~{sample_name}.vcf.gz
+        fi
 
         tree
     >>>
