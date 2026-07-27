@@ -2,8 +2,6 @@ version 1.0
 
 import "../../../structs/Structs.wdl"
 
-import "../../../tasks/Utility/Utils.wdl"
-
 import "../../../tasks/Utility/Finalize.wdl" as FF
 
 workflow HiFiCNV {
@@ -37,11 +35,15 @@ workflow HiFiCNV {
 
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    call Utils.InferSampleName { input: bam = bam, bai = bai}
+    # Use the BAM filename as the hificnv output prefix. The sample name is
+    # inferred inside the PacBioHiFiCNV task from the *localized* BAM (see there),
+    # replacing the separate InferSampleName task that streamed the BAM header
+    # directly from GCS and failed on requester-pays buckets.
+    String prefix = basename(bam, ".bam")
+
     call PacBioHiFiCNV { input:
         bam = bam, bai = bai,
-        sample_name = InferSampleName.sample_name,
-        output_prefix = InferSampleName.sample_name,
+        output_prefix = prefix,
         ref_fasta = ref_map['fasta'],
         ref_fasta_fai = ref_map['fai'],
         exclude_bed = exclude_bed,
@@ -49,7 +51,7 @@ workflow HiFiCNV {
     }
 
     String workflow_name = 'HiFiCNV'
-    String outdir = sub(gcs_out_root_dir, "/$", "") + "/~{workflow_name}/~{InferSampleName.sample_name}"
+    String outdir = sub(gcs_out_root_dir, "/$", "") + "/~{workflow_name}/~{prefix}"
     call FF.FinalizeToFile as FinalizeLog      { input: outdir = outdir, file = PacBioHiFiCNV.log }
     call FF.FinalizeToFile as FinalizeVCF      { input: outdir = outdir, file = PacBioHiFiCNV.vcf }
     call FF.FinalizeToFile as FinalizeVcfIndex { input: outdir = outdir, file = PacBioHiFiCNV.vcf_tbi }
@@ -61,7 +63,6 @@ task PacBioHiFiCNV {
     input {
         File bam
         File bai
-        String sample_name
         String output_prefix
         File ref_fasta
         File ref_fasta_fai
@@ -73,11 +74,16 @@ task PacBioHiFiCNV {
     }
 
     output {
-        File vcf = "~{output_prefix}.${sample_name}.vcf.gz"
-        File vcf_tbi = "~{output_prefix}.${sample_name}.vcf.gz.tbi"
-        File bedgraph = "~{output_prefix}.${sample_name}.copynum.bedgraph"
-        File log = "~{output_prefix}.log"
-        File depth_bw = "~{output_prefix}.${sample_name}.depth.bw"
+        # sample_name is inferred from the localized BAM @RG SM tag (written to
+        # sample_name.txt by the command) -- the same value hificnv embeds in its
+        # output filenames (<output_prefix>.<sample>.<ext>) -- so the outputs can
+        # be named explicitly rather than globbed.
+        String sample_name = read_string("sample_name.txt")
+        File vcf      = "~{output_prefix}.~{sample_name}.vcf.gz"
+        File vcf_tbi  = "~{output_prefix}.~{sample_name}.vcf.gz.tbi"
+        File bedgraph = "~{output_prefix}.~{sample_name}.copynum.bedgraph"
+        File depth_bw = "~{output_prefix}.~{sample_name}.depth.bw"
+        File log      = "~{output_prefix}.log"
     }
 
     command <<<
@@ -90,6 +96,17 @@ task PacBioHiFiCNV {
         && \
         samtools index ~{bam}
 
+        # Infer the sample name from the (already-localized) BAM @RG SM tag -- the
+        # same value hificnv uses to name its outputs. Doing this on the local
+        # file avoids the direct-from-GCS header streaming that made the separate
+        # InferSampleName task fail on requester-pays buckets. Same checks as that
+        # task: fail on missing / multiple / unnamedsample.
+        samtools view -H ~{bam} | grep '^@RG' | sed 's/\t/\n/g' | grep '^SM:' | sed 's/SM://g' | sort | uniq > sample_name.txt
+        if [[ $(wc -l < sample_name.txt) -lt 1 ]]; then echo "No @RG SM sample name found!" && exit 1; fi
+        if [[ $(wc -l < sample_name.txt) -gt 1 ]]; then echo "Multiple sample names found!" && exit 1; fi
+        if grep -iq "unnamedsample" sample_name.txt; then echo "Sample name found to be unnamedsample!" && exit 1; fi
+        sample_name=$(cat sample_name.txt)
+
         hificnv \
             --bam ~{bam} \
             --ref ~{ref_fasta} \
@@ -100,8 +117,8 @@ task PacBioHiFiCNV {
 
         # hificnv does not always emit a VCF index; create a tabix index if one
         # was not produced, so the .vcf.gz can be random-accessed downstream.
-        if [ ! -f ~{output_prefix}.~{sample_name}.vcf.gz.tbi ]; then
-            tabix -p vcf ~{output_prefix}.~{sample_name}.vcf.gz
+        if [ ! -f ~{output_prefix}.${sample_name}.vcf.gz.tbi ]; then
+            tabix -p vcf ~{output_prefix}.${sample_name}.vcf.gz
         fi
 
         tree
