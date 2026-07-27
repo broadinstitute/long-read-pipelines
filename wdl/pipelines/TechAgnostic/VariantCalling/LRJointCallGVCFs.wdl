@@ -37,8 +37,8 @@ workflow LRJointCallGVCFs {
     # For R9/PEPPER-Margin-DeepVariant inputs, drop FILTER=NoCall records whose
     # malformed PL vector would abort GLnexus. See DropNoCallRecords.
     if (drop_nocall_records) {
-        scatter (pair in zip(gvcfs, tbis)) {
-            call DropNoCallRecords { input: gvcf = pair.left, tbi = pair.right }
+        scatter (i in range(length(gvcfs))) {
+            call DropNoCallRecords { input: gvcf = gvcfs[i], tbi = tbis[i], idx = i }
         }
     }
     Array[File] jc_gvcfs = select_first([DropNoCallRecords.clean_gvcf, gvcfs])
@@ -85,17 +85,25 @@ task DropNoCallRecords {
     parameter_meta {
         gvcf: "input gVCF to filter"
         tbi:  "index for the input gVCF"
+        idx:  "scatter index; used only to build a short, unique output basename (see out_prefix)"
     }
 
     input {
         File gvcf
         File tbi
+        Int idx
 
         Int cpu = 2
         Int mem_gb = 4
     }
 
-    String prefix = basename(gvcf, ".g.vcf.gz")
+    # GLnexus builds a per-input "dataset name" from the sharded file name
+    # (ShardVCFByRanges: "<contig-index>.<this-basename>.locus_<range>") and rejects
+    # any that exceeds 100 chars (GLnexus regex_id, src/types.cc). Emit a short,
+    # unique basename ("s<scatter-index>") so the dataset name stays under the cap.
+    # Per-sample identity is unaffected: GLnexus reads sample names from the gVCF
+    # header (untouched here), not from the file/dataset name.
+    String out_prefix = "s~{idx}"
     Int disk_size = 10 + 2*ceil(size(gvcf, "GB"))
 
     command <<<
@@ -104,13 +112,13 @@ task DropNoCallRecords {
         # Exclude only records whose FILTER is exactly NoCall (empirically a perfect
         # 1:1 with the malformed-PL records; GT=./. alone would also drop well-formed
         # RefCall bands, so filter on FILTER, not GT).
-        bcftools view -e 'FILTER="NoCall"' -O z -o "~{prefix}.nocall_filtered.g.vcf.gz" ~{gvcf}
-        bcftools index --tbi --force "~{prefix}.nocall_filtered.g.vcf.gz"
+        bcftools view -e 'FILTER="NoCall"' -O z -o "~{out_prefix}.g.vcf.gz" ~{gvcf}
+        bcftools index --tbi --force "~{out_prefix}.g.vcf.gz"
     >>>
 
     output {
-        File clean_gvcf = "~{prefix}.nocall_filtered.g.vcf.gz"
-        File clean_tbi  = "~{prefix}.nocall_filtered.g.vcf.gz.tbi"
+        File clean_gvcf = "~{out_prefix}.g.vcf.gz"
+        File clean_tbi  = "~{out_prefix}.g.vcf.gz.tbi"
     }
 
     runtime {
