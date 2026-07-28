@@ -74,15 +74,17 @@ task PacBioHiFiCNV {
     }
 
     output {
-        # sample_name is inferred from the localized BAM @RG SM tag (written to
-        # sample_name.txt by the command) -- the same value hificnv embeds in its
-        # output filenames (<output_prefix>.<sample>.<ext>) -- so the outputs can
-        # be named explicitly rather than globbed.
-        String sample_name = read_string("sample_name.txt")
-        File vcf      = "~{output_prefix}.~{sample_name}.vcf.gz"
-        File vcf_tbi  = "~{output_prefix}.~{sample_name}.vcf.gz.tbi"
-        File bedgraph = "~{output_prefix}.~{sample_name}.copynum.bedgraph"
-        File depth_bw = "~{output_prefix}.~{sample_name}.depth.bw"
+        # The command renames hificnv's per-sample outputs
+        # (<output_prefix>.<sample>.<ext>) to deterministic <output_prefix>.<ext>.
+        # Output paths MUST depend only on output_prefix (a task input): the GCP
+        # Batch backend builds the delocalization file list BEFORE the command
+        # runs, so a name derived from the runtime-inferred sample (e.g. via
+        # read_string) resolves to empty and delocalization of the "required"
+        # outputs fails the job (with a misleading exit-code-0 message).
+        File vcf      = "~{output_prefix}.vcf.gz"
+        File vcf_tbi  = "~{output_prefix}.vcf.gz.tbi"
+        File bedgraph = "~{output_prefix}.copynum.bedgraph"
+        File depth_bw = "~{output_prefix}.depth.bw"
         File log      = "~{output_prefix}.log"
     }
 
@@ -115,11 +117,18 @@ task PacBioHiFiCNV {
             --threads "${num_core}" \
             --output-prefix ~{output_prefix}
 
-        # hificnv does not always emit a VCF index; create a tabix index if one
-        # was not produced, so the .vcf.gz can be random-accessed downstream.
-        if [ ! -f ~{output_prefix}.${sample_name}.vcf.gz.tbi ]; then
-            tabix -p vcf ~{output_prefix}.${sample_name}.vcf.gz
-        fi
+        # hificnv names the per-sample outputs <output_prefix>.<sample>.<ext>.
+        # Rename them to deterministic <output_prefix>.<ext> so the declared
+        # outputs depend only on output_prefix, not on the runtime-inferred
+        # sample name (see the output block for why that matters on GCP Batch).
+        # (The log is already named <output_prefix>.log, so it needs no rename.)
+        mv ~{output_prefix}.${sample_name}.vcf.gz           ~{output_prefix}.vcf.gz
+        mv ~{output_prefix}.${sample_name}.copynum.bedgraph ~{output_prefix}.copynum.bedgraph
+        mv ~{output_prefix}.${sample_name}.depth.bw         ~{output_prefix}.depth.bw
+
+        # hificnv does not emit a VCF index; create a tabix index so the .vcf.gz
+        # can be random-accessed downstream.
+        tabix -p vcf ~{output_prefix}.vcf.gz
 
         tree
     >>>
