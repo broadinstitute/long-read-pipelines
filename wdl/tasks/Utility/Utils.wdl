@@ -2463,11 +2463,11 @@ task ComputeAllowedLocalSSD {
 task RandomZoneSpewer {
 
     meta {
-        description: "Spews a random GCP zone"
+        description: "Spews random GCP zones within a single region (required by GCP Batch)."
     }
 
     parameter_meta {
-        num_of_zones: "number of zones to spew"
+        num_of_zones: "number of zones to spew (all from one randomly chosen region)"
     }
 
     input {
@@ -2477,9 +2477,17 @@ task RandomZoneSpewer {
     command <<<
         set -eux
 
-        # by no means a perfect solution, but that's not desired anyway
+        # GCP Batch rejects allocation policies that span multiple regions, so pick one
+        # region first, then sample zones only within it.
         all_known_zones=("us-central1-a" "us-central1-b" "us-central1-c" "us-central1-f" "us-east1-b" "us-east1-c" "us-east1-d" "us-east4-a" "us-east4-b" "us-east4-c" "us-west1-a" "us-west1-b" "us-west1-c" "us-west2-a" "us-west2-b" "us-west2-c" "us-west3-a" "us-west3-b" "us-west3-c" "us-west4-a" "us-west4-b" "us-west4-c")
-        for zone in "${all_known_zones[@]}"; do echo "${zone}" >> zones.txt; done
+        regions=("us-central1" "us-east1" "us-east4" "us-west1" "us-west2" "us-west3" "us-west4")
+        region="${regions[$((RANDOM % ${#regions[@]}))]}"
+
+        for zone in "${all_known_zones[@]}"; do
+            case "${zone}" in
+                "${region}"-*) echo "${zone}" ;;
+            esac
+        done > zones.txt
 
         shuf zones.txt | head -n ~{num_of_zones} | tr '\n' ' ' > "result.txt"
     >>>
