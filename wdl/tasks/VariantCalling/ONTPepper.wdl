@@ -47,7 +47,9 @@ task Pepper {
     Int minimal_disk = 1000
 	Int disk_size = if inflation_factor * bam_sz > minimal_disk then inflation_factor * bam_sz else minimal_disk
 
-    String output_root = "/cromwell_root/pepper_output"
+    # Relative to the execution dir so outputs land on the declared local-disk mount
+    # (GCP Batch rejects absolute /cromwell_root/... paths for delocalization).
+    String output_root = "pepper_output"
 
     String prefix = basename(bam, ".bam") + ".deepvariant_pepper"
 

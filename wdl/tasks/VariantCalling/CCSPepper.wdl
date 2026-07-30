@@ -96,7 +96,9 @@ task Pepper {
     Int bam_sz = ceil(size(bam, "GB"))
 	Int disk_size = if bam_sz > 200 then 2*bam_sz else bam_sz + 200
 
-    String output_root = "/cromwell_root/pepper_output"
+    # Relative to the execution dir so outputs land on the declared local-disk mount
+    # (GCP Batch rejects absolute /cromwell_root/... paths for delocalization).
+    String output_root = "pepper_output"
 
     String prefix = basename(bam, ".bam") + ".pepper"
 
@@ -183,7 +185,8 @@ task DV {
     }
 
     String prefix = basename(bam, ".bam") + ".deepvariant"
-    String output_root = "/cromwell_root/dv_output"
+    # Relative to the execution dir so outputs land on the declared local-disk mount.
+    String output_root = "dv_output"
 
     Int bam_sz = ceil(size(bam, "GB"))
     Boolean is_big_bam = bam_sz > 100
@@ -283,7 +286,8 @@ task MarginPhase {
     Int cores = 64
 
     String prefix = basename(bam, ".bam") + ".pepper"
-    String output_root = "/cromwell_root/margin_output"
+    # Relative to the execution dir so outputs land on the declared local-disk mount.
+    String output_root = "margin_output"
 
     command <<<
         set -euxo pipefail
