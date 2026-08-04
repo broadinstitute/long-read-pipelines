@@ -149,13 +149,14 @@ task DV {
 
         Int threads
         Int memory
+        Int max_preemption
         String zones
 
         RuntimeAttr? runtime_attr_override
     }
 
     String prefix = basename(bam, ".bam") + ".deepvariant"
-    String output_root = "/cromwell_root/dv_output"
+    String output_root = "/mnt/disks/cromwell_root/dv_output"
 
     command <<<
         set -euxo pipefail
@@ -164,7 +165,7 @@ task DV {
 
         mkdir -p "~{output_root}"
 
-        export MONITOR_MOUNT_POINT="/cromwell_root/"
+        export MONITOR_MOUNT_POINT="/mnt/disks/cromwell_root/"
         bash /opt/vm_local_monitoring_script.sh &> resources.log &
         job_id=$(ps -aux | grep -F 'vm_local_monitoring_script.sh' | head -1 | awk '{print $2}')
 
@@ -210,7 +211,7 @@ task DV {
         mem_gb:             memory,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  1,
+        preemptible_tries:  max_preemption,
         max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-deepvariant:1.6.0"
     }
@@ -254,7 +255,9 @@ task DV_gpu {
     }
 
     String prefix = basename(bam, ".bam") + ".deepvariant"
-    String output_root = "/cromwell_root/dv_output"
+    # Relative to the execution dir so outputs land on the declared local-disk mount
+    # (GCP Batch rejects absolute /cromwell_root/... paths for delocalization).
+    String output_root = "dv_output"
 
     command <<<
         set -euxo pipefail
@@ -263,7 +266,7 @@ task DV_gpu {
 
         mkdir -p "~{output_root}"
 
-        export MONITOR_MOUNT_POINT="/cromwell_root/"
+        export MONITOR_MOUNT_POINT="$(pwd)"
         bash vm_local_monitoring_script.sh &> resources.log &
         job_id=$(ps -aux | grep -F 'vm_local_monitoring_script.sh' | head -1 | awk '{print $2}')
         gpustat -a -i 1 &> gpu.usages.log &
