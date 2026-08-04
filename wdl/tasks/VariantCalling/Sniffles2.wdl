@@ -86,7 +86,8 @@ task SampleSV {
     String vcf_output = "~{prefix}.sniffles~{postfix}.vcf.gz"
     String tbi_output = "~{prefix}.sniffles~{postfix}.vcf.gz.tbi"
 
-    String local_bam = "/cromwell_root/~{basename(bam)}"
+    # Relative staging path: GCP Batch does not guarantee /cromwell_root exists.
+    String local_bam = "~{basename(bam)}"
 
     command <<<
         set -euxo pipefail

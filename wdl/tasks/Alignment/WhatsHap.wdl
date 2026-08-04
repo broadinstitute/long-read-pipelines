@@ -33,8 +33,9 @@ task HaploTagBam {
 
     Int disk_size = 10 + 2*ceil(size([to_tag_bam, phased_vcf], "GiB"))
 
-    String local_bam = "/cromwell_root/~{prefix}.bam"
-    String local_bai = "/cromwell_root/~{prefix}.bam.bai"
+    # Relative staging path: GCP Batch does not guarantee /cromwell_root exists.
+    String local_bam = "~{prefix}.bam"
+    String local_bai = "~{prefix}.bam.bai"
 
     command <<<
         set -eux
@@ -111,7 +112,8 @@ task Phase {
     Int disk_size = 10 + 2*ceil(size([bam, unphased_vcf], "GiB"))
     String extra_args = if (defined(chromosome)) then "--chromosome "  + select_first([chromosome]) else ""
 
-    String local_bam = "/cromwell_root/~{bam_prefix}.bam"
+    # Relative staging path: GCP Batch does not guarantee /cromwell_root exists.
+    String local_bam = "~{bam_prefix}.bam"
     String local_bai = "~{local_bam}.bai"
 
     command <<<

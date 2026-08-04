@@ -41,13 +41,14 @@ task MarginPhase {
 	Int disk_size = if bam_sz > 200 then 2*bam_sz else bam_sz + 200
 
     String prefix = basename(unphased_vcf, ".vcf.gz")
-    String output_root = "/cromwell_root/margin_output"
+    # Relative paths: GCP Batch rejects absolute /cromwell_root/... File outputs.
+    String output_root = "margin_output"
 
     # name of pre-made parameter set json file. See margin github page for appropriate values.
     String parameter_json_file_name = if data_type == 'ONT' then "allParams.phase_vcf.ont.json" else "allParams.phase_vcf.pb-hifi.json"
 
     String base = basename(bam)
-    String local_bam = "/cromwell_root/~{base}"
+    String local_bam = "~{base}"
     String local_bai = "~{local_bam}.bai"
 
     command <<<

@@ -149,14 +149,16 @@ task DV {
 
         Int threads
         Int memory
-        Int max_preemption
+        Int max_preemption = 1
         String zones
 
         RuntimeAttr? runtime_attr_override
     }
 
     String prefix = basename(bam, ".bam") + ".deepvariant"
-    String output_root = "/mnt/disks/cromwell_root/dv_output"
+    # Relative to the execution dir so outputs land on the declared local-disk mount
+    # (GCP Batch rejects absolute /cromwell_root/... paths for delocalization).
+    String output_root = "dv_output"
 
     command <<<
         set -euxo pipefail
@@ -165,7 +167,7 @@ task DV {
 
         mkdir -p "~{output_root}"
 
-        export MONITOR_MOUNT_POINT="/mnt/disks/cromwell_root/"
+        export MONITOR_MOUNT_POINT="$(pwd)"
         bash /opt/vm_local_monitoring_script.sh &> resources.log &
         job_id=$(ps -aux | grep -F 'vm_local_monitoring_script.sh' | head -1 | awk '{print $2}')
 
