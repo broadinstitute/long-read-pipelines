@@ -186,6 +186,9 @@ workflows:
 - name: SplitMultiSampleVCF
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SplitMultiSampleVCF.wdl
+- name: ONTBasecallDorado
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/ONT/Preprocessing/ONTBasecallDorado.wdl
 - name: SplitMultiSampleVCFToTerraTable
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/Utility/SplitMultiSampleVCFToTerraTable.wdl
