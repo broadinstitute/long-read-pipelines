@@ -12,17 +12,26 @@ task FunctionallyAnnotateVariants {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 1 + 5*ceil(size([vcf, snpeff_db], "GB"))
+    Int disk_size = 1 + 10*ceil(size([vcf, snpeff_db], "GB"))
     String prefix = basename(basename(vcf, ".gz"), ".vcf")
+
+    Int mem_gb = if (size(vcf, "GB") < 5) then 8 else 16
 
     command <<<
         set -x
 
-        gunzip -c ~{snpeff_db} | tar xvf -
+        tar -xf ~{snpeff_db}
 
-        /snpEff/scripts/snpEff ann -v \
-            -c $PWD/snpeff_db/snpEff.config \
-            -dataDir $PWD/snpeff_db/data \
+        # Create a new tmpdir just in case:
+        mkdir ${PWD}/tmp
+
+        # Set our memory to leave 1GB for the OS:
+        java_mem=$((~{mem_gb}-1))
+
+        # Make sure we give it enough memory to work for larger VCFs:
+        /snpEff/scripts/snpEff -D${PWD}/tmp -Xms2g -Xmx${java_mem}g ann -v \
+            -c "$PWD/snpeff_db/snpEff.config" \
+            -dataDir "$PWD/snpeff_db/data" \
             ~{snpeff_db_identifier} \
             ~{vcf} | bgzip > ~{prefix}.annotated.vcf.gz
 
@@ -43,7 +52,7 @@ task FunctionallyAnnotateVariants {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
-        mem_gb:             4,
+        mem_gb:             mem_gb,
         disk_gb:            disk_size,
         boot_disk_gb:       25,
         preemptible_tries:  2,

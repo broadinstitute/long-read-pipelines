@@ -224,7 +224,7 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
     }
 
     # 8 - Recalibrate variants:
-    call BroadOnPremMalariaPipelineTasks.VariantRecalibrator as t_015_VariantRecalibrator {
+    call BroadOnPremMalariaPipelineTasks.VariantRecalibratorBestEffort as t_015_VariantRecalibrator {
         input:
             input_vcf = t_013_HaplotypeCaller.vcf,
             reference_fasta = ref_map["fasta"],
@@ -245,9 +245,14 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
             input_vcf = t_013_HaplotypeCaller.vcf
     }
 
-    call BroadOnPremMalariaPipelineTasks.SortCompressIndexVcf as t_017_SortCompressIndexVCF {
-        input:
-            input_vcf = t_015_VariantRecalibrator.vcf
+    # VQSR is best-effort: only sort/compress the recalibrated VCF when VQSR
+    # actually succeeded. On VQSR failure this call is skipped and the
+    # recalibrated_vcf outputs resolve to absent.
+    if (t_015_VariantRecalibrator.vqsr_ok) {
+        call BroadOnPremMalariaPipelineTasks.SortCompressIndexVcf as t_017_SortCompressIndexVCF {
+            input:
+                input_vcf = select_first([t_015_VariantRecalibrator.vcf])
+        }
     }
 
     # 9 - sort, compress, and index final outputs:
@@ -259,8 +264,13 @@ workflow BroadOnPremMalariaPipeline_1_Alignment {
     output {
         File raw_vcf = t_016_SortCompressIndexRawVCF.vcf
         File raw_vcf_index = t_016_SortCompressIndexRawVCF.vcf_index
-        File recalibrated_vcf = t_017_SortCompressIndexVCF.vcf
-        File recalibrated_vcf_index = t_017_SortCompressIndexVCF.vcf_index
+
+        # VQSR is best-effort. vqsr_succeeded tells the caller what happened; the
+        # recalibrated VCF is present only when it succeeded.
+        Boolean vqsr_succeeded = t_015_VariantRecalibrator.vqsr_ok
+        File? recalibrated_vcf = t_017_SortCompressIndexVCF.vcf
+        File? recalibrated_vcf_index = t_017_SortCompressIndexVCF.vcf_index
+
         File gvcf = t_018_SortCompressIndexGVCF.vcf
         File gvcf_index = t_018_SortCompressIndexGVCF.vcf_index
     }

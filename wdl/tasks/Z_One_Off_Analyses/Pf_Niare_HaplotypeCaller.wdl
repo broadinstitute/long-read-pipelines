@@ -562,6 +562,9 @@ task VariantRecalibratorIndel {
         File sites_only_vcf_index
 
         String prefix
+        # INDEL model --max-gaussians (default 4). Exposed so small / low-variance
+        # callsets (a per-contig scatter can starve the model) can be tuned per run.
+        Int max_gaussians = 4
 
         RuntimeAttr? runtime_attr_override
     }
@@ -590,7 +593,7 @@ task VariantRecalibratorIndel {
                 --trust-all-polymorphic \
                 -an QD -an DP -an FS -an SOR -an MQ \
                 -mode INDEL \
-                --max-gaussians 4 \
+                --max-gaussians ~{max_gaussians} \
                 -resource:Brown,known=true,training=true,truth=true,prior=15.0 ~{sites_only_vcf} \
                 -O ~{prefix}.indel_recal \
                 --output-model ~{prefix}.indel.model.report \
@@ -646,6 +649,9 @@ task VariantRecalibratorSnp {
         File sites_only_vcf_index
 
         String prefix
+        # SNP model --max-gaussians (default 4). Exposed so small / low-variance
+        # callsets (a per-contig scatter can starve the model) can be tuned per run.
+        Int max_gaussians = 4
 
         RuntimeAttr? runtime_attr_override
     }
@@ -674,7 +680,7 @@ task VariantRecalibratorSnp {
                 --trust-all-polymorphic \
                 -an QD -an DP -an FS -an SOR -an MQ \
                 -mode SNP \
-                --max-gaussians 4 \
+                --max-gaussians ~{max_gaussians} \
                 -resource:Brown,known=true,training=true,truth=true,prior=15.0 ~{sites_only_vcf} \
                 -O ~{prefix}.snp_recal \
                 --tranches-file  ~{prefix}.raw.snp.tranches \

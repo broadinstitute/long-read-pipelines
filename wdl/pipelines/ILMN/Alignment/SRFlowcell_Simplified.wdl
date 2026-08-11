@@ -7,7 +7,7 @@ import "../../../tasks/QC/FastQC.wdl" as FastQC
 import "../../TechAgnostic/Utility/RemoveSingleOrganismContamination.wdl" as DECONTAMINATE
 import "../../../tasks/Utility/Finalize.wdl" as FF
 import "../../../tasks/QC/QCAssessment.wdl" as QCAssessment
-workflow SRFlowcell {
+workflow SRFlowcell_Simplified {
 
     meta {
         author: "Jonn Smith"
@@ -168,29 +168,31 @@ workflow SRFlowcell {
 
     if (perform_mark_duplicates) {
         # Mark Duplicates
-        call SRUTIL.MarkDuplicates as t_008_MarkDuplicates {
+        call SRUTIL.MarkDuplicatesAndSort as t_008_MarkDuplicates {
             input:
                 input_bam = merged_bam,
-                prefix = SM + ".aligned.merged.markDuplicates"
+                prefix = SM + ".aligned.merged.markDuplicates.sorted"
         }
     }
-    File pre_bqsr_bam = select_first([t_008_MarkDuplicates.bam, merged_bam])
-
-    # Sort Duplicate Marked Bam:
-    call Utils.SortSam as t_009_SortBam {
-        input:
-            input_bam = pre_bqsr_bam,
-            prefix = basename(pre_bqsr_bam, ".bam") + ".sorted"
+    if (!perform_mark_duplicates) {
+        # Sort merged bam:
+        call Utils.SortSam as t_009_SortBam {
+            input:
+                input_bam = merged_bam,
+                prefix = basename(merged_bam, ".bam") + ".sorted"
+        }
     }
+    File pre_bqsr_bam = select_first([t_008_MarkDuplicates.bam, t_009_SortBam.output_bam])
+    File pre_bqsr_bam_index = select_first([t_008_MarkDuplicates.bai, t_009_SortBam.output_bam_index])
 
 #    TODO: Add Fingerprinting?
 
     if (perform_BQSR) {
         # Recalibrate Base Scores:
-        call SRUTIL.BaseRecalibrator as t_010_BaseRecalibrator {
+        call SRUTIL.RunBaseRecalibratorAndApplyBQSR as t_010_RunBaseRecalibratorAndApplyBQSR {
             input:
-                input_bam = t_009_SortBam.output_bam,
-                input_bam_index = t_009_SortBam.output_bam_index,
+                input_bam = pre_bqsr_bam,
+                input_bam_index = pre_bqsr_bam_index,
 
                 ref_fasta = ref_map["fasta"],
                 ref_fasta_index = ref_map["fai"],
@@ -199,26 +201,12 @@ workflow SRFlowcell {
                 known_sites_vcf = ref_map["known_sites_vcf"],
                 known_sites_index = ref_map["known_sites_index"],
 
-                prefix = SM + ".baseRecalibratorReport"
-        }
-
-        call SRUTIL.ApplyBQSR as t_011_ApplyBQSR {
-            input:
-                input_bam = t_009_SortBam.output_bam,
-                input_bam_index = t_009_SortBam.output_bam,
-
-                ref_fasta = ref_map["fasta"],
-                ref_fasta_index = ref_map["fai"],
-                ref_dict = ref_map["dict"],
-
-                recalibration_report = t_010_BaseRecalibrator.recalibration_report,
-
                 prefix = SM + ".aligned.merged.markDuplicates.sorted.BQSR"
         }
     }
 
-    File final_bam = select_first([t_011_ApplyBQSR.recalibrated_bam, t_009_SortBam.output_bam])
-    File final_bai = select_first([t_011_ApplyBQSR.recalibrated_bai, t_009_SortBam.output_bam_index])
+    File final_bam = select_first([t_010_RunBaseRecalibratorAndApplyBQSR.recalibrated_bam, pre_bqsr_bam])
+    File final_bai = select_first([t_010_RunBaseRecalibratorAndApplyBQSR.recalibrated_bai, pre_bqsr_bam_index])
 
     #############################################
     #      __  __      _        _
@@ -303,7 +291,7 @@ workflow SRFlowcell {
         # Create an outdir:
         String concrete_gcs_out_root_dir = select_first([gcs_out_root_dir])
 
-        String outdir = if DEBUG_MODE then sub(concrete_gcs_out_root_dir, "/$", "") + "/SRFlowcell/~{dir_prefix}/" + t_001_WdlExecutionStartTimestamp.timestamp_string else sub(concrete_gcs_out_root_dir, "/$", "") + "/SRFlowcell/~{dir_prefix}"
+        String outdir = if DEBUG_MODE then sub(concrete_gcs_out_root_dir, "/$", "") + "/SRFlowcell_Simplified/~{dir_prefix}/" + t_001_WdlExecutionStartTimestamp.timestamp_string else sub(concrete_gcs_out_root_dir, "/$", "") + "/SRFlowcell/~{dir_prefix}"
         String reads_dir = outdir + "/reads"
         String unaligned_reads_dir = outdir + "/reads/unaligned"
         String aligned_reads_dir = outdir + "/reads/aligned"
@@ -344,8 +332,7 @@ workflow SRFlowcell {
                     t_006_AlignReads.bam,
                     merged_bam,
                     pre_bqsr_bam,
-                    t_009_SortBam.output_bam,
-                    t_009_SortBam.output_bam_index,
+                    pre_bqsr_bam_index,
                 ],
                 keyfile = keyfile
         }
@@ -396,7 +383,7 @@ workflow SRFlowcell {
             call FF.FinalizeToDir as t_029_FinalizeBQSRMetrics {
                 input:
                     outdir = metrics_dir,
-                    files = select_all([t_010_BaseRecalibrator.recalibration_report]),
+                    files = select_all([t_010_RunBaseRecalibratorAndApplyBQSR.recalibration_report]),
                     keyfile = keyfile
             }
         }

@@ -21,6 +21,12 @@ workflow PfalciparumTypeDrugResistanceMarkers {
         ref_map_file:    "Table indicating reference sequence, auxillary file locations, and metadata."
 
         do_functional_annotation: "Whether to perform functional annotation"
+
+        joint_vcfs: {
+            description: "Optional list of per-contig joint-call VCFs, given as paths/URLs (e.g. gs://...). When provided, the analyzed sample's resolved genotypes are STREAMED from these files at the drug-resistance loci and the files are never localized. Each must have a co-located tabix index (.tbi) and SnpEff (ANN) annotations, and the sample must be present in at least one of them or the workflow fails. The given GVCF is still used to fill in no-call evidence.",
+            localization_optional: true
+        }
+        sample_id: "Optional sample ID to analyze when joint_vcfs is provided. Defaults to the single sample present in 'vcf'."
     }
 
     input {
@@ -36,12 +42,15 @@ workflow PfalciparumTypeDrugResistanceMarkers {
         File ref_map_file
 
         Boolean do_functional_annotation = true
+
+        Array[File]? joint_vcfs
+        String? sample_id
     }
 
     # Read ref map into map data type so we can access its fields:
     Map[String, String] ref_map = read_map(ref_map_file)
 
-    if (do_functional_annotation) {
+    if (do_functional_annotation && (!defined(joint_vcfs) || length(select_first([joint_vcfs, []])) == 0)) {
         call FUNK.FunctionallyAnnotateVariants { input: vcf = vcf, snpeff_db = snpeff_db, snpeff_db_identifier = snpeff_db_identifier }
     }
 
@@ -52,7 +61,9 @@ workflow PfalciparumTypeDrugResistanceMarkers {
             gvcf = gvcf,
             gvcf_index = gvcf_index,
             drug_resistance_list = drug_resistance_list,
-            genes_gff = ref_map["gff"]
+            genes_gff = ref_map["gff"],
+            joint_vcf_urls = joint_vcfs,
+            sample_id = sample_id
     }
 
     call CreateDrugResistanceSummary {
@@ -147,6 +158,13 @@ workflow PfalciparumTypeDrugResistanceMarkers {
 }
 
 task CallDrugResistanceMutations {
+    parameter_meta {
+        joint_vcf_urls: {
+            description: "Optional per-contig joint-call VCFs streamed at the drug-resistance loci. Marked localization_optional so Cromwell passes the (gs://) paths through to the tools without localizing these potentially huge files.",
+            localization_optional: true
+        }
+    }
+
     input {
         File vcf
         File vcf_index
@@ -157,8 +175,15 @@ task CallDrugResistanceMutations {
         File drug_resistance_list
         File genes_gff
 
+        Array[File]? joint_vcf_urls
+        String? sample_id
+
         RuntimeAttr? runtime_attr_override
     }
+
+    # joint_vcf_urls is localization_optional (see parameter_meta), so Cromwell passes the
+    # gs:// paths straight through and the per-contig joint VCFs are streamed, never localized.
+    Array[String] joint_vcf_urls_safe = select_first([joint_vcf_urls, []])
 
     Int disk_size = 1 + 2*ceil(size([vcf, gvcf, drug_resistance_list], "GB"))
     String prefix = basename(basename(vcf, ".gz"), ".vcf")
@@ -166,6 +191,14 @@ task CallDrugResistanceMutations {
 
     command <<<
         set -x
+
+        # Enable htslib/bcftools streaming of gs:// joint-call VCFs without localizing them.
+        # htslib reads the OAuth token from $GCS_OAUTH_TOKEN; pull a fresh one from the
+        # GCE metadata server (no-op off-GCP, which is fine for the non-joint code path).
+        GCS_OAUTH_TOKEN=$(curl -s -H "Metadata-Flavor: Google" \
+            "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token" \
+            | python3 -c 'import sys, json; print(json.load(sys.stdin)["access_token"])' 2>/dev/null) || true
+        export GCS_OAUTH_TOKEN
 
         python3 <<CODE
 
@@ -487,6 +520,12 @@ task CallDrugResistanceMutations {
         gff_file = f"~{genes_gff}"
         drug_resistance_list = f"~{drug_resistance_list}"
 
+        # Joint-call mode: per-contig joint VCF URLs (streamed, never localized) and the
+        # sample to analyze. When no joint VCFs are given we fall back to the localized
+        # single-sample VCF and the behavior is unchanged.
+        joint_vcf_urls = [u for u in "~{sep=',' joint_vcf_urls_safe}".split(",") if u]
+        requested_sample_id = "~{default='' sample_id}"
+
         # single_sample_VCF = f"SEN_2019_DBL.CXX_0027_ALL_scored.annotated.vcf.gz"
         # single_sample_GVCF = f"SEN_2019_DBL.CXX_0027.haplotype_caller.renamed.g.vcf.gz"
         # drug_res_info_out_file = f"tmp.drugres.txt"
@@ -523,10 +562,77 @@ task CallDrugResistanceMutations {
         regions = [gene_id_pos_dict[gene_id] for gene_id in drug_res_info_by_gene_id.keys()]
 
         raw_variants_of_interest = []
-        with pysam.VariantFile(single_sample_VCF, 'r') as vcf:
-            for contig, start, end, direction in tqdm(regions,desc="Extracting variants from drug res loci"):
-                for v in vcf.fetch(contig, start, end):
-                    raw_variants_of_interest.append(v)
+        if joint_vcf_urls:
+            import subprocess
+
+            # Resolve which sample we are analyzing.  Default to the single sample in the
+            # localized single-sample VCF when the caller did not name one explicitly.
+            if requested_sample_id:
+                sample_id = requested_sample_id
+            else:
+                with pysam.VariantFile(single_sample_VCF, 'r') as ss_vcf:
+                    sample_id = list(ss_vcf.header.samples)[0]
+
+            # Map each contig to the joint VCF that serves it, reading ONLY the remote
+            # index (bcftools index -s), and confirm our sample is present somewhere.
+            contig_to_url = {}
+            sample_present = False
+            for url in joint_vcf_urls:
+                samples_in_url = subprocess.run(
+                    ["bcftools", "query", "-l", url],
+                    check=True, capture_output=True, text=True
+                ).stdout.split()
+                if sample_id in samples_in_url:
+                    sample_present = True
+                for line in subprocess.run(
+                    ["bcftools", "index", "-s", url],
+                    check=True, capture_output=True, text=True
+                ).stdout.splitlines():
+                    if line.strip():
+                        contig_to_url[line.split("\t")[0]] = url
+
+            if not sample_present:
+                raise RuntimeError(
+                    f"Sample '{sample_id}' is not present in any of the provided joint-call "
+                    f"VCFs: {joint_vcf_urls}"
+                )
+
+            # Stream just our sample, at just the drug-resistance loci, from the per-contig
+            # joint VCFs into one small local VCF.  The full joint VCFs are never localized.
+            streamed_vcf = "joint_sample_subset.vcf"
+            with open(streamed_vcf, "w") as out:
+                header_url = next(iter(contig_to_url.values()))
+                subprocess.run(
+                    ["bcftools", "view", "-h", "-s", sample_id, header_url],
+                    check=True, stdout=out, text=True
+                )
+            with open(streamed_vcf, "a") as out:
+                for contig, start, end, direction in tqdm(regions, desc="Streaming variants from joint VCFs"):
+                    url = contig_to_url.get(contig)
+                    if url is None:
+                        # No joint VCF covers this contig; the GVCF coverage step still
+                        # resolves these loci as hom_ref/missing below.
+                        continue
+                    subprocess.run(
+                        ["bcftools", "view", "-H", "-s", sample_id, url, f"{contig}:{start}-{end}"],
+                        check=True, stdout=out, text=True
+                    )
+
+            subprocess.run(f"bgzip -f {streamed_vcf} && tabix -p vcf {streamed_vcf}.gz", shell=True, check=True)
+
+            with pysam.VariantFile(streamed_vcf + ".gz", 'r') as vcf:
+                for contig, start, end, direction in tqdm(regions, desc="Extracting variants from drug res loci"):
+                    try:
+                        for v in vcf.fetch(contig, start, end):
+                            raw_variants_of_interest.append(v)
+                    except ValueError:
+                        # Contig absent from the streamed subset (no record pulled).
+                        continue
+        else:
+            with pysam.VariantFile(single_sample_VCF, 'r') as vcf:
+                for contig, start, end, direction in tqdm(regions,desc="Extracting variants from drug res loci"):
+                    for v in vcf.fetch(contig, start, end):
+                        raw_variants_of_interest.append(v)
 
         # Now filter the variants of interest to the specific genes and amino acid changes in our list:
         variants_of_interest = []

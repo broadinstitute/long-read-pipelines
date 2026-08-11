@@ -1874,7 +1874,7 @@ task GetCurrentTimestampString {
     # ------------------------------------------------
     # Runtime settings:
      runtime {
-         docker: "ubuntu:19.10"
+         docker: "ubuntu:24.04"
          memory: "512 MB"
          disks: "local-disk 10 HDD"
          bootDiskSizeGb: 15

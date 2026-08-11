@@ -1,6 +1,6 @@
 version 1.0
 
-workflow Benchmark {
+workflow BenchmarkVCFsSmall {
 
     meta {
         description: "A workflow to calculate sensitivity and precision of a germline variant calling pipeline by comparing a 'call' vcf produced by the pipeline to a gold standard 'truth' vcf.  Allows for stratification based on interval lists, bed files, or variant types defined according to GATK SelectVariants.  Borrowed and adapted from the Broad Institute's Hydrogen/Palantir repo, courtesy of Michael Gatzen (https://github.com/broadinstitute/palantir-workflows/tree/mg_benchmark_compare/BenchmarkVCFs ; permalink: https://github.com/broadinstitute/palantir-workflows/blob/0bf48efc6de818364993e46d89591a035cfd80c7/BenchmarkVCFs/BenchmarkVCFs.wdl)."
@@ -63,7 +63,8 @@ workflow Benchmark {
 
         Int? threadsVcfEval = 2
         Boolean doIndelLengthStratification = true
-        Int? preemptible
+        # Small-genome variant: default to preemptible VMs (idempotent eval tasks).
+        Int? preemptible = 3
         String gatkTag="4.0.11.0"
         Boolean requireMatchingGenotypes = true
         Boolean truthIsSitesOnlyVcf = false
@@ -152,11 +153,9 @@ workflow Benchmark {
                              "vc.isSimpleIndel()  && vc.getIndelLengths().0<22.5 && vc.getIndelLengths().0>17.5","vc.isSimpleIndel()  && vc.getIndelLengths().0<27.5 && vc.getIndelLengths().0>22.5",
                              "vc.isSimpleIndel()  && vc.getIndelLengths().0<32.5 && vc.getIndelLengths().0>27.5"]
 
-    scatter (indel in zip(indelLabels,indelJexl)) {
-        VariantSelector indelSelectors = object{ jexl : indel.right,
-                                         label : indel.left
-                                         }
-    }
+    # (Small variant) The 55 indel-length bins are consumed directly by
+    # EvalIndelLengthAllBins below, so the per-bin VariantSelector scatter that
+    # the standard workflow builds here is intentionally omitted.
 
     if (defined(jexlVariantSelectors)) {
         scatter (select in zip(actualSelectorLabels,actualSelectorJEXL)) {
@@ -272,7 +271,8 @@ workflow Benchmark {
                     input_files = flatten([select_all([StandardVcfEval.outVcf,ConfidenceConvertIntervals.bed,stratifier.bed]), select_all([evalBam, truthBam])]),
                     input_names = flatten([select_all([outputPrefix+"_vcfeval","confidence_intervals",stratifier.label]), select_all([evalBamLabel, truthBamLabel])]),
                     reference_version = ref_map["fasta"],
-                    file_name = outputPrefix+"_vcfeval"
+                    file_name = outputPrefix+"_vcfeval",
+                    preemptible = preemptible
             }
 
             call CountUNKVcfEval {
@@ -281,6 +281,37 @@ workflow Benchmark {
                     vcfIndex = StandardVcfEval.outVcfIndex,
                     gatkTag = gatkTag,
                     preemptible = preemptible
+            }
+
+            # Small-genome variant: loop all 55 indel-length bins inside one
+            # right-sized VM instead of fanning them into ~165 tiny VMs.
+            if (doIndelLengthStratification) {
+                call EvalIndelLengthAllBins {
+                    input:
+                        vcf = StandardVcfEval.outVcf,
+                        vcfIndex = StandardVcfEval.outVcfIndex,
+                        indelLabels = indelLabels,
+                        indelJexl = indelJexl,
+                        selectTPCall="CALL == 'TP'",
+                        selectTPBase="BASE == 'TP'",
+                        selectFN="(BASE == 'FN' || BASE == 'FN_CA')",
+                        selectFP="(CALL == 'FP' || CALL == 'FP_CA')",
+                        sampleCall="CALLS",
+                        sampleBase="BASELINE",
+                        engine="VcfEval",
+                        evalLabel = evalLabel,
+                        truthLabel = truthLabel,
+                        stratLabel = stratLabel,
+                        gatkTag = gatkTag,
+                        gatkJarForAnnotation = gatkJarForAnnotation,
+                        annotationNames = annotationNames,
+                        reference = ref_map["fasta"],
+                        refDict = ref_map["dict"],
+                        refIndex = ref_map["fai"]
+                        # Intentionally on-demand (not preemptible): this is the
+                        # longest task and it has no checkpoint, so a preemption
+                        # would restart the whole bin loop from scratch.
+                }
             }
         }
 
@@ -312,70 +343,6 @@ workflow Benchmark {
     }
 
 
-    scatter (indelCombo in cross(annotatedVcfsList,indelSelectors)) {
-        EvalStratSelectorCombo evalStratIndelCombos = object{annotatedVcfs : indelCombo.left,
-                                                    variantSelector : indelCombo.right
-                                                    }
-        }
-
-    scatter (evalStratIndelCombo in evalStratIndelCombos) {
-        String jexl = evalStratIndelCombo.variantSelector.jexl
-        File? vcfVcfEval = evalStratIndelCombo.annotatedVcfs.vcfVcfEval
-        File? vcfVcfEvalIndex = evalStratIndelCombo.annotatedVcfs.vcfVcfEvalIndex
-        String evalIndelLabel = evalStratIndelCombo.annotatedVcfs.evalLabel
-        String truthIndelLabel = evalStratIndelCombo.annotatedVcfs.truthLabel
-        String? stratIndelLabel = evalStratIndelCombo.annotatedVcfs.stratLabel
-        String indelLabel = evalStratIndelCombo.variantSelector.label
-        File? stratIndelBed = evalStratIndelCombo.annotatedVcfs.stratBed
-        File? confidenceBed = evalStratIndelCombo.annotatedVcfs.confidenceBed
-        String namePrefix = evalStratIndelCombo.annotatedVcfs.namePrefix+"_"+indelLabel
-
-        if (defined(vcfVcfEval) && defined(vcfVcfEvalIndex) && doIndelLengthStratification) {
-            call EvalForVariantSelection as EvalIndelLengthVcfEval {
-                input:
-                    vcf = vcfVcfEval,
-                    vcfIndex = vcfVcfEvalIndex,
-                    jexl = jexl,
-                    engine="VcfEval",
-                    selectTPCall="CALL == 'TP'",
-                    selectTPBase="BASE == 'TP'",
-                    selectFN="(BASE == 'FN' || BASE == 'FN_CA')",
-                    selectFP="(CALL == 'FP' || CALL == 'FP_CA')",
-                    sampleCall="CALLS",
-                    sampleBase="BASELINE",
-                    gatkTag = gatkTag,
-                    preemptible = preemptible,
-                    gatkJarForAnnotation = gatkJarForAnnotation,
-                    annotationNames = annotationNames,
-                    reference = ref_map["fasta"],
-                    refDict = ref_map["dict"],
-                    refIndex = ref_map["fai"]
-            }
-
-            call WriteXMLfile as VcfEvalIndelWriteXMLfile {
-                        input:
-                            input_files = flatten([select_all([EvalIndelLengthVcfEval.selectedTPCall,EvalIndelLengthVcfEval.selectedTPBase,EvalIndelLengthVcfEval.selectedFP,EvalIndelLengthVcfEval.selectedFN,vcfVcfEval,confidenceBed,stratIndelBed]), select_all([evalBam, truthBam])]),
-                            input_names = flatten([select_all(["TP_Eval","TP_Base","FP","FN","All_Variants","confidence_intervals",stratIndelLabel]), select_all([evalBamLabel, truthBamLabel])]),
-                            reference_version = ref_map["fasta"],
-                            file_name = namePrefix+"_vcfeval"
-            }
-
-            call SummariseForIndelSelection as VcfEvalSummariseForIndelSelection {
-                        input:
-                            evalLabel = evalIndelLabel,
-                            truthLabel = truthIndelLabel,
-                            stratLabel = stratIndelLabel,
-                            indelLabel = indelLabel,
-                            engine="VcfEval",
-                            igvSession = VcfEvalIndelWriteXMLfile.igv_session,
-                            TP_CALL = EvalIndelLengthVcfEval.TP_CALL,
-                            TP_BASE = EvalIndelLengthVcfEval.TP_BASE,
-                            FP = EvalIndelLengthVcfEval.FP,
-                            FN = EvalIndelLengthVcfEval.FN,
-                            preemptible = preemptible
-            }
-        }
-    }
 
 
 
@@ -413,7 +380,8 @@ workflow Benchmark {
                                         evalStratSelectorCombo.annotatedVcfs.vcfVcfEval,evalStratSelectorCombo.annotatedVcfs.confidenceBed,evalStratSelectorCombo.annotatedVcfs.stratBed]), select_all([evalBam, truthBam])]),
                                     input_names = flatten([select_all(["TP_Eval","TP_Base","FP","FN","All_Variants","confidence_intervals",evalStratSelectorCombo.annotatedVcfs.stratLabel]), select_all([evalBamLabel, truthBamLabel])]),
                                     reference_version = ref_map["fasta"],
-                                    file_name = evalStratSelectorCombo.annotatedVcfs.namePrefix+"_"+evalStratSelectorCombo.variantSelector.label+"_vcfeval"
+                                    file_name = evalStratSelectorCombo.annotatedVcfs.namePrefix+"_"+evalStratSelectorCombo.variantSelector.label+"_vcfeval",
+                                    preemptible = preemptible
                     }
 
                     call SummariseForVariantSelection as VcfEvalSummariseForVariantSelection {
@@ -434,7 +402,7 @@ workflow Benchmark {
     }
 
     Array[File] summaries = flatten([SummariseVcfEval.summaryOut,select_all(VcfEvalSummariseForVariantSelection.summaryOut),
-                                    select_all(VcfEvalSummariseForIndelSelection.summaryOut)])
+                                    select_all(EvalIndelLengthAllBins.summaryOut)])
 
     call CombineSummaries {
         input:
@@ -1007,7 +975,7 @@ task EvalForVariantSelection {
         File refIndex
     }
 
-    Int memoryDefault = 16
+    Int memoryDefault = 2
     Int memoryJava = select_first([memoryMaybe,memoryDefault])
     Int memoryRam = memoryJava+2
 
@@ -1073,67 +1041,163 @@ task EvalForVariantSelection {
 }
 
 #create csv file of statistics based on TP,FP,FN
-task SummariseForIndelSelection {
+task EvalIndelLengthAllBins {
+    meta {
+        description: "Small-genome replacement for the 55-way indel-length scatter: loops every indel-length bin inside one right-sized VM (GATK SelectVariants + CountVariants per bin), then emits a single combined summary CSV matching SummariseForIndelSelection's schema. Replaces ~165 tiny VMs with one."
+    }
+
+    parameter_meta {
+        vcf: "The vcfeval-annotated eval VCF (carries CALL/BASE annotations)."
+        indelLabels: "Per-bin labels, positionally paired with indelJexl."
+        indelJexl: "Per-bin GATK JEXL selection expressions, positionally paired with indelLabels."
+    }
+
     input {
+        File? vcf
+        File? vcfIndex
+
+        Array[String] indelLabels
+        Array[String] indelJexl
+
+        String selectTPCall
+        String selectTPBase
+        String selectFN
+        String selectFP
+        String sampleCall
+        String sampleBase
+
+        String engine
         String evalLabel
         String truthLabel
         String? stratLabel
-        String indelLabel
-        String engine
-        String igvSession
-        Int TP_CALL
-        Int TP_BASE
-        Int FP
-        Int FN
-        Int? preemptible
 
+        String gatkTag
+        File? gatkJarForAnnotation
+        Array[String] annotationNames=[]
+        File reference
+        File refDict
+        File refIndex
+
+        Int? preemptible
+        Int? memoryMaybe
+        Int? cpuMaybe
     }
+
+    Int memoryDefault = 2
+    Int memoryJava = select_first([memoryMaybe,memoryDefault])
+    # Bins run concurrently, one GATK JVM (-Xmx memoryJava) per worker, so the VM
+    # needs roughly cpu * memoryJava plus a couple GB of overhead.
+    Int cpu = select_first([cpuMaybe, 4])
+    Int memoryRam = cpu*memoryJava + 2
+
+    Int disk_size = 10 + ceil(4.2 * size(vcf, "GB") + 2.2 * size(vcfIndex, "GB") + size(reference, "GB"))
 
     command <<<
         set -xeuo pipefail
 
-        Rscript -<<"EOF" ~{TP_CALL} ~{TP_BASE} ~{FN} ~{FP} ~{evalLabel} ~{truthLabel} ~{indelLabel} ~{engine} ~{default="" stratLabel} ~{igvSession}
-        GetSelectionValue<-function(name, target) {
+        VCF=~{vcf}
+        if [[ ! -z "~{gatkJarForAnnotation}" ]]; then
+            java -jar ~{gatkJarForAnnotation} VariantAnnotator -V ~{vcf} -O annotated.vcf.gz ~{true="-A" false="" length(annotationNames)>0} ~{sep=" -A " annotationNames} -R ~{reference}
+            VCF=annotated.vcf.gz
+        fi
 
-                  if(target=="insertion" || target=="deletion") {
-                    return(NA)
-                  }
-                  pos_start<-regexpr(target,name)
-                  sub = substring(name,pos_start+attr(pos_start,"match.length")+1,nchar(name))
-                  split_sub = strsplit(sub,"_")
-                  val = if(grepl("^m",split_sub[[1]][[1]])) -as.double(gsub("m","",split_sub[[1]][[1]])) else as.double(split_sub[[1]][[1]])
-                }
+        # Pre-filter to simple indels ONCE (keeping both samples). Every per-bin
+        # selection then scans this small file instead of re-scanning the full,
+        # potentially hundreds-of-thousands-of-variant, eval VCF 4x per bin.
+        # These intermediates are only counted (never region-queried), so skip
+        # output index creation: GATK 4.0.11 otherwise crashes writing the tabix
+        # index for empty / contig-sparse subsets (sequenceNames.size() mismatch).
+        gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V "${VCF}" -O indels.vcf -select "vc.isSimpleIndel()" --create-output-variant-index false
 
-        args <-commandArgs(trailingOnly = TRUE)
-        indel_options <-c("deletion","insertion","indel_fine","indel_coarse")
-        indel_type <- mapply(grepl,indel_options,args[7])
-        indel_type <- indel_options[indel_type[indel_options]]
-        indel_length <- GetSelectionValue(args[7],indel_type)
-        if (length(args)<10) {
-          stratifier <- NA
-        } else {
-          stratifier <- args[9]
+        # One line per indel-length bin: <label>\t<jexl>
+        paste "~{write_lines(indelLabels)}" "~{write_lines(indelJexl)}" > bins.tsv
+        mkdir -p bin_counts
+
+        # Count TP_CALL/TP_BASE/FN/FP for one indel-length bin; each bin writes a
+        # uniquely-named file so concurrent workers never race.
+        run_bin() {
+            local label="$1" jexl="$2"
+            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V indels.vcf -O "sel.${label}.TP_CALL.vcf" -select "${jexl} && ~{selectTPCall}" -sn ~{sampleCall} --create-output-variant-index false
+            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V indels.vcf -O "sel.${label}.TP_BASE.vcf" -select "${jexl} && ~{selectTPBase}" -sn ~{sampleBase} --create-output-variant-index false
+            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V indels.vcf -O "sel.${label}.FN.vcf" -select "${jexl} && ~{selectFN}" -sn ~{sampleBase} --create-output-variant-index false
+            gatk --java-options "-Xmx~{memoryJava}G" SelectVariants -V indels.vcf -O "sel.${label}.FP.vcf" -select "${jexl} && ~{selectFP}" -sn ~{sampleCall} --create-output-variant-index false
+            local tpc tpb fn fp
+            tpc="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V "sel.${label}.TP_CALL.vcf" | tail -1)"
+            tpb="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V "sel.${label}.TP_BASE.vcf" | tail -1)"
+            fn="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V "sel.${label}.FN.vcf" | tail -1)"
+            fp="$(gatk --java-options "-Xmx~{memoryJava}G" CountVariants -V "sel.${label}.FP.vcf" | tail -1)"
+            printf '%s\t%s\t%s\t%s\t%s\n' "${label}" "${tpc}" "${tpb}" "${fn}" "${fp}" > "bin_counts/${label}.txt"
+            # Progress line (grep 'PROGRESS:' in this task's stderr to monitor).
+            echo "$(date -u '+%H:%M:%S') PROGRESS: $(find bin_counts -type f | wc -l)/${TOTAL_BINS} indel bins complete (last: ${label})" >&2
         }
-        table <- data.frame("Name"=args[5], "Truth_Set"=args[6],"Comparison_Engine"=args[8],"Stratifier"=stratifier,
-                            "IndelLength"= indel_length,
-                            "Recall"=as.numeric(args[2])/(as.numeric(args[2])+as.numeric(args[3])),"Precision"=as.numeric(args[1])/(as.numeric(args[1])+as.numeric(args[4])),"TP_Base"=as.numeric(args[2]),"TP_Eval"=as.numeric(args[1]),
-                            "FP"=as.numeric(args[4]),"FN"=as.numeric(args[3]),"IGV_Session"=args[length(args)],"Summary_Type"=indel_type)
-        table$F1_Score <- 2*table$Precision*table$Recall/(table$Precision+table$Recall)
-        write.csv(table,paste(args[8],".",indel_type,".summary.csv",sep=""),row.names = FALSE)
-        EOF
+
+        TOTAL_BINS="$(grep -cve '^[[:space:]]*$' bins.tsv)"
+        echo "$(date -u '+%H:%M:%S') PROGRESS: starting ${TOTAL_BINS} indel bins across ~{cpu} workers" >&2
+
+        # Run bins concurrently, bounded to ~{cpu} workers (a failed worker
+        # propagates via `wait -n` under `set -e`).
+        running=0
+        while IFS=$'\t' read -r label jexl; do
+            [ -z "${label}" ] && continue
+            run_bin "${label}" "${jexl}" &
+            running=$((running+1))
+            if [ "${running}" -ge ~{cpu} ]; then wait -n; running=$((running-1)); fi
+        done < bins.tsv
+        wait
+
+        # Every bin must have produced a count file.
+        n_expected="$(grep -cve '^[[:space:]]*$' bins.tsv)"
+        n_got="$(find bin_counts -type f | wc -l)"
+        if [ "${n_got}" -ne "${n_expected}" ]; then
+            echo "ERROR: expected ${n_expected} bin count files, got ${n_got}" >&2
+            exit 1
+        fi
+
+        # Assemble in bins.tsv order (not glob/lexical order) so the row order is
+        # independent of concurrency and matches the serial version.
+        printf 'label\ttp_call\ttp_base\tfn\tfp\n' > counts.tsv
+        while IFS=$'\t' read -r label jexl; do
+            [ -z "${label}" ] && continue
+            cat "bin_counts/${label}.txt" >> counts.tsv
+        done < bins.tsv
+
+        # Summarise all bins into one CSV (schema matches SummariseForIndelSelection).
+        # IndelLength parsing mirrors that task's GetSelectionValue: NA for the
+        # pure insertion/deletion bins; an 'm' prefix denotes a negative length.
+        awk -F'\t' -v name="~{evalLabel}" -v truth="~{truthLabel}" -v engine="~{engine}" -v strat="~{default="NA" stratLabel}" '
+            BEGIN { OFS=","; print "Name","Truth_Set","Comparison_Engine","Stratifier","IndelLength","Recall","Precision","TP_Base","TP_Eval","FP","FN","IGV_Session","Summary_Type","F1_Score" }
+            NR==1 { next }
+            {
+                label=$1; tpc=$2+0; tpb=$3+0; fn=$4+0; fp=$5+0;
+                type=""; len="NA";
+                if (label=="deletion")            { type="deletion" }
+                else if (label=="insertion")      { type="insertion" }
+                else if (label ~ /^indel_fine_/)  { type="indel_fine";   s=substr(label,12) }
+                else if (label ~ /^indel_coarse_/){ type="indel_coarse"; s=substr(label,14) }
+                if (type=="indel_fine" || type=="indel_coarse") {
+                    if (substr(s,1,1)=="m") { len = -(substr(s,2)+0) } else { len = s+0 }
+                }
+                recall = (tpb+fn>0) ? tpb/(tpb+fn) : "NA";
+                prec   = (tpc+fp>0) ? tpc/(tpc+fp) : "NA";
+                if (recall=="NA" || prec=="NA" || (prec+recall)==0) { f1="NA" } else { f1=2*prec*recall/(prec+recall) }
+                print name,truth,engine,strat,len,recall,prec,tpb,tpc,fp,fn,"NA",type,f1
+            }' counts.tsv > "~{engine}.indel_length.summary.csv"
     >>>
 
     runtime {
-            docker: "rocker/tidyverse"
-            preemptible: select_first([preemptible,0])
-            disks: "local-disk 10 HDD"
-        }
-
-    output {
-        File summaryOut = glob("*.summary.csv")[0]
+        docker: "us.gcr.io/broad-gatk/gatk:"+gatkTag
+        preemptible: select_first([preemptible,0])
+        cpu: cpu
+        disks: "local-disk " + disk_size + " HDD"
+        bootDiskSizeGb: 16
+        memory: memoryRam + " GB"
     }
 
+    output {
+        File summaryOut = engine + ".indel_length.summary.csv"
+    }
 }
+
 
 #create csv file of statistics based on TP,FP,FN
 task SummariseForVariantSelection {
@@ -1503,6 +1567,8 @@ task WriteXMLfile {
         String file_name
 
         Array[String]? input_names
+
+        Int? preemptible
     }
 
     Array[String] input_names_prefix = if defined(input_names) then prefix('-n ', select_first([input_names])) else []
@@ -1518,6 +1584,9 @@ task WriteXMLfile {
     >>>
     runtime {
         docker: "quay.io/mduran/generate-igv-session_2:v1.0"
+        preemptible: select_first([preemptible,0])
+        memory: "2 GB"
+        disks: "local-disk 10 HDD"
     }
     output {
         File igv_session = "${file_name}.xml"

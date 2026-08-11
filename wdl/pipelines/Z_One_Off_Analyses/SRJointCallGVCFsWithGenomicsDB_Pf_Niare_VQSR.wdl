@@ -31,6 +31,11 @@ workflow SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR {
         File vqsr_sites_vcf
         File vqsr_sites_vcf_index
 
+        # VQSR SNP/INDEL model --max-gaussians (default 4). Lower for small / low-variance
+        # callsets that fail to converge (a per-contig scatter can starve the model).
+        Int snp_max_gaussians   = 4
+        Int indel_max_gaussians = 4
+
         String prefix
 
         String gcs_out_root_dir
@@ -120,6 +125,7 @@ workflow SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR {
                 ref_dict          = ref_map['dict'],
                 sites_only_vcf = vqsr_sites_vcf,
                 sites_only_vcf_index = vqsr_sites_vcf_index,
+                max_gaussians = indel_max_gaussians,
                 prefix = prefix + "." + contig,
         }
 
@@ -142,6 +148,7 @@ workflow SRJointCallGVCFsWithGenomicsDB_Pf_Niare_VQSR {
                 ref_dict          = ref_map['dict'],
                 sites_only_vcf = vqsr_sites_vcf,
                 sites_only_vcf_index = vqsr_sites_vcf_index,
+                max_gaussians = snp_max_gaussians,
                 prefix = prefix + "." + contig,
         }
 
