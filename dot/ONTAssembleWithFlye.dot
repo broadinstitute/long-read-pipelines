@@ -19,10 +19,10 @@ digraph {
 	"call-summaryQ" [label=summaryQ shape=cds]
 	"decl-q_metrics" [label=q_metrics shape=plaintext]
 	"call-ListFilesOfType" -> "call-MergeFastqs"
-	"call-ComputeGenomeLength" -> "call-Flye"
 	"call-MergeFastqs" -> "call-Flye"
-	"call-Flye" -> "call-MedakaPolish"
+	"call-ComputeGenomeLength" -> "call-Flye"
 	"call-MergeFastqs" -> "call-MedakaPolish"
+	"call-Flye" -> "call-MedakaPolish"
 	"call-MedakaPolish" -> "call-Quast"
 	"call-MedakaPolish" -> "call-CallAssemblyVariants"
 	"call-Flye" -> "call-FinalizeAsmUnpolished"

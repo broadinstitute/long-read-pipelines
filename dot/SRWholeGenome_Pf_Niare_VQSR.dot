@@ -63,8 +63,8 @@ digraph {
 	"call-CallVariantsWithHaplotypeCaller" -> "call-FinalizeHCBamOut"
 	"decl-keyfile" -> "call-FinalizeHCBaiOut"
 	"call-CallVariantsWithHaplotypeCaller" -> "call-FinalizeHCBaiOut"
-	"decl-keyfile" -> "call-FinalizeRecalibratedVcf"
 	"call-MergeMultiAllelicSitesPostRecalibration" -> "call-FinalizeRecalibratedVcf"
-	"decl-keyfile" -> "call-FinalizeRecalibratedVcfIndex"
+	"decl-keyfile" -> "call-FinalizeRecalibratedVcf"
 	"call-MergeMultiAllelicSitesPostRecalibration" -> "call-FinalizeRecalibratedVcfIndex"
+	"decl-keyfile" -> "call-FinalizeRecalibratedVcfIndex"
 }
