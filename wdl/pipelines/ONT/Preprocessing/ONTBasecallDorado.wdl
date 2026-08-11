@@ -1,3 +1,4 @@
+
 version 1.0
 
 import "../../../tasks/Utility/Utils.wdl" as Utils
@@ -374,7 +375,6 @@ task MakeFinalSummary {
 
 task FinalizeBasecalls {
     input {
-#        Array[String] pass_fastqs
         Array[String] pass_bams
         File sequencing_summary
         File final_summary
@@ -413,7 +413,17 @@ task FinalizeBasecalls {
                 cp ~{final_summary} final_summary.$b.txt
             else
                 set -euxo pipefail
-                grep -w -e filename -e $b ~{sequencing_summary} > sequencing_summary.$b.txt
+
+                # Barcode token lives inside $b, e.g. ..._pass_barcode01_... -> barcode01
+                bc=$(printf '%s\n' "$b" | grep -oE 'barcode[0-9]+|unclassified' | head -n1)
+
+                # Header is always line 1 (column name is input_filename, not filename).
+                head -n1 ~{sequencing_summary} > sequencing_summary.$b.txt
+                # Append this barcode's rows; grep may match nothing, must not kill the task.
+                if [ -n "$bc" ]; then
+                    grep -w "$bc" ~{sequencing_summary} >> sequencing_summary.$b.txt || true
+                fi
+
                 sed "s/sample_id=/sample_id=$b./" ~{final_summary} > final_summary.$b.txt
             fi
 
