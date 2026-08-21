@@ -45,6 +45,8 @@ jobs:
           
           python3 ./scripts/git_page/add_dot_link_to_md.py --md_dir ./docs/workflows --dot_dir ./docs/dot
           
+          python ./scripts/git_page/generate_docker_usage_md.py --output_path ./docs/development_guide
+          
           mkdocs build
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@releases/v4
