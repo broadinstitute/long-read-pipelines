@@ -5,7 +5,7 @@
 # ---- Builder: compile hmmibd-rs (and the bundled C hmmIBD, kept for parity) ----
 FROM rust:1.82-slim-bookworm AS builder
 
-MAINTAINER Jonn Smith
+LABEL maintainer="Jonn Smith"
 
 # Pin the exact upstream commit for reproducible builds.
 ARG HMMIBD_RS_COMMIT=aba74a05c6bda3635902227e5e689f9954ca598d
@@ -33,7 +33,7 @@ RUN cc -O3 -Wall hmmIBD.c -o hmmIBD -lm
 # ---- Runtime: just the hmmibd-rs (and C hmmIBD) binaries ----
 FROM debian:bookworm-slim
 
-MAINTAINER Jonn Smith
+LABEL maintainer="Jonn Smith"
 
 # minimal runtime C libraries (the Rust bcf_reader build needs no htslib/system libs),
 # plus procps for `free`, which the WDL task command preamble uses to size memory.
