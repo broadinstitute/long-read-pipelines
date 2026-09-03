@@ -60,6 +60,9 @@ workflows:
 - name: ONTMethylation
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/ONT/Epigenomics/ONTMethylation.wdl
+- name: HmmIBD
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/HmmIBD.wdl
 - name: PfalciparumHrp2Hrp3Status
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/PfalciparumHrp2Hrp3Status.wdl
