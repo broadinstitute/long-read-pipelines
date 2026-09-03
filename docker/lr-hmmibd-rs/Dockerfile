@@ -35,10 +35,12 @@ FROM debian:bookworm-slim
 
 MAINTAINER Jonn Smith
 
-# minimal runtime C libraries; the Rust bcf_reader build needs no htslib/system libs
+# minimal runtime C libraries (the Rust bcf_reader build needs no htslib/system libs),
+# plus procps for `free`, which the WDL task command preamble uses to size memory.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libgcc-s1 \
         libc6 \
+        procps \
     && rm -rf /var/lib/apt/lists/*
 
 # copy only the compiled binaries from the builder stage
