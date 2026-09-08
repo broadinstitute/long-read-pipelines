@@ -25,6 +25,7 @@ task FilterVcfForHmmIBD {
         prefix:                "Basename for the output BCF. (required)"
         min_depth:             "Genotypes with FORMAT/DP below this value are set to missing (bcftools filter -S .). (default: 5)"
         keep_original_af:      "If true, rename the existing INFO annotations via rename_annots_tsv before recomputing AN/AC/AF, so the original frequencies are preserved under new tags. (default: false)"
+        biallelic_snps_only:   "Restrict to biallelic SNPs (bcftools view -m2 -M2 -v snps) — the standard hmmIBD marker set; also avoids multiallelic/indel sites that exceed hmmibd-rs --max-all and crash it. (default: true)"
         max_variants:          "Optional cap on the number of variants kept. When >0 and the filtered callset exceeds it, sites are thinned evenly across the genome down to at most this many (not truncated to the first N). (default: 0 = no limit)"
         populations_file:      "Optional sample-to-population file passed to `bcftools +fill-tags -S`; when given, AN/AC/AF are computed per population. When omitted, tags are computed across all samples. (default: none)"
         rename_annots_tsv:     "Required when keep_original_af=true: two-column TSV of old-name<TAB>new-name passed to `bcftools annotate --rename-annots`. (default: none)"
@@ -38,6 +39,7 @@ task FilterVcfForHmmIBD {
 
         Int min_depth = 5
         Boolean keep_original_af = false
+        Boolean biallelic_snps_only = true
         Int max_variants = 0
 
         File? populations_file
@@ -71,6 +73,11 @@ task FilterVcfForHmmIBD {
         echo "NUM_CPUS=${NUM_CPUS}  RAM_IN_GB=${RAM_IN_GB}  USABLE_RAM_GB=${USABLE_RAM_GB}  MEM_PER_THREAD_GB=${MEM_PER_THREAD_GB}  JAVA_MEM_GB=${JAVA_MEM_GB}"
         # ---- end preamble ----
 
+        # Restrict to biallelic SNPs (standard hmmIBD markers; keeps allele count within
+        # hmmibd-rs --max-all) when requested.
+        SNP_FILTER=""
+        if [[ "~{biallelic_snps_only}" == "true" ]] ; then SNP_FILTER="-m2 -M2 -v snps" ; fi
+
         # keeping the original allele frequencies requires a rename map
         if [[ "~{keep_original_af}" == "true" && -z "~{rename_annots_tsv}" ]] ; then
             echo "ERROR: keep_original_af=true requires rename_annots_tsv to be provided." >&2
@@ -83,11 +90,16 @@ task FilterVcfForHmmIBD {
             bcftools filter -S . -e "FMT/DP < ~{min_depth}" -Ou ~{input_vcf} \
               | bcftools annotate --rename-annots ~{rename_annots_tsv} -Ou \
               | bcftools +fill-tags -Ou -- ~{"-S " + populations_file} -t AN,AC,AF \
-              | bcftools view --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads ${NUM_CPUS} ~{extra_args} -o ~{prefix}.filtered.bcf
+              | bcftools view ${SNP_FILTER} --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads ${NUM_CPUS} ~{extra_args} -o ~{prefix}.filtered.bcf
         else
+            # Strip all original INFO before recomputing: hmmibd-rs needs none of it, and
+            # GATK/GnarlyGenotyper cohort VCFs can carry per-allele INFO annotations (e.g.
+            # HAPCOMP) whose value counts disagree with the ALT count, which makes
+            # `bcftools view --trim-alt-alleles` abort. Dropping INFO first sidesteps that.
             bcftools filter -S . -e "FMT/DP < ~{min_depth}" -Ou ~{input_vcf} \
+              | bcftools annotate -x INFO -Ou \
               | bcftools +fill-tags -Ou -- ~{"-S " + populations_file} -t AN,AC,AF \
-              | bcftools view --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads ${NUM_CPUS} ~{extra_args} -o ~{prefix}.filtered.bcf
+              | bcftools view ${SNP_FILTER} --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads ${NUM_CPUS} ~{extra_args} -o ~{prefix}.filtered.bcf
         fi
 
         bcftools index --threads ${NUM_CPUS} ~{prefix}.filtered.bcf
