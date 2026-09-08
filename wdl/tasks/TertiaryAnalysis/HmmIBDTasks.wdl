@@ -25,6 +25,7 @@ task FilterVcfForHmmIBD {
         prefix:                "Basename for the output BCF. (required)"
         min_depth:             "Genotypes with FORMAT/DP below this value are set to missing (bcftools filter -S .). (default: 5)"
         keep_original_af:      "If true, rename the existing INFO annotations via rename_annots_tsv before recomputing AN/AC/AF, so the original frequencies are preserved under new tags. (default: false)"
+        max_variants:          "Optional cap on the number of variants kept. When >0 and the filtered callset exceeds it, sites are thinned evenly across the genome down to at most this many (not truncated to the first N). (default: 0 = no limit)"
         populations_file:      "Optional sample-to-population file passed to `bcftools +fill-tags -S`; when given, AN/AC/AF are computed per population. When omitted, tags are computed across all samples. (default: none)"
         rename_annots_tsv:     "Required when keep_original_af=true: two-column TSV of old-name<TAB>new-name passed to `bcftools annotate --rename-annots`. (default: none)"
         extra_args:            "Additional command-line args appended verbatim to the final bcftools view invocation. (default: empty)"
@@ -37,6 +38,7 @@ task FilterVcfForHmmIBD {
 
         Int min_depth = 5
         Boolean keep_original_af = false
+        Int max_variants = 0
 
         File? populations_file
         File? rename_annots_tsv
@@ -89,6 +91,26 @@ task FilterVcfForHmmIBD {
         fi
 
         bcftools index --threads ${NUM_CPUS} ~{prefix}.filtered.bcf
+
+        # Optional cap on the number of variants (off when max_variants <= 0). When the
+        # filtered callset has more sites than max_variants, thin it evenly across the
+        # genome (keep every ceil(total / max_variants)-th site) so the retained variants
+        # stay genome-wide, instead of truncating to the first N.
+        if [[ ~{max_variants} -gt 0 ]] ; then
+            TOTAL=$(bcftools index -n ~{prefix}.filtered.bcf)
+            echo "variant cap: max_variants=~{max_variants}, filtered site count=${TOTAL}"
+            if [[ "${TOTAL}" -gt ~{max_variants} ]] ; then
+                STRIDE=$(( (TOTAL + ~{max_variants} - 1) / ~{max_variants} ))
+                bcftools view ~{prefix}.filtered.bcf \
+                  | awk -v s="${STRIDE}" -v m=~{max_variants} '
+                        /^#/ { print; next }
+                        { n++; if (((n - 1) % s) == 0 && k < m) { print; k++ } }' \
+                  | bcftools view -Ob --threads ${NUM_CPUS} -o ~{prefix}.filtered.capped.bcf
+                mv ~{prefix}.filtered.capped.bcf ~{prefix}.filtered.bcf
+                bcftools index -f --threads ${NUM_CPUS} ~{prefix}.filtered.bcf
+                echo "variant cap: retained $(bcftools index -n ~{prefix}.filtered.bcf) variants (stride ${STRIDE})"
+            fi
+        fi
     >>>
 
     output {
