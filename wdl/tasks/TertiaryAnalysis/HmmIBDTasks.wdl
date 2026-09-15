@@ -75,6 +75,9 @@ task FilterVcfForHmmIBD {
 
         # Restrict to biallelic SNPs (standard hmmIBD markers; keeps allele count within
         # hmmibd-rs --max-all) when requested.
+        # TODO(indels): SNP-only for now. hmmibd-rs can technically use indels (it reads
+        # allele indices, not the allele strings), but Pf indels are error-prone and are the
+        # source of the hyper-multiallelic sites; revisit adding an indel/mixed option later.
         SNP_FILTER=""
         if [[ "~{biallelic_snps_only}" == "true" ]] ; then SNP_FILTER="-m2 -M2 -v snps" ; fi
 
@@ -87,17 +90,19 @@ task FilterVcfForHmmIBD {
         # Mask low-depth genotypes, (optionally) preserve original AF via rename, recompute
         # AN/AC/AF (optionally per population), then trim now-unrepresented alt alleles/sites.
         if [[ "~{keep_original_af}" == "true" ]] ; then
-            bcftools filter -S . -e "FMT/DP < ~{min_depth}" -Ou ~{input_vcf} \
+            bcftools annotate -x '^FORMAT/GT,FORMAT/AD,FORMAT/DP' -Ou ~{input_vcf} \
+              | bcftools filter -S . -e "FMT/DP < ~{min_depth}" -Ou \
               | bcftools annotate --rename-annots ~{rename_annots_tsv} -Ou \
               | bcftools +fill-tags -Ou -- ~{"-S " + populations_file} -t AN,AC,AF \
               | bcftools view ${SNP_FILTER} --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads ${NUM_CPUS} ~{extra_args} -o ~{prefix}.filtered.bcf
         else
-            # Strip all original INFO before recomputing: hmmibd-rs needs none of it, and
-            # GATK/GnarlyGenotyper cohort VCFs can carry per-allele INFO annotations (e.g.
-            # HAPCOMP) whose value counts disagree with the ALT count, which makes
-            # `bcftools view --trim-alt-alleles` abort. Dropping INFO first sidesteps that.
-            bcftools filter -S . -e "FMT/DP < ~{min_depth}" -Ou ~{input_vcf} \
-              | bcftools annotate -x INFO -Ou \
+            # Strip original INFO + heavy per-sample FORMAT (PL is Number=G, quadratic in
+            # alleles) up front. hmmibd-rs needs none of it; dropping it makes every
+            # downstream stage far faster on big cohorts (~3x measured), and it removes the
+            # GATK per-allele INFO annotations (e.g. HAPCOMP) whose value counts disagree
+            # with the ALT count and would otherwise abort `bcftools view --trim-alt-alleles`.
+            bcftools annotate -x 'INFO,^FORMAT/GT,FORMAT/AD,FORMAT/DP' -Ou ~{input_vcf} \
+              | bcftools filter -S . -e "FMT/DP < ~{min_depth}" -Ou \
               | bcftools +fill-tags -Ou -- ~{"-S " + populations_file} -t AN,AC,AF \
               | bcftools view ${SNP_FILTER} --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads ${NUM_CPUS} ~{extra_args} -o ~{prefix}.filtered.bcf
         fi
