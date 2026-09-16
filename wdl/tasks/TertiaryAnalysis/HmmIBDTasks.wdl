@@ -25,7 +25,8 @@ task FilterVcfForHmmIBD {
         prefix:                "Basename for the output BCF. (required)"
         min_depth:             "Genotypes with FORMAT/DP below this value are set to missing (bcftools filter -S .). (default: 5)"
         keep_original_af:      "If true, rename the existing INFO annotations via rename_annots_tsv before recomputing AN/AC/AF, so the original frequencies are preserved under new tags. (default: false)"
-        biallelic_snps_only:   "Restrict to biallelic SNPs (bcftools view -m2 -M2 -v snps) — the standard hmmIBD marker set; also avoids multiallelic/indel sites that exceed hmmibd-rs --max-all and crash it. (default: true)"
+        variant_types:         "Which variant types to keep (bcftools view -v): 'snps', 'indels', or 'both'. SNPs are the standard hmmIBD marker set; Pf indels are error-prone. (default: snps)"
+        biallelic_only:        "Restrict to biallelic sites (bcftools view -m2 -M2). Recommended true: multiallelic sites (especially indels) can exceed hmmibd-rs --max-all and crash it until that is patched. (default: true)"
         max_variants:          "Optional cap on the number of variants kept. When >0 and the filtered callset exceeds it, sites are thinned evenly across the genome down to at most this many (not truncated to the first N). (default: 0 = no limit)"
         populations_file:      "Optional sample-to-population file passed to `bcftools +fill-tags -S`; when given, AN/AC/AF are computed per population. When omitted, tags are computed across all samples. (default: none)"
         rename_annots_tsv:     "Required when keep_original_af=true: two-column TSV of old-name<TAB>new-name passed to `bcftools annotate --rename-annots`. (default: none)"
@@ -39,7 +40,8 @@ task FilterVcfForHmmIBD {
 
         Int min_depth = 5
         Boolean keep_original_af = false
-        Boolean biallelic_snps_only = true
+        String variant_types = "snps"
+        Boolean biallelic_only = true
         Int max_variants = 0
 
         File? populations_file
@@ -75,11 +77,17 @@ task FilterVcfForHmmIBD {
 
         # Restrict to biallelic SNPs (standard hmmIBD markers; keeps allele count within
         # hmmibd-rs --max-all) when requested.
-        # TODO(indels): SNP-only for now. hmmibd-rs can technically use indels (it reads
-        # allele indices, not the allele strings), but Pf indels are error-prone and are the
-        # source of the hyper-multiallelic sites; revisit adding an indel/mixed option later.
-        SNP_FILTER=""
-        if [[ "~{biallelic_snps_only}" == "true" ]] ; then SNP_FILTER="-m2 -M2 -v snps" ; fi
+        # Variant-type + biallelic selection. hmmibd-rs can technically use indels (it reads
+        # allele indices, not allele strings), but Pf indels are error-prone, so SNPs are the
+        # default. Keeping multiallelic sites (biallelic_only=false) — especially indels — can
+        # exceed hmmibd-rs --max-all and crash it until the fork patch lands.
+        case "~{variant_types}" in
+            snps)   SELECT_FLAGS="-v snps" ;;
+            indels) SELECT_FLAGS="-v indels" ;;
+            both)   SELECT_FLAGS="" ;;
+            *) echo "ERROR: variant_types must be one of: snps, indels, both" >&2 ; exit 1 ;;
+        esac
+        if [[ "~{biallelic_only}" == "true" ]] ; then SELECT_FLAGS="-m2 -M2 ${SELECT_FLAGS}" ; fi
 
         # keeping the original allele frequencies requires a rename map
         if [[ "~{keep_original_af}" == "true" && -z "~{rename_annots_tsv}" ]] ; then
@@ -94,7 +102,7 @@ task FilterVcfForHmmIBD {
               | bcftools filter -S . -e "FMT/DP < ~{min_depth}" -Ou \
               | bcftools annotate --rename-annots ~{rename_annots_tsv} -Ou \
               | bcftools +fill-tags -Ou -- ~{"-S " + populations_file} -t AN,AC,AF \
-              | bcftools view ${SNP_FILTER} --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads ${NUM_CPUS} ~{extra_args} -o ~{prefix}.filtered.bcf
+              | bcftools view ${SELECT_FLAGS} --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads ${NUM_CPUS} ~{extra_args} -o ~{prefix}.filtered.bcf
         else
             # Strip original INFO + heavy per-sample FORMAT (PL is Number=G, quadratic in
             # alleles) up front. hmmibd-rs needs none of it; dropping it makes every
@@ -104,7 +112,7 @@ task FilterVcfForHmmIBD {
             bcftools annotate -x 'INFO,^FORMAT/GT,FORMAT/AD,FORMAT/DP' -Ou ~{input_vcf} \
               | bcftools filter -S . -e "FMT/DP < ~{min_depth}" -Ou \
               | bcftools +fill-tags -Ou -- ~{"-S " + populations_file} -t AN,AC,AF \
-              | bcftools view ${SNP_FILTER} --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads ${NUM_CPUS} ~{extra_args} -o ~{prefix}.filtered.bcf
+              | bcftools view ${SELECT_FLAGS} --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads ${NUM_CPUS} ~{extra_args} -o ~{prefix}.filtered.bcf
         fi
 
         bcftools index --threads ${NUM_CPUS} ~{prefix}.filtered.bcf

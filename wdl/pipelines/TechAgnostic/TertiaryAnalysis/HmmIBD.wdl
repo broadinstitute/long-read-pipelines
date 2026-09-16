@@ -24,7 +24,8 @@ workflow HmmIBD {
         # ---- Step 1: filtration (bcftools) ----
         min_depth:         "Genotypes with FORMAT/DP below this value are set to missing. (default: 5)"
         keep_original_af:  "Preserve the original allele-frequency annotations (via rename_annots_tsv) before recomputing AN/AC/AF. (default: false)"
-        biallelic_snps_only: "Restrict to biallelic SNPs (standard hmmIBD markers; avoids multiallelic/indel sites that exceed hmmibd-rs --max-all). (default: true)"
+        variant_types:     "Which variant types to keep: 'snps', 'indels', or 'both'. SNPs are the standard hmmIBD marker set. (default: snps)"
+        biallelic_only:    "Restrict to biallelic sites. Recommended true: multiallelic sites (especially indels) can exceed hmmibd-rs --max-all and crash it until patched. (default: true)"
         max_variants:      "Optional cap on the number of variants; when >0, the filtered callset is thinned evenly across the genome to at most this many. (default: 0 = no limit)"
         populations_file:  "Optional sample-to-population file for per-population AN/AC/AF (bcftools +fill-tags -S). (default: none)"
         rename_annots_tsv: "Required when keep_original_af=true: old-name<TAB>new-name TSV for bcftools annotate --rename-annots. (default: none)"
@@ -71,7 +72,8 @@ workflow HmmIBD {
         # ---- Step 1: filtration ----
         Int min_depth = 5
         Boolean keep_original_af = false
-        Boolean biallelic_snps_only = true
+        String variant_types = "snps"
+        Boolean biallelic_only = true
         Int max_variants = 0
         File? populations_file
         File? rename_annots_tsv
@@ -123,7 +125,8 @@ workflow HmmIBD {
             prefix            = prefix,
             min_depth           = min_depth,
             keep_original_af    = keep_original_af,
-            biallelic_snps_only = biallelic_snps_only,
+            variant_types       = variant_types,
+            biallelic_only      = biallelic_only,
             max_variants        = max_variants,
             populations_file    = populations_file,
             rename_annots_tsv   = rename_annots_tsv
