@@ -27,6 +27,7 @@ task FilterVcfForHmmIBD {
         keep_original_af:      "If true, rename the existing INFO annotations via rename_annots_tsv before recomputing AN/AC/AF, so the original frequencies are preserved under new tags. (default: false)"
         variant_types:         "Which variant types to keep (bcftools view -v): 'snps', 'indels', or 'both'. SNPs are the standard hmmIBD marker set; Pf indels are error-prone. (default: snps)"
         biallelic_only:        "Restrict to biallelic sites (bcftools view -m2 -M2). Recommended true: multiallelic sites (especially indels) can exceed hmmibd-rs --max-all and crash it until that is patched. (default: true)"
+        split_multiallelics:   "Split multiallelic records into biallelic ones (bcftools norm -m-any) so SNP alleles at multiallelic/spanning-deletion sites are recovered rather than dropped. Runs after the type pre-select to stay fast. (default: true)"
         max_variants:          "Optional cap on the number of variants kept. When >0 and the filtered callset exceeds it, sites are thinned evenly across the genome down to at most this many (not truncated to the first N). (default: 0 = no limit)"
         populations_file:      "Optional sample-to-population file passed to `bcftools +fill-tags -S`; when given, AN/AC/AF are computed per population. When omitted, tags are computed across all samples. (default: none)"
         rename_annots_tsv:     "Required when keep_original_af=true: two-column TSV of old-name<TAB>new-name passed to `bcftools annotate --rename-annots`. (default: none)"
@@ -42,6 +43,7 @@ task FilterVcfForHmmIBD {
         Boolean keep_original_af = false
         String variant_types = "snps"
         Boolean biallelic_only = true
+        Boolean split_multiallelics = true
         Int max_variants = 0
 
         File? populations_file
@@ -75,19 +77,28 @@ task FilterVcfForHmmIBD {
         echo "NUM_CPUS=${NUM_CPUS}  RAM_IN_GB=${RAM_IN_GB}  USABLE_RAM_GB=${USABLE_RAM_GB}  MEM_PER_THREAD_GB=${MEM_PER_THREAD_GB}  JAVA_MEM_GB=${JAVA_MEM_GB}"
         # ---- end preamble ----
 
-        # Restrict to biallelic SNPs (standard hmmIBD markers; keeps allele count within
-        # hmmibd-rs --max-all) when requested.
-        # Variant-type + biallelic selection. hmmibd-rs can technically use indels (it reads
+        # Variant-type and biallelic selection, kept as separate flags so the type can be
+        # pre-selected BEFORE `norm` (below). hmmibd-rs can technically use indels (it reads
         # allele indices, not allele strings), but Pf indels are error-prone, so SNPs are the
-        # default. Keeping multiallelic sites (biallelic_only=false) — especially indels — can
-        # exceed hmmibd-rs --max-all and crash it until the fork patch lands.
+        # default. Keeping multiallelic sites (biallelic_only=false) can exceed hmmibd-rs
+        # --max-all and crash it until the fork patch lands.
         case "~{variant_types}" in
-            snps)   SELECT_FLAGS="-v snps" ;;
-            indels) SELECT_FLAGS="-v indels" ;;
-            both)   SELECT_FLAGS="" ;;
+            snps)   TYPE_FLAGS="-v snps" ;;
+            indels) TYPE_FLAGS="-v indels" ;;
+            both)   TYPE_FLAGS="" ;;
             *) echo "ERROR: variant_types must be one of: snps, indels, both" >&2 ; exit 1 ;;
         esac
-        if [[ "~{biallelic_only}" == "true" ]] ; then SELECT_FLAGS="-m2 -M2 ${SELECT_FLAGS}" ; fi
+        BIALLELIC_FLAGS=""
+        if [[ "~{biallelic_only}" == "true" ]] ; then BIALLELIC_FLAGS="-m2 -M2" ; fi
+
+        # Split multiallelic records into biallelic ones, so the SNP allele(s) at a multiallelic
+        # or spanning-deletion site are recovered instead of the whole site being discarded by
+        # the biallelic filter. Run AFTER the type pre-select so it only splits SNP/mixed sites,
+        # not the hyper-multiallelic raw indel sites (up to ~250 alleles) that would explode the
+        # record count. `cat` is a no-op passthrough when disabled. (variant_types=both + split
+        # can be slow on multiallelic-heavy cohorts, since nothing is pre-dropped.)
+        NORM_STEP=(cat)
+        if [[ "~{split_multiallelics}" == "true" ]] ; then NORM_STEP=(bcftools norm -m-any -Ou) ; fi
 
         # keeping the original allele frequencies requires a rename map
         if [[ "~{keep_original_af}" == "true" && -z "~{rename_annots_tsv}" ]] ; then
@@ -100,19 +111,24 @@ task FilterVcfForHmmIBD {
         if [[ "~{keep_original_af}" == "true" ]] ; then
             bcftools annotate -x '^FORMAT/GT,FORMAT/AD,FORMAT/DP' -Ou ~{input_vcf} \
               | bcftools filter -S . -e "FMT/DP < ~{min_depth}" -Ou \
+              | bcftools view ${TYPE_FLAGS} -Ou \
+              | "${NORM_STEP[@]}" \
               | bcftools annotate --rename-annots ~{rename_annots_tsv} -Ou \
               | bcftools +fill-tags -Ou -- ~{"-S " + populations_file} -t AN,AC,AF \
-              | bcftools view ${SELECT_FLAGS} --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads ${NUM_CPUS} ~{extra_args} -o ~{prefix}.filtered.bcf
+              | bcftools view ${BIALLELIC_FLAGS} ${TYPE_FLAGS} --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads ${NUM_CPUS} ~{extra_args} -o ~{prefix}.filtered.bcf
         else
-            # Strip original INFO + heavy per-sample FORMAT (PL is Number=G, quadratic in
-            # alleles) up front. hmmibd-rs needs none of it; dropping it makes every
-            # downstream stage far faster on big cohorts (~3x measured), and it removes the
-            # GATK per-allele INFO annotations (e.g. HAPCOMP) whose value counts disagree
-            # with the ALT count and would otherwise abort `bcftools view --trim-alt-alleles`.
+            # First step: strip to only the fields anything downstream uses. hmmibd-rs reads
+            # FORMAT/GT (first-ploidy), FORMAT/AD (dominant-allele), and the FILTER column;
+            # our DP-mask needs FORMAT/DP. Everything else — all INFO, and FORMAT PL (Number=G,
+            # quadratic in alleles) / GQ / phasing — is dropped. This is much smaller and ~3x
+            # faster on big cohorts, and it removes GATK per-allele INFO (e.g. HAPCOMP) with
+            # value counts that disagree with the ALT count and would abort --trim-alt-alleles.
             bcftools annotate -x 'INFO,^FORMAT/GT,FORMAT/AD,FORMAT/DP' -Ou ~{input_vcf} \
               | bcftools filter -S . -e "FMT/DP < ~{min_depth}" -Ou \
+              | bcftools view ${TYPE_FLAGS} -Ou \
+              | "${NORM_STEP[@]}" \
               | bcftools +fill-tags -Ou -- ~{"-S " + populations_file} -t AN,AC,AF \
-              | bcftools view ${SELECT_FLAGS} --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads ${NUM_CPUS} ~{extra_args} -o ~{prefix}.filtered.bcf
+              | bcftools view ${BIALLELIC_FLAGS} ${TYPE_FLAGS} --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads ${NUM_CPUS} ~{extra_args} -o ~{prefix}.filtered.bcf
         fi
 
         bcftools index --threads ${NUM_CPUS} ~{prefix}.filtered.bcf

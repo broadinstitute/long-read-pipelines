@@ -26,6 +26,7 @@ workflow HmmIBD {
         keep_original_af:  "Preserve the original allele-frequency annotations (via rename_annots_tsv) before recomputing AN/AC/AF. (default: false)"
         variant_types:     "Which variant types to keep: 'snps', 'indels', or 'both'. SNPs are the standard hmmIBD marker set. (default: snps)"
         biallelic_only:    "Restrict to biallelic sites. Recommended true: multiallelic sites (especially indels) can exceed hmmibd-rs --max-all and crash it until patched. (default: true)"
+        split_multiallelics: "Split multiallelics into biallelic records (bcftools norm -m-any) to recover SNP alleles from multiallelic/spanning-deletion sites instead of dropping them. (default: true)"
         max_variants:      "Optional cap on the number of variants; when >0, the filtered callset is thinned evenly across the genome to at most this many. (default: 0 = no limit)"
         populations_file:  "Optional sample-to-population file for per-population AN/AC/AF (bcftools +fill-tags -S). (default: none)"
         rename_annots_tsv: "Required when keep_original_af=true: old-name<TAB>new-name TSV for bcftools annotate --rename-annots. (default: none)"
@@ -74,6 +75,7 @@ workflow HmmIBD {
         Boolean keep_original_af = false
         String variant_types = "snps"
         Boolean biallelic_only = true
+        Boolean split_multiallelics = true
         Int max_variants = 0
         File? populations_file
         File? rename_annots_tsv
@@ -127,6 +129,7 @@ workflow HmmIBD {
             keep_original_af    = keep_original_af,
             variant_types       = variant_types,
             biallelic_only      = biallelic_only,
+            split_multiallelics = split_multiallelics,
             max_variants        = max_variants,
             populations_file    = populations_file,
             rename_annots_tsv   = rename_annots_tsv
