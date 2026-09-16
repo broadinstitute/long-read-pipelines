@@ -91,12 +91,15 @@ task FilterVcfForHmmIBD {
         BIALLELIC_FLAGS=""
         if [[ "~{biallelic_only}" == "true" ]] ; then BIALLELIC_FLAGS="-m2 -M2" ; fi
 
-        # Split multiallelic records into biallelic ones, so the SNP allele(s) at a multiallelic
-        # or spanning-deletion site are recovered instead of the whole site being discarded by
-        # the biallelic filter. Run AFTER the type pre-select so it only splits SNP/mixed sites,
-        # not the hyper-multiallelic raw indel sites (up to ~250 alleles) that would explode the
-        # record count. `cat` is a no-op passthrough when disabled. (variant_types=both + split
-        # can be slow on multiallelic-heavy cohorts, since nothing is pre-dropped.)
+        # Split multiallelic records into biallelic ones, so the alleles at a multiallelic or
+        # spanning-deletion site are recovered instead of the whole site being discarded by the
+        # biallelic filter. This runs for EVERY variant_types setting (snps, indels, or both) --
+        # it is not gated to SNPs. It runs after the type pre-select purely for speed: selecting
+        # a type first means norm only splits records of the type(s) you keep (so snps mode never
+        # touches the raw ~250-allele indel sites). With variant_types=both nothing is pre-dropped,
+        # so norm splits everything -- correct, just slower on multiallelic-heavy cohorts. Runs
+        # after the up-front annotation strip, so norm never sees PL or unneeded INFO. `cat` is a
+        # no-op passthrough when disabled.
         NORM_STEP=(cat)
         if [[ "~{split_multiallelics}" == "true" ]] ; then NORM_STEP=(bcftools norm -m-any -Ou) ; fi
 
