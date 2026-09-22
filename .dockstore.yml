@@ -63,6 +63,9 @@ workflows:
 - name: HmmIBD
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/HmmIBD.wdl
+- name: FilterVcfForHmmIBD
+  subclass: wdl
+  primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/FilterVcfForHmmIBD.wdl
 - name: PfalciparumHrp2Hrp3Status
   subclass: wdl
   primaryDescriptorPath: /wdl/pipelines/TechAgnostic/TertiaryAnalysis/PfalciparumHrp2Hrp3Status.wdl

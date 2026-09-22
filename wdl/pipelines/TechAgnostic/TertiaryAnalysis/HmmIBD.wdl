@@ -1,7 +1,7 @@
 version 1.0
 
-import "../../../structs/Structs.wdl"
 import "../../../tasks/TertiaryAnalysis/HmmIBDTasks.wdl" as HMMIBD
+import "FilterVcfForHmmIBD.wdl" as FILTER
 
 workflow HmmIBD {
 
@@ -18,8 +18,11 @@ workflow HmmIBD {
     }
 
     parameter_meta {
-        input_vcf:        "VCF/BCF to infer IBD from. (required)"
+        input_vcf:        "Genotype input. With run_filtration=true: a VCF/BCF to filter then analyze. With run_filtration=false: an already-prepared input fed straight to hmmibd-rs — a VCF/BCF (hmmibd_input_format='bcf'/'vcf') or an hmmIBD text genotype table (hmmibd_input_format='hmmibd_table'). (required)"
         prefix:           "Basename / sample-set name for all outputs. (required)"
+
+        run_filtration:      "Filter input_vcf first via the FilterVcfForHmmIBD workflow (bcftools). Set false to feed input_vcf straight to hmmibd-rs. (default: true)"
+        hmmibd_input_format: "Only used when run_filtration=false: format of input_vcf — 'bcf' or 'vcf' (read via --from-bcf) or 'hmmibd_table' (hmmibd-rs text genotype table). (default: bcf)"
 
         # ---- Step 1: filtration (bcftools) ----
         min_depth:         "Genotypes with FORMAT/DP below this value are set to missing. (default: 5)"
@@ -30,6 +33,7 @@ workflow HmmIBD {
         max_variants:      "Optional cap on the number of variants; when >0, the filtered callset is thinned evenly across the genome to at most this many. (default: 0 = no limit)"
         populations_file:  "Optional sample-to-population file for per-population AN/AC/AF (bcftools +fill-tags -S). (default: none)"
         rename_annots_tsv: "Required when keep_original_af=true: old-name<TAB>new-name TSV for bcftools annotate --rename-annots. (default: none)"
+        filter_extra_args: "Extra `bcftools view` filters added to the final filtration view (e.g. \"-e MAF<0.01\"); whitespace-separated, no internal spaces. Only applied when run_filtration=true. (default: empty)"
 
         # ---- Step 2: hmmibd-rs ----
         data_file2:           "Optional second-population genotypes (-I). (default: none)"
@@ -70,6 +74,9 @@ workflow HmmIBD {
         File input_vcf
         String prefix
 
+        Boolean run_filtration = true
+        String hmmibd_input_format = "bcf"
+
         # ---- Step 1: filtration ----
         Int min_depth = 5
         Boolean keep_original_af = false
@@ -79,6 +86,7 @@ workflow HmmIBD {
         Int max_variants = 0
         File? populations_file
         File? rename_annots_tsv
+        String filter_extra_args = ""
 
         # ---- Step 2: hmmibd-rs ----
         File? data_file2
@@ -120,25 +128,36 @@ workflow HmmIBD {
         Boolean bcf_to_bin_file_by_chromosome = false
     }
 
-    # Step 1: filter the VCF down to the features/samples of interest and recompute allele stats.
-    call HMMIBD.FilterVcfForHmmIBD as t_01_FilterVcfForHmmIBD {
-        input:
-            input_vcf         = input_vcf,
-            prefix            = prefix,
-            min_depth           = min_depth,
-            keep_original_af    = keep_original_af,
-            variant_types       = variant_types,
-            biallelic_only      = biallelic_only,
-            split_multiallelics = split_multiallelics,
-            max_variants        = max_variants,
-            populations_file    = populations_file,
-            rename_annots_tsv   = rename_annots_tsv
+    # Step 1 (optional): filter input_vcf via the standalone FilterVcfForHmmIBD workflow.
+    if (run_filtration) {
+        call FILTER.FilterVcfForHmmIBD as t_01_FilterVcfForHmmIBD {
+            input:
+                input_vcf           = input_vcf,
+                prefix              = prefix,
+                output_format       = "bcf",
+                min_depth           = min_depth,
+                keep_original_af    = keep_original_af,
+                variant_types       = variant_types,
+                biallelic_only      = biallelic_only,
+                split_multiallelics = split_multiallelics,
+                max_variants        = max_variants,
+                populations_file    = populations_file,
+                rename_annots_tsv   = rename_annots_tsv,
+                filter_extra_args   = filter_extra_args
+        }
     }
 
-    # Step 2: infer IBD on the filtered BCF.
+    # Pick the genotype input + read mode for hmmibd-rs:
+    #  - filtered:     feed the filtered BCF via --from-bcf
+    #  - not filtered: feed input_vcf as-is; --from-bcf for a bcf/vcf, text mode for an hmmIBD table
+    File hmmibd_input    = select_first([t_01_FilterVcfForHmmIBD.filtered_bcf, input_vcf])
+    Boolean use_from_bcf = if run_filtration then true else (hmmibd_input_format != "hmmibd_table")
+
+    # Step 2: infer IBD.
     call HMMIBD.HmmIBDrs as t_02_HmmIBDrs {
         input:
-            input_bcf            = t_01_FilterVcfForHmmIBD.filtered_bcf,
+            input_bcf            = hmmibd_input,
+            from_bcf             = use_from_bcf,
             prefix               = prefix,
             data_file2           = data_file2,
             freq_file1           = freq_file1,
@@ -180,6 +199,6 @@ workflow HmmIBD {
         Array[File] ibd_segments     = t_02_HmmIBDrs.ibd_segments
         Array[File] ibd_fraction     = t_02_HmmIBDrs.ibd_fraction
         Array[File] binary_genotypes = t_02_HmmIBDrs.binary_genotypes
-        File filtered_bcf            = t_01_FilterVcfForHmmIBD.filtered_bcf
+        File? filtered_bcf           = t_01_FilterVcfForHmmIBD.filtered_bcf
     }
 }

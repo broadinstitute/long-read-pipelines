@@ -31,7 +31,7 @@ task FilterVcfForHmmIBD {
         max_variants:          "Optional cap on the number of variants kept. When >0 and the filtered callset exceeds it, sites are thinned evenly across the genome down to at most this many (not truncated to the first N). (default: 0 = no limit)"
         populations_file:      "Optional sample-to-population file passed to `bcftools +fill-tags -S`; when given, AN/AC/AF are computed per population. When omitted, tags are computed across all samples. (default: none)"
         rename_annots_tsv:     "Required when keep_original_af=true: two-column TSV of old-name<TAB>new-name passed to `bcftools annotate --rename-annots`. (default: none)"
-        extra_args:            "Additional command-line args appended verbatim to the final bcftools view invocation. (default: empty)"
+        extra_args:            "Additional `bcftools view` filters appended to the FINAL view (after AN/AC/AF are recomputed, so INFO-based expressions like MAF work). Whitespace-separated tokens; write expressions without internal spaces, e.g. \"-e MAF<0.01\" or \"-i F_MISSING<0.1\". Note the final view already applies -i 'MAX(INFO/AC) > 0'; supply extra exclusions with -e (a second -i would override the built-in one). (default: empty)"
         runtime_attr_override: "Override the default runtime attributes. (default: none)"
     }
 
@@ -82,14 +82,24 @@ task FilterVcfForHmmIBD {
         # allele indices, not allele strings), but Pf indels are error-prone, so SNPs are the
         # default. Keeping multiallelic sites (biallelic_only=false) can exceed hmmibd-rs
         # --max-all and crash it until the fork patch lands.
-        case "~{variant_types}" in
-            snps)   TYPE_FLAGS="-v snps" ;;
-            indels) TYPE_FLAGS="-v indels" ;;
-            both)   TYPE_FLAGS="" ;;
+        # Assign to a variable first so shellcheck sees a variable (not a constant) in `case`,
+        # and keep the flag sets as arrays so their expansion is quote-safe (shellcheck-clean).
+        VTYPE="~{variant_types}"
+        case "${VTYPE}" in
+            snps)   TYPE_FLAGS=(-v snps) ;;
+            indels) TYPE_FLAGS=(-v indels) ;;
+            both)   TYPE_FLAGS=() ;;
             *) echo "ERROR: variant_types must be one of: snps, indels, both" >&2 ; exit 1 ;;
         esac
-        BIALLELIC_FLAGS=""
-        if [[ "~{biallelic_only}" == "true" ]] ; then BIALLELIC_FLAGS="-m2 -M2" ; fi
+        BIALLELIC_FLAGS=()
+        if [[ "~{biallelic_only}" == "true" ]] ; then BIALLELIC_FLAGS=(-m2 -M2) ; fi
+
+        # User-supplied extra `bcftools view` filters (e.g. "-e MAF<0.01" or "-i F_MISSING<0.1").
+        # Word-split into an array so multiple tokens pass through cleanly under set -u and quoted
+        # expansion. Tokens are whitespace-separated, so write expressions without internal spaces
+        # (bcftools accepts e.g. -e MAF<0.01). Applied in the FINAL view, after AN/AC/AF are
+        # recomputed, so INFO-based expressions work. Empty by default.
+        read -r -a EXTRA_ARGS <<< "~{extra_args}"
 
         # Split multiallelic records into biallelic ones, so the alleles at a multiallelic or
         # spanning-deletion site are recovered instead of the whole site being discarded by the
@@ -114,11 +124,11 @@ task FilterVcfForHmmIBD {
         if [[ "~{keep_original_af}" == "true" ]] ; then
             bcftools annotate -x '^FORMAT/GT,FORMAT/AD,FORMAT/DP' -Ou ~{input_vcf} \
               | bcftools filter -S . -e "FMT/DP < ~{min_depth}" -Ou \
-              | bcftools view ${TYPE_FLAGS} -Ou \
+              | bcftools view "${TYPE_FLAGS[@]}" -Ou \
               | "${NORM_STEP[@]}" \
               | bcftools annotate --rename-annots ~{rename_annots_tsv} -Ou \
               | bcftools +fill-tags -Ou -- ~{"-S " + populations_file} -t AN,AC,AF \
-              | bcftools view ${BIALLELIC_FLAGS} ${TYPE_FLAGS} --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads ${NUM_CPUS} ~{extra_args} -o ~{prefix}.filtered.bcf
+              | bcftools view "${BIALLELIC_FLAGS[@]}" "${TYPE_FLAGS[@]}" --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads "${NUM_CPUS}" -o ~{prefix}.filtered.bcf
         else
             # First step: strip to only the fields anything downstream uses. hmmibd-rs reads
             # FORMAT/GT (first-ploidy), FORMAT/AD (dominant-allele), and the FILTER column;
@@ -128,13 +138,21 @@ task FilterVcfForHmmIBD {
             # value counts that disagree with the ALT count and would abort --trim-alt-alleles.
             bcftools annotate -x 'INFO,^FORMAT/GT,FORMAT/AD,FORMAT/DP' -Ou ~{input_vcf} \
               | bcftools filter -S . -e "FMT/DP < ~{min_depth}" -Ou \
-              | bcftools view ${TYPE_FLAGS} -Ou \
+              | bcftools view "${TYPE_FLAGS[@]}" -Ou \
               | "${NORM_STEP[@]}" \
               | bcftools +fill-tags -Ou -- ~{"-S " + populations_file} -t AN,AC,AF \
-              | bcftools view ${BIALLELIC_FLAGS} ${TYPE_FLAGS} --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads ${NUM_CPUS} ~{extra_args} -o ~{prefix}.filtered.bcf
+              | bcftools view "${BIALLELIC_FLAGS[@]}" "${TYPE_FLAGS[@]}" --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads "${NUM_CPUS}" -o ~{prefix}.filtered.bcf
         fi
 
-        bcftools index --threads ${NUM_CPUS} ~{prefix}.filtered.bcf
+        # Apply user-supplied extra filters as a SEPARATE view: `bcftools view` accepts only one
+        # -i/-e expression and the view above already uses -i 'MAX(INFO/AC) > 0', so a user -i/-e
+        # (or any other view-level filter) must run as its own pass here, on the recomputed callset.
+        if [[ ${#EXTRA_ARGS[@]} -gt 0 ]] ; then
+            bcftools view "${EXTRA_ARGS[@]}" -Ob --threads "${NUM_CPUS}" ~{prefix}.filtered.bcf -o ~{prefix}.filtered.extra.bcf
+            mv ~{prefix}.filtered.extra.bcf ~{prefix}.filtered.bcf
+        fi
+
+        bcftools index --threads "${NUM_CPUS}" ~{prefix}.filtered.bcf
 
         # Optional cap on the number of variants (off when max_variants <= 0). When the
         # filtered callset has more sites than max_variants, thin it evenly across the
@@ -149,9 +167,9 @@ task FilterVcfForHmmIBD {
                   | awk -v s="${STRIDE}" -v m=~{max_variants} '
                         /^#/ { print; next }
                         { n++; if (((n - 1) % s) == 0 && k < m) { print; k++ } }' \
-                  | bcftools view -Ob --threads ${NUM_CPUS} -o ~{prefix}.filtered.capped.bcf
+                  | bcftools view -Ob --threads "${NUM_CPUS}" -o ~{prefix}.filtered.capped.bcf
                 mv ~{prefix}.filtered.capped.bcf ~{prefix}.filtered.bcf
-                bcftools index -f --threads ${NUM_CPUS} ~{prefix}.filtered.bcf
+                bcftools index -f --threads "${NUM_CPUS}" ~{prefix}.filtered.bcf
                 echo "variant cap: retained $(bcftools index -n ~{prefix}.filtered.bcf) variants (stride ${STRIDE})"
             fi
         fi
@@ -204,8 +222,9 @@ task HmmIBDrs {
     }
 
     parameter_meta {
-        input_bcf:             "Filtered BCF to run IBD on (read via hmmibd-rs --from-bcf; requires FORMAT/AD under the default read mode). (required)"
+        input_bcf:             "Genotype input for hmmibd-rs. With from_bcf=true (default): a BCF/VCF read via --from-bcf. With from_bcf=false: an hmmIBD text genotype table (-i), e.g. from BcfToHmmIBDTable. (required)"
         prefix:                "Output prefix; produces <prefix>.hmm.txt and <prefix>.hmm_fract.txt. (required)"
+        from_bcf:              "Read the input as BCF/VCF (--from-bcf, applies --bcf-read-mode). Set false to read a pre-built hmmIBD text genotype table instead. (default: true)"
 
         data_file2:            "Optional second-population genotypes (-I/--data-file2). (default: none)"
         freq_file1:            "Optional allele-frequency file for population 1 (-f/--freq-file1); computed from data when omitted. (default: none)"
@@ -261,6 +280,7 @@ task HmmIBDrs {
         File? bcf_filter_config
         File? genome
 
+        Boolean from_bcf = true
         String bcf_read_mode = "dominant-allele"
 
         Int max_iter = 5
@@ -300,6 +320,8 @@ task HmmIBDrs {
 
     # --genome and -r/--rec-rate are mutually exclusive; genome wins when supplied.
     String recombination_arg = if defined(genome) then "--genome " + select_first([genome]) else "-r " + rec_rate
+    # --bcf-read-mode only applies when reading a BCF/VCF; omit it in text-table mode.
+    String read_mode_arg = if from_bcf then "--bcf-read-mode " + bcf_read_mode else ""
 
     command <<<
         set -euxo pipefail
@@ -323,10 +345,10 @@ task HmmIBDrs {
         # ---- end preamble ----
 
         hmmibd-rs \
-            --from-bcf \
+            ~{true="--from-bcf" false="" from_bcf} \
             -i ~{input_bcf} \
             -o ~{prefix} \
-            --bcf-read-mode ~{bcf_read_mode} \
+            ~{read_mode_arg} \
             ~{"-I " + data_file2} \
             ~{"-f " + freq_file1} \
             ~{"-F " + freq_file2} \
@@ -375,6 +397,161 @@ task HmmIBDrs {
         preemptible_tries:  1,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-hmmibd-rs:0.1.5"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task BcfToVcf {
+
+    meta {
+        description: "Re-emit a BCF as a bgzipped, tabix-indexed VCF (bcftools view -Oz). Convenience conversion so the filtration workflow can hand back a VCF."
+
+        tool:          "bcftools"
+        tool_version:  "1.22"
+        tool_url:      "https://www.htslib.org/"
+
+        author: "Jonn Smith"
+
+        outputs: {
+            filtered_vcf:       "The input BCF re-emitted as a bgzipped VCF",
+            filtered_vcf_index: "Tabix (.tbi) index for filtered_vcf"
+        }
+    }
+
+    parameter_meta {
+        input_bcf:             "BCF (or VCF) to re-emit as bgzipped VCF. (required)"
+        prefix:                "Basename for the output VCF. (required)"
+        runtime_attr_override: "Override the default runtime attributes. (default: none)"
+    }
+
+    input {
+        File input_bcf
+        String prefix
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 10 + ceil(5.0 * size(input_bcf, "GB"))
+
+    command <<<
+        set -euxo pipefail
+        NUM_CPUS=$(grep -c '^processor' /proc/cpuinfo)
+
+        bcftools view "~{input_bcf}" -Oz --threads "${NUM_CPUS}" -o "~{prefix}.filtered.vcf.gz"
+        bcftools index -t --threads "${NUM_CPUS}" "~{prefix}.filtered.vcf.gz"
+    >>>
+
+    output {
+        File filtered_vcf       = "~{prefix}.filtered.vcf.gz"
+        File filtered_vcf_index = "~{prefix}.filtered.vcf.gz.tbi"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       25,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.3"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task BcfToHmmIBDTable {
+
+    meta {
+        description: "Convert a bi-allelic BCF/VCF to the hmmIBD text genotype table: a tab-delimited matrix with columns chrom(int) pos then one call per sample, alleles coded 0/1/... and -1 for missing, using the first allele of each GT (matches hmmibd-rs --bcf-read-mode first-ploidy). Also emits a matching bi-allelic allele-frequency file (same sites and order) computed from the matrix, so it can be supplied to both hmmIBD and hmmibd-rs. Non-numeric contigs (MIT/API) are dropped because hmmIBD requires integer chromosomes."
+
+        tool:          "bcftools"
+        tool_version:  "1.22"
+        tool_url:      "https://www.htslib.org/"
+
+        author: "Jonn Smith"
+
+        outputs: {
+            hmmibd_gt_table:   "hmmIBD text genotype table (<prefix>.hmmibd_gt.txt); hmmibd-rs input in text mode (from_bcf=false)",
+            hmmibd_freq_table: "Bi-allelic allele-frequency file (<prefix>.hmmibd_freq.txt), same sites/order as the genotype table"
+        }
+    }
+
+    parameter_meta {
+        input_bcf:             "Bi-allelic, SNP-filtered BCF/VCF (as produced by FilterVcfForHmmIBD) to convert. (required)"
+        prefix:                "Basename for the output tables. (required)"
+        runtime_attr_override: "Override the default runtime attributes. (default: none)"
+    }
+
+    input {
+        File input_bcf
+        String prefix
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 10 + ceil(5.0 * size(input_bcf, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        GT="~{prefix}.hmmibd_gt.txt"
+        FRQ="~{prefix}.hmmibd_freq.txt"
+
+        # header: chrom  pos  <sample1> <sample2> ...
+        { printf 'chrom\tpos'; bcftools query -l "~{input_bcf}" | awk '{printf "\t%s", $0}'; printf '\n'; } > "${GT}"
+
+        # body: integer chrom, pos, first-allele call per sample (-1 missing)
+        bcftools query -f '%CHROM\t%POS[\t%GT]\n' "~{input_bcf}" | awk 'BEGIN{FS=OFS="\t"}
+        {
+            c=$1; sub(/^Pf3D7_/,"",c); sub(/_v[0-9]+$/,"",c)   # Pf3D7_01_v3 -> 01
+            if (c !~ /^[0-9]+$/) next                          # drop non-numeric contigs
+            printf "%d\t%d", c+0, $2
+            for (i=3;i<=NF;i++){ n=split($i,a,/[\/|]/); g=a[1]; if (g=="."||g=="") g=-1; printf "\t%s", g }
+            printf "\n"
+        }' >> "${GT}"
+
+        # bi-allelic allele frequencies from the matrix (identical sites and order)
+        awk 'NR==1{next}
+        {
+            c0=0; c1=0; n=0
+            for (i=3;i<=NF;i++){ if($i=="0"){c0++;n++} else if($i=="1"){c1++;n++} }
+            if (n==0){ f0=1; f1=0 } else { f0=c0/n; f1=c1/n }
+            printf "%s\t%s\t%.6f\t%.6f\n", $1, $2, f0, f1
+        }' "${GT}" > "${FRQ}"
+
+        echo "variants: $(( $(wc -l < "${GT}") - 1 )); samples: $(( $(head -1 "${GT}" | awk '{print NF}') - 2 ))"
+    >>>
+
+    output {
+        File hmmibd_gt_table   = "~{prefix}.hmmibd_gt.txt"
+        File hmmibd_freq_table = "~{prefix}.hmmibd_freq.txt"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       25,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
