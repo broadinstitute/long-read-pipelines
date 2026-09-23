@@ -494,8 +494,8 @@ task BcfToHmmIBDTable {
         author: "Jonn Smith"
 
         outputs: {
-            hmmibd_gt_table:   "hmmIBD text genotype table (<prefix>.hmmibd_gt.txt); hmmibd-rs input in text mode (from_bcf=false)",
-            hmmibd_freq_table: "Bi-allelic allele-frequency file (<prefix>.hmmibd_freq.txt), same sites/order as the genotype table"
+            sample_gt_table:   "hmmIBD text genotype table (<prefix>.hmmibd_gt.txt); hmmibd-rs input in text mode (from_bcf=false)",
+            sample_freq_table: "Bi-allelic allele-frequency file (<prefix>.hmmibd_freq.txt), same sites/order as the genotype table"
         }
     }
 
@@ -545,8 +545,8 @@ task BcfToHmmIBDTable {
     >>>
 
     output {
-        File hmmibd_gt_table   = "~{prefix}.hmmibd_gt.txt"
-        File hmmibd_freq_table = "~{prefix}.hmmibd_freq.txt"
+        File sample_gt_table   = "~{prefix}.hmmibd_gt.txt"
+        File sample_freq_table = "~{prefix}.hmmibd_freq.txt"
     }
 
     #########################

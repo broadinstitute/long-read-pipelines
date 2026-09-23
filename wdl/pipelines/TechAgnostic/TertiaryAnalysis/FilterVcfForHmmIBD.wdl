@@ -14,8 +14,8 @@ workflow FilterVcfForHmmIBD {
             filtered_bcf_index: "CSI index for filtered_bcf",
             filtered_vcf:       "Filtered callset as a bgzipped VCF; only when output_format='vcf'",
             filtered_vcf_index: "Tabix index for filtered_vcf; only when output_format='vcf'",
-            hmmibd_gt_table:    "hmmIBD text genotype table; only when output_format='hmmibd_table'",
-            hmmibd_freq_table:  "Matching bi-allelic allele-frequency file; only when output_format='hmmibd_table'"
+            sample_gt_table:    "hmmIBD text genotype table; only when output_format='hmmibd_table'",
+            sample_freq_table:  "Matching bi-allelic allele-frequency file; only when output_format='hmmibd_table'"
         }
     }
 
@@ -101,7 +101,7 @@ workflow FilterVcfForHmmIBD {
         File filtered_bcf_index  = t_01_Filter.filtered_bcf_index
         File? filtered_vcf       = t_02_ToVcf.filtered_vcf
         File? filtered_vcf_index = t_02_ToVcf.filtered_vcf_index
-        File? hmmibd_gt_table    = t_02_ToTable.hmmibd_gt_table
-        File? hmmibd_freq_table  = t_02_ToTable.hmmibd_freq_table
+        File? sample_gt_table    = t_02_ToTable.sample_gt_table
+        File? sample_freq_table  = t_02_ToTable.sample_freq_table
     }
 }
