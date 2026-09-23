@@ -61,6 +61,9 @@ task FilterVcfForHmmIBD {
     # Genotype mask: always drop low-depth genotypes; optionally also drop GQ0 genotypes
     # (see mask_gq0_genotypes / GATK issue #7792). bcftools sets matching genotypes to ./. (-S .).
     String gt_mask_expr = if mask_gq0_genotypes then "FMT/DP < " + min_depth + " | FMT/GQ = 0" else "FMT/DP < " + min_depth
+    # FORMAT fields to KEEP in the up-front strip. GQ is normally dropped, but must survive when
+    # mask_gq0_genotypes needs it in gt_mask_expr below (otherwise bcftools errors: GQ not in header).
+    String fmt_keep = if mask_gq0_genotypes then "^FORMAT/GT,FORMAT/AD,FORMAT/DP,FORMAT/GQ" else "^FORMAT/GT,FORMAT/AD,FORMAT/DP"
 
     command <<<
         set -euxo pipefail
@@ -128,7 +131,7 @@ task FilterVcfForHmmIBD {
         # Mask low-depth genotypes, (optionally) preserve original AF via rename, recompute
         # AN/AC/AF (optionally per population), then trim now-unrepresented alt alleles/sites.
         if [[ "~{keep_original_af}" == "true" ]] ; then
-            bcftools annotate -x '^FORMAT/GT,FORMAT/AD,FORMAT/DP' -Ou ~{input_vcf} \
+            bcftools annotate -x '~{fmt_keep}' -Ou ~{input_vcf} \
               | bcftools filter -S . -e "~{gt_mask_expr}" -Ou \
               | bcftools view "${TYPE_FLAGS[@]}" -Ou \
               | "${NORM_STEP[@]}" \
@@ -142,7 +145,7 @@ task FilterVcfForHmmIBD {
             # quadratic in alleles) / GQ / phasing — is dropped. This is much smaller and ~3x
             # faster on big cohorts, and it removes GATK per-allele INFO (e.g. HAPCOMP) with
             # value counts that disagree with the ALT count and would abort --trim-alt-alleles.
-            bcftools annotate -x 'INFO,^FORMAT/GT,FORMAT/AD,FORMAT/DP' -Ou ~{input_vcf} \
+            bcftools annotate -x 'INFO,~{fmt_keep}' -Ou ~{input_vcf} \
               | bcftools filter -S . -e "~{gt_mask_expr}" -Ou \
               | bcftools view "${TYPE_FLAGS[@]}" -Ou \
               | "${NORM_STEP[@]}" \
