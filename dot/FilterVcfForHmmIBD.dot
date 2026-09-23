@@ -1,0 +1,19 @@
+// FilterVcfForHmmIBD
+digraph {
+	compound=true rankdir=LR
+	node [fontname=Roboto]
+	edge [color="#00000080"]
+	"call-t_01_Filter" [label=t_01_Filter shape=cds]
+	subgraph "cluster-if-L81C5" {
+		fontname=Roboto label="if(output_format == \"vcf\")" rank=same
+		"call-t_02_ToVcf" [label=t_02_ToVcf shape=cds]
+		"if-L81C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	subgraph "cluster-if-L90C5" {
+		fontname=Roboto label="if(output_format == \"hmmibd_table\")" rank=same
+		"call-t_02_ToTable" [label=t_02_ToTable shape=cds]
+		"if-L90C5" [label="" height=0 margin=0 style=invis width=0]
+	}
+	"call-t_01_Filter" -> "call-t_02_ToVcf"
+	"call-t_01_Filter" -> "call-t_02_ToTable"
+}

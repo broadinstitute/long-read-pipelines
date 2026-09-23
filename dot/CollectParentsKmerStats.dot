@@ -16,6 +16,6 @@ digraph {
 	"call-ParentalReadsRepartitionAndMerylConfigure" -> "call-MerylCount"
 	"call-PrintMerylMemory" -> "call-MerylCount"
 	"call-ParentalReadsRepartitionAndMerylConfigure" -> "call-MerylMergeAndSubtract"
-	"call-MerylCount" -> "call-MerylMergeAndSubtract"
 	"call-PrintMerylMemory" -> "call-MerylMergeAndSubtract"
+	"call-MerylCount" -> "call-MerylMergeAndSubtract"
 }

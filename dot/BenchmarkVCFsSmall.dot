@@ -102,13 +102,13 @@ digraph {
 	"call-CreateIntervalList" -> "call-StratConvertIntervals"
 	"call-StratConvertIntervals" -> "decl-stratBeds"
 	"call-StratConvertIntervals" -> "decl-stratILs"
-	"decl-stratBeds" -> "scatter-L197C5-strat" [lhead="cluster-scatter-L197C5-strat"]
 	"decl-stratILs" -> "scatter-L197C5-strat" [lhead="cluster-scatter-L197C5-strat"]
+	"decl-stratBeds" -> "scatter-L197C5-strat" [lhead="cluster-scatter-L197C5-strat"]
 	"call-CreateIntervalList" -> "call-ConfidenceConvertIntervals"
 	"call-ConfidenceConvertIntervals" -> "call-CheckForVariantsEval"
 	"call-ConfidenceConvertIntervals" -> "call-CheckForVariantsTruth"
-	"call-CheckForVariantsEval" -> "if-L247C9" [lhead="cluster-if-L247C9"]
 	"call-CheckForVariantsTruth" -> "if-L247C9" [lhead="cluster-if-L247C9"]
+	"call-CheckForVariantsEval" -> "if-L247C9" [lhead="cluster-if-L247C9"]
 	"decl-outputPrefix" -> "call-StandardVcfEval"
 	"call-ConfidenceConvertIntervals" -> "call-StandardVcfEval"
 	"call-StandardVcfEval" -> "call-VcfEvalWriteXMLfile"
@@ -116,22 +116,22 @@ digraph {
 	"call-ConfidenceConvertIntervals" -> "call-VcfEvalWriteXMLfile"
 	"call-StandardVcfEval" -> "call-CountUNKVcfEval"
 	"call-StandardVcfEval" -> "call-EvalIndelLengthAllBins"
-	"call-CheckForVariantsEval" -> "decl-areVariants"
 	"call-CheckForVariantsTruth" -> "decl-areVariants"
+	"call-CheckForVariantsEval" -> "decl-areVariants"
+	"call-StandardVcfEval" -> "call-SummariseVcfEval"
 	"call-VcfEvalWriteXMLfile" -> "call-SummariseVcfEval"
 	"decl-areVariants" -> "call-SummariseVcfEval"
 	"call-CountUNKVcfEval" -> "call-SummariseVcfEval"
-	"call-StandardVcfEval" -> "call-SummariseVcfEval"
-	"decl-outputPrefix" -> "decl-annotatedVcfsList"
 	"call-StandardVcfEval" -> "decl-annotatedVcfsList"
+	"decl-outputPrefix" -> "decl-annotatedVcfsList"
 	"call-ConfidenceConvertIntervals" -> "decl-annotatedVcfsList"
-	"decl-annotatedVcfsList" -> "scatter-L350C5-selectorCombo" [lhead="cluster-scatter-L350C5-selectorCombo"]
 	"decl-actualVariantSelectors" -> "scatter-L350C5-selectorCombo" [lhead="cluster-scatter-L350C5-selectorCombo"]
+	"decl-annotatedVcfsList" -> "scatter-L350C5-selectorCombo" [lhead="cluster-scatter-L350C5-selectorCombo"]
 	"call-EvalSelectorVcfEval" -> "call-VcfEvalSelectorWriteXMLfile"
 	"call-VcfEvalSelectorWriteXMLfile" -> "call-VcfEvalSummariseForVariantSelection"
 	"call-EvalSelectorVcfEval" -> "call-VcfEvalSummariseForVariantSelection"
+	"call-EvalIndelLengthAllBins" -> "decl-summaries"
 	"call-VcfEvalSummariseForVariantSelection" -> "decl-summaries"
 	"call-SummariseVcfEval" -> "decl-summaries"
-	"call-EvalIndelLengthAllBins" -> "decl-summaries"
 	"decl-summaries" -> "call-CombineSummaries"
 }

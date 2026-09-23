@@ -29,9 +29,9 @@ digraph {
 	"call-Basecall" -> "call-MakeFinalSummary"
 	"call-TimestampStopped" -> "call-MakeFinalSummary"
 	"call-Basecall" -> "call-UniqueBarcodes"
-	"call-UniqueBarcodes" -> "call-FinalizeBasecalls"
-	"call-MakeSequencingSummary" -> "call-FinalizeBasecalls"
-	"call-MakeFinalSummary" -> "call-FinalizeBasecalls"
 	"call-Basecall" -> "call-FinalizeBasecalls"
+	"call-MakeFinalSummary" -> "call-FinalizeBasecalls"
+	"call-MakeSequencingSummary" -> "call-FinalizeBasecalls"
 	"decl-gcs_out_dir" -> "call-FinalizeBasecalls"
+	"call-UniqueBarcodes" -> "call-FinalizeBasecalls"
 }
