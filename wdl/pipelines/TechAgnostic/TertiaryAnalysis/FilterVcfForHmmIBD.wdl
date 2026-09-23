@@ -30,6 +30,7 @@ workflow FilterVcfForHmmIBD {
         biallelic_only:      "Restrict to biallelic sites. (default: true)"
         split_multiallelics: "Split multiallelics into biallelic records to recover SNP alleles. (default: true)"
         max_variants:        "Optional cap; when >0 the callset is thinned evenly to at most this many variants. (default: 0 = no limit)"
+        mask_gq0_genotypes:  "Also set GQ0 genotypes to missing (beyond the DP < min_depth mask). Reproduces the GATK GQ0-hom-ref fix (issue #7792 / PR #8741) for VCFs from pre-4.6.0.0 GenotypeGVCFs or GnarlyGenotyper, where no-/low-confidence hom-refs are 0/0:GQ=0 instead of ./. — the DP mask alone misses GQ0 calls with DP >= min_depth. Conservative: drops all GQ0 hom-refs (use a GVCF cross-reference to keep well-covered ones). (default: false)"
         populations_file:    "Optional sample-to-population file for per-population AN/AC/AF. (default: none)"
         rename_annots_tsv:   "Required when keep_original_af=true: old-name<TAB>new-name TSV. (default: none)"
         filter_extra_args:   "Additional args appended verbatim to the final bcftools view invocation. (default: empty)"
@@ -49,6 +50,7 @@ workflow FilterVcfForHmmIBD {
         Boolean biallelic_only = true
         Boolean split_multiallelics = true
         Int max_variants = 0
+        Boolean mask_gq0_genotypes = false
         File? populations_file
         File? rename_annots_tsv
         String filter_extra_args = ""
@@ -68,6 +70,7 @@ workflow FilterVcfForHmmIBD {
             biallelic_only      = biallelic_only,
             split_multiallelics = split_multiallelics,
             max_variants        = max_variants,
+            mask_gq0_genotypes  = mask_gq0_genotypes,
             populations_file    = populations_file,
             rename_annots_tsv   = rename_annots_tsv,
             extra_args          = filter_extra_args,

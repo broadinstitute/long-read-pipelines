@@ -29,6 +29,7 @@ task FilterVcfForHmmIBD {
         biallelic_only:        "Restrict to biallelic sites (bcftools view -m2 -M2). Recommended true: multiallelic sites (especially indels) can exceed hmmibd-rs --max-all and crash it until that is patched. (default: true)"
         split_multiallelics:   "Split multiallelic records into biallelic ones (bcftools norm -m-any) so SNP alleles at multiallelic/spanning-deletion sites are recovered rather than dropped. Runs after the type pre-select to stay fast. (default: true)"
         max_variants:          "Optional cap on the number of variants kept. When >0 and the filtered callset exceeds it, sites are thinned evenly across the genome down to at most this many (not truncated to the first N). (default: 0 = no limit)"
+        mask_gq0_genotypes:    "Also set GQ0 genotypes to missing (in addition to the FORMAT/DP < min_depth mask). Older GATK (pre-4.6.0.0 GenotypeGVCFs; also GnarlyGenotyper) emitted no-/low-confidence hom-refs as 0/0 with GQ=0 instead of ./. (GATK issue #7792, fixed in PR #8741). Turning this on reproduces that fix downstream — the DP mask alone misses GQ0 calls whose DP >= min_depth. NOTE: this is the conservative choice — it drops ALL GQ0 hom-refs, including any that are genuinely well-covered ref; use a GVCF cross-reference if you need to keep those. (default: false)"
         populations_file:      "Optional sample-to-population file passed to `bcftools +fill-tags -S`; when given, AN/AC/AF are computed per population. When omitted, tags are computed across all samples. (default: none)"
         rename_annots_tsv:     "Required when keep_original_af=true: two-column TSV of old-name<TAB>new-name passed to `bcftools annotate --rename-annots`. (default: none)"
         extra_args:            "Additional `bcftools view` filters appended to the FINAL view (after AN/AC/AF are recomputed, so INFO-based expressions like MAF work). Whitespace-separated tokens; write expressions without internal spaces, e.g. \"-e MAF<0.01\" or \"-i F_MISSING<0.1\". Note the final view already applies -i 'MAX(INFO/AC) > 0'; supply extra exclusions with -e (a second -i would override the built-in one). (default: empty)"
@@ -45,6 +46,7 @@ task FilterVcfForHmmIBD {
         Boolean biallelic_only = true
         Boolean split_multiallelics = true
         Int max_variants = 0
+        Boolean mask_gq0_genotypes = false
 
         File? populations_file
         File? rename_annots_tsv
@@ -55,6 +57,10 @@ task FilterVcfForHmmIBD {
     }
 
     Int disk_size = 10 + ceil(5.0 * size(input_vcf, "GB"))
+
+    # Genotype mask: always drop low-depth genotypes; optionally also drop GQ0 genotypes
+    # (see mask_gq0_genotypes / GATK issue #7792). bcftools sets matching genotypes to ./. (-S .).
+    String gt_mask_expr = if mask_gq0_genotypes then "FMT/DP < " + min_depth + " | FMT/GQ = 0" else "FMT/DP < " + min_depth
 
     command <<<
         set -euxo pipefail
@@ -123,7 +129,7 @@ task FilterVcfForHmmIBD {
         # AN/AC/AF (optionally per population), then trim now-unrepresented alt alleles/sites.
         if [[ "~{keep_original_af}" == "true" ]] ; then
             bcftools annotate -x '^FORMAT/GT,FORMAT/AD,FORMAT/DP' -Ou ~{input_vcf} \
-              | bcftools filter -S . -e "FMT/DP < ~{min_depth}" -Ou \
+              | bcftools filter -S . -e "~{gt_mask_expr}" -Ou \
               | bcftools view "${TYPE_FLAGS[@]}" -Ou \
               | "${NORM_STEP[@]}" \
               | bcftools annotate --rename-annots ~{rename_annots_tsv} -Ou \
@@ -137,7 +143,7 @@ task FilterVcfForHmmIBD {
             # faster on big cohorts, and it removes GATK per-allele INFO (e.g. HAPCOMP) with
             # value counts that disagree with the ALT count and would abort --trim-alt-alleles.
             bcftools annotate -x 'INFO,^FORMAT/GT,FORMAT/AD,FORMAT/DP' -Ou ~{input_vcf} \
-              | bcftools filter -S . -e "FMT/DP < ~{min_depth}" -Ou \
+              | bcftools filter -S . -e "~{gt_mask_expr}" -Ou \
               | bcftools view "${TYPE_FLAGS[@]}" -Ou \
               | "${NORM_STEP[@]}" \
               | bcftools +fill-tags -Ou -- ~{"-S " + populations_file} -t AN,AC,AF \
