@@ -228,7 +228,7 @@ task HmmIBDrs {
     }
 
     parameter_meta {
-        input_bcf:             "Genotype input for hmmibd-rs. With from_bcf=true (default): a BCF/VCF read via --from-bcf. With from_bcf=false: an hmmIBD text genotype table (-i), e.g. from BcfToHmmIBDTable. (required)"
+        input_bcf:             "Genotype input for hmmibd-rs. With from_bcf=true (default): a BCF/VCF read via --from-bcf. With from_bcf=false: an hmmIBD text genotype table (-i), e.g. from BcfToSampleTable. (required)"
         prefix:                "Output prefix; produces <prefix>.hmm.txt and <prefix>.hmm_fract.txt. (required)"
         from_bcf:              "Read the input as BCF/VCF (--from-bcf, applies --bcf-read-mode). Set false to read a pre-built hmmIBD text genotype table instead. (default: true)"
 
@@ -482,7 +482,7 @@ task BcfToVcf {
     }
 }
 
-task BcfToHmmIBDTable {
+task BcfToSampleTable {
 
     meta {
         description: "Convert a bi-allelic BCF/VCF to the hmmIBD text genotype table: a tab-delimited matrix with columns chrom(int) pos then one call per sample, alleles coded 0/1/... and -1 for missing, using the first allele of each GT (matches hmmibd-rs --bcf-read-mode first-ploidy). Also emits a matching bi-allelic allele-frequency file (same sites and order) computed from the matrix, so it can be supplied to both hmmIBD and hmmibd-rs. Non-numeric contigs (MIT/API) are dropped because hmmIBD requires integer chromosomes."
@@ -494,8 +494,8 @@ task BcfToHmmIBDTable {
         author: "Jonn Smith"
 
         outputs: {
-            sample_gt_table:   "hmmIBD text genotype table (<prefix>.hmmibd_gt.txt); hmmibd-rs input in text mode (from_bcf=false)",
-            sample_freq_table: "Bi-allelic allele-frequency file (<prefix>.hmmibd_freq.txt), same sites/order as the genotype table"
+            sample_gt_table:   "hmmIBD text genotype table (<prefix>.sample_gt.txt); hmmibd-rs input in text mode (from_bcf=false)",
+            sample_freq_table: "Bi-allelic allele-frequency file (<prefix>.sample_freq.txt), same sites/order as the genotype table"
         }
     }
 
@@ -516,8 +516,8 @@ task BcfToHmmIBDTable {
     command <<<
         set -euxo pipefail
 
-        GT="~{prefix}.hmmibd_gt.txt"
-        FRQ="~{prefix}.hmmibd_freq.txt"
+        GT="~{prefix}.sample_gt.txt"
+        FRQ="~{prefix}.sample_freq.txt"
 
         # header: chrom  pos  <sample1> <sample2> ...
         { printf 'chrom\tpos'; bcftools query -l "~{input_bcf}" | awk '{printf "\t%s", $0}'; printf '\n'; } > "${GT}"
@@ -545,8 +545,8 @@ task BcfToHmmIBDTable {
     >>>
 
     output {
-        File sample_gt_table   = "~{prefix}.hmmibd_gt.txt"
-        File sample_freq_table = "~{prefix}.hmmibd_freq.txt"
+        File sample_gt_table   = "~{prefix}.sample_gt.txt"
+        File sample_freq_table = "~{prefix}.sample_freq.txt"
     }
 
     #########################

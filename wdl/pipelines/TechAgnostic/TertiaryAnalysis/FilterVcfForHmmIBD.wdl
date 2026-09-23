@@ -88,7 +88,7 @@ workflow FilterVcfForHmmIBD {
     }
 
     if (output_format == "hmmibd_table") {
-        call HMMIBD.BcfToHmmIBDTable as t_02_ToTable {
+        call HMMIBD.BcfToSampleTable as t_02_ToTable {
             input:
                 input_bcf = t_01_Filter.filtered_bcf,
                 prefix    = prefix,
