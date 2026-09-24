@@ -573,3 +573,121 @@ task BcfToSampleTable {
         docker:                 select_first([runtime_attr.docker,            default_attr.docker])
     }
 }
+
+task StitchHmmIBDTables {
+
+    meta {
+        description: "Combine many per-region hmmIBD genotype tables (one per input VCF, as produced by BcfToSampleTable) into a SINGLE hmmIBD table + matching allele-frequency file for hmmibd-rs. This is the scalable combine step: each huge input VCF is first reduced to its compact integer genotype table, and only these small tables are stitched here — a merged multi-hundred-GB BCF is never materialized. Assumes every input table carries the SAME samples in the SAME column order (i.e. the input VCFs are disjoint regions of ONE joint call, split across files); the sample headers are verified identical and the task aborts if they differ. Rows (sites) from all tables are concatenated and coordinate-sorted by integer chrom then pos (hmmibd-rs assumes sorted input); the allele-frequency file is recomputed on the COMBINED matrix (valid because every table holds the full sample set) so no cross-file reconciliation is needed. An optional max_variants cap is applied to the combined, genome-wide callset (thinned by even stride, not truncated). Input regions are expected to be non-overlapping; same-position rows (e.g. a SNP and an indel from variant_types=both) are left in place and handled downstream by hmmibd-rs --min-snp-sep."
+
+        tool:          "coreutils"
+        tool_url:      "https://www.gnu.org/software/coreutils/"
+
+        author: "Jonn Smith"
+
+        outputs: {
+            sample_gt_table:   "Combined hmmIBD text genotype table (<prefix>.sample_gt.txt): all input sites, coordinate-sorted, one first-allele call per sample (-1 missing)",
+            sample_freq_table: "Combined bi-allelic allele-frequency file (<prefix>.sample_freq.txt), same sites/order as the genotype table, recomputed across all samples"
+        }
+    }
+
+    parameter_meta {
+        gt_tables:             "hmmIBD genotype tables to combine, one per input VCF (from BcfToSampleTable / FilterVcfForHmmIBD output_format='hmmibd_table'). All must share the same samples in the same column order. (required)"
+        prefix:                "Basename for the combined output tables. (required)"
+        max_variants:          "Optional cap on the number of variants in the COMBINED callset. When >0 and the combined site count exceeds it, sites are thinned evenly across the genome down to at most this many (not truncated to the first N). Applied genome-wide here (not per input file), so the cap is meaningful across the merged callset. (default: 0 = no limit)"
+        runtime_attr_override: "Override the default runtime attributes. (default: none)"
+    }
+
+    input {
+        Array[File] gt_tables
+        String prefix
+        Int max_variants = 0
+        RuntimeAttr? runtime_attr_override
+    }
+
+    # Sort is external (disk-backed); size for input + sort temp + output.
+    Int disk_size = 20 + ceil(10.0 * size(gt_tables, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        GT="~{prefix}.sample_gt.txt"
+        FRQ="~{prefix}.sample_freq.txt"
+
+        TABLES=(~{sep=' ' gt_tables})
+
+        # Header (chrom pos <samples...>) comes from the first table; every other table MUST have
+        # the identical header. The tables are disjoint regions of ONE joint call, so the sample
+        # set and column order are the same across files; a mismatch means the inputs are not the
+        # same samples and stitching would misalign genotype columns -> abort loudly.
+        head -n1 "${TABLES[0]}" > header.txt
+        for t in "${TABLES[@]}"; do
+            if ! head -n1 "$t" | cmp -s - header.txt ; then
+                echo "ERROR: sample header mismatch in $t; all input tables must share the same samples in the same column order (disjoint regions of one joint call)." >&2
+                exit 1
+            fi
+        done
+
+        # Concatenate all bodies (drop each header) and coordinate-sort by integer chrom then pos.
+        # External sort (-T .) keeps temp files on the task disk, so this scales past RAM.
+        for t in "${TABLES[@]}"; do tail -n +2 "$t"; done \
+            | sort -T . -k1,1n -k2,2n > body_sorted.txt
+
+        # Write header, then the (optionally thinned) sorted body.
+        cat header.txt > "${GT}"
+        if [[ ~{max_variants} -gt 0 ]]; then
+            TOTAL=$(wc -l < body_sorted.txt)
+            echo "combined variant cap: max_variants=~{max_variants}, combined site count=${TOTAL}"
+            if [[ "${TOTAL}" -gt ~{max_variants} ]]; then
+                # Even genome-wide stride over the sorted callset (keep every STRIDE-th site),
+                # matching FilterVcfForHmmIBD's per-file cap logic but applied to the merged set.
+                STRIDE=$(( (TOTAL + ~{max_variants} - 1) / ~{max_variants} ))
+                awk -v s="${STRIDE}" -v m=~{max_variants} '{ if (((NR-1) % s) == 0 && k < m) { print; k++ } }' body_sorted.txt >> "${GT}"
+                echo "combined variant cap: retained $(( $(wc -l < "${GT}") - 1 )) variants (stride ${STRIDE})"
+            else
+                cat body_sorted.txt >> "${GT}"
+            fi
+        else
+            cat body_sorted.txt >> "${GT}"
+        fi
+        rm -f body_sorted.txt
+
+        # Recompute bi-allelic allele frequencies on the COMBINED matrix (explicit freq file,
+        # same sites/order as GT). Valid because every input table carries the full sample set,
+        # so a per-site frequency over the merged rows equals concatenating per-file frequencies.
+        awk 'NR==1{next}
+        {
+            c0=0; c1=0; n=0
+            for (i=3;i<=NF;i++){ if($i=="0"){c0++;n++} else if($i=="1"){c1++;n++} }
+            if (n==0){ f0=1; f1=0 } else { f0=c0/n; f1=c1/n }
+            printf "%s\t%s\t%.6f\t%.6f\n", $1, $2, f0, f1
+        }' "${GT}" > "${FRQ}"
+
+        echo "combined variants: $(( $(wc -l < "${GT}") - 1 )); samples: $(( $(head -1 "${GT}" | awk '{print NF}') - 2 )); tables: ${#TABLES[@]}"
+    >>>
+
+    output {
+        File sample_gt_table   = "~{prefix}.sample_gt.txt"
+        File sample_freq_table = "~{prefix}.sample_freq.txt"
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       25,
+        preemptible_tries:  2,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.3"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}

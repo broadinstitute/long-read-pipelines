@@ -7,44 +7,46 @@ workflow HmmIBD {
 
     meta {
         author: "Jonn Smith"
-        description: "Infer identity-by-descent (IBD) from a VCF. Step one pre-filters the VCF with bcftools (mask low-depth genotypes, recompute AN/AC/AF, trim unrepresented alleles/sites) into a BCF; step two runs hmmibd-rs (the Rust reimplementation of hmmIBD) on that BCF. The hmmibd-rs IBD segments and per-pair IBD fractions are returned as workflow outputs. Every hmmibd-rs tuning parameter is exposed with its upstream default so runs are fully configurable from Terra."
+        description: "Infer identity-by-descent (IBD) from a LIST of VCFs with hmmibd-rs (the Rust reimplementation of hmmIBD), designed to scale to cohorts split across many large files (hundreds of GB). With run_filtration=true, each input VCF is filtered independently and reduced to a compact hmmIBD genotype table, and all tables are STITCHED into one combined, coordinate-sorted table + allele-frequency file — a merged multi-hundred-GB BCF is never materialized. hmmibd-rs then runs on that single combined table. The inputs are meant to be disjoint regions of ONE joint call (same samples across files), so the stitched frequencies are exact. Every hmmibd-rs tuning parameter is exposed with its upstream default."
 
         outputs: {
-            ibd_segments:     "Per sample-pair IBD/non-IBD segments (<prefix>.hmm.txt); empty when the HMM is skipped via a bcf-to-bin mode",
-            ibd_fraction:     "Per sample-pair IBD-fraction summary (<prefix>.hmm_fract.txt); empty when suppress_frac=true or a bcf-to-bin mode is used",
-            binary_genotypes: "Binary genotype file(s) (<prefix>*.bin); populated only when bcf_to_bin_file or bcf_to_bin_file_by_chromosome is set",
-            filtered_bcf:     "The pre-filtered BCF that hmmibd-rs was run on"
+            ibd_segments:       "Per sample-pair IBD/non-IBD segments (<prefix>.hmm.txt); empty when the HMM is skipped via a bcf-to-bin mode",
+            ibd_fraction:       "Per sample-pair IBD-fraction summary (<prefix>.hmm_fract.txt); empty when suppress_frac=true or a bcf-to-bin mode is used",
+            binary_genotypes:   "Binary genotype file(s) (<prefix>*.bin); populated only when bcf_to_bin_file or bcf_to_bin_file_by_chromosome is set",
+            filtered_bcfs:      "The per-input filtered BCFs (one per input VCF); populated when run_filtration=true",
+            combined_gt_table:  "The single stitched hmmIBD genotype table hmmibd-rs was run on (when the combined-table path is used)",
+            combined_freq_table:"The matching combined allele-frequency file (when the combined-table path is used)"
         }
     }
 
     parameter_meta {
-        input_vcf:        "Genotype input. With run_filtration=true: a VCF/BCF to filter then analyze. With run_filtration=false: an already-prepared input fed straight to hmmibd-rs — a VCF/BCF (hmmibd_input_format='bcf'/'vcf') or an hmmIBD text genotype table (hmmibd_input_format='hmmibd_table'). (required)"
+        input_vcfs:       "Genotype inputs, one or more. Meant to be disjoint regions of ONE joint call (same samples across files); pass a single file as a one-element array. With run_filtration=true each is filtered + reduced to a table, then all are stitched into one combined table for hmmibd-rs. With run_filtration=false: if hmmibd_input_format='hmmibd_table' the elements are treated as pre-built per-region hmmIBD tables and STITCHED (re-run IBD without re-filtering hundreds of GB); if 'bcf'/'vcf' the FIRST element is fed straight to hmmibd-rs via --from-bcf (a list is NOT combined in this mode). (required)"
         prefix:           "Basename / sample-set name for all outputs. (required)"
 
-        run_filtration:      "Filter input_vcf first via the FilterVcfForHmmIBD workflow (bcftools). Set false to feed input_vcf straight to hmmibd-rs. (default: true)"
-        hmmibd_input_format: "Only used when run_filtration=false: format of input_vcf — 'bcf' or 'vcf' (read via --from-bcf) or 'hmmibd_table' (hmmibd-rs text genotype table). (default: bcf)"
+        run_filtration:      "Filter + reduce + stitch input_vcfs via the FilterVcfForHmmIBD workflow before IBD. Set false to feed a prepared input straight to hmmibd-rs (see input_vcfs / hmmibd_input_format). (default: true)"
+        hmmibd_input_format: "Only used when run_filtration=false: format of input_vcfs — 'hmmibd_table' (per-region hmmIBD text tables, stitched into one) or 'bcf'/'vcf' (first element read via --from-bcf). (default: bcf)"
 
         # ---- Step 1: filtration (bcftools) ----
         min_depth:         "Genotypes with FORMAT/DP below this value are set to missing. (default: 5)"
         keep_original_af:  "Preserve the original allele-frequency annotations (via rename_annots_tsv) before recomputing AN/AC/AF. (default: false)"
-        variant_types:     "Which variant types to keep: 'snps', 'indels', or 'both'. SNPs are the standard hmmIBD marker set. (default: snps)"
+        variant_types:     "Which variant types to keep: 'snps', 'indels', or 'both'. Default keeps SNPs only; set 'both' to also run IBD on indels (hmmibd-rs codes by allele index, so bi-allelic indels are fine). (default: snps)"
         biallelic_only:    "Restrict to biallelic sites. Recommended true: multiallelic sites (especially indels) can exceed hmmibd-rs --max-all and crash it until patched. (default: true)"
         split_multiallelics: "Split multiallelics into biallelic records (bcftools norm -m-any) to recover SNP alleles from multiallelic/spanning-deletion sites instead of dropping them. (default: true)"
-        max_variants:      "Optional cap on the number of variants; when >0, the filtered callset is thinned evenly across the genome to at most this many. (default: 0 = no limit)"
+        max_variants:      "Optional cap on the number of variants; when >0, sites are thinned evenly across the genome to at most this many. Applied to the COMBINED, genome-wide callset (per-file filtration runs uncapped). (default: 0 = no limit)"
         mask_gq0_genotypes: "Also set GQ0 genotypes to missing (beyond the DP < min_depth mask). Reproduces the GATK GQ0-hom-ref fix (issue #7792 / PR #8741) for VCFs from pre-4.6.0.0 GenotypeGVCFs or GnarlyGenotyper, where no-/low-confidence hom-refs are 0/0:GQ=0 instead of ./. Conservative (drops all GQ0 hom-refs). Only applied when run_filtration=true. (default: false)"
         populations_file:  "Optional sample-to-population file for per-population AN/AC/AF (bcftools +fill-tags -S). (default: none)"
         rename_annots_tsv: "Required when keep_original_af=true: old-name<TAB>new-name TSV for bcftools annotate --rename-annots. (default: none)"
-        filter_extra_args: "Extra `bcftools view` filters added to the final filtration view (e.g. \"-e MAF<0.01\"); whitespace-separated, no internal spaces. Only applied when run_filtration=true. (default: empty)"
+        filter_extra_args: "Extra `bcftools view` filters added to the final per-file filtration view (e.g. \"-e MAF<0.01\"); whitespace-separated, no internal spaces. Only applied when run_filtration=true. (default: empty)"
 
         # ---- Step 2: hmmibd-rs ----
         data_file2:           "Optional second-population genotypes (-I). (default: none)"
-        freq_file1:           "Optional allele-frequency file for population 1 (-f). (default: none)"
+        freq_file1:           "Optional allele-frequency file for population 1 (-f); overrides the stitched combined frequencies when supplied. (default: none; computed from the combined table)"
         freq_file2:           "Optional allele-frequency file for population 2 (-F). (default: none)"
         bad_samples_file:     "Optional list of sample IDs to exclude (-b). (default: none)"
         good_pairs_file:      "Optional list of sample pairs to analyze (-g). (default: none)"
-        bcf_filter_config:    "Optional TOML BCF filter config (--bcf-filter-config). (default: none)"
+        bcf_filter_config:    "Optional TOML BCF filter config (--bcf-filter-config); only used in --from-bcf mode. (default: none)"
         genome:               "Optional genome/recombination-map spec (--genome); mutually exclusive with rec_rate. (default: none)"
-        bcf_read_mode:        "BCF genotype read mode: dominant-allele | first-ploidy | each-ploidy. (default: dominant-allele)"
+        bcf_read_mode:        "BCF genotype read mode: dominant-allele | first-ploidy | each-ploidy; only used in --from-bcf mode. (default: dominant-allele)"
         max_iter:             "Max EM iterations (-m). (default: 5)"
         k_rec_max:            "Cap on inferred generations (-n). (default: none; hmmibd-rs uses Inf = no cap)"
         eps:                  "Genotyping error rate (--eps). (default: 0.001)"
@@ -67,12 +69,12 @@ workflow HmmIBD {
         par_chunk_size:       "Pairs-per-chunk (mode 0) or samples-per-chunk (mode 1) (--par-chunk-size). (default: 120)"
 
         suppress_frac:                 "Suppress the per-pair fraction output (--suppress-frac); leaves ibd_fraction empty. (default: false)"
-        bcf_to_bin_file:               "Convert the BCF to a single binary genotype file and skip the HMM (--bcf-to-bin-file). (default: false)"
-        bcf_to_bin_file_by_chromosome: "Convert the BCF to one binary genotype file per chromosome and skip the HMM (--bcf-to-bin-file-by-chromosome). (default: false)"
+        bcf_to_bin_file:               "Convert to a single binary genotype file and skip the HMM (--bcf-to-bin-file). (default: false)"
+        bcf_to_bin_file_by_chromosome: "Convert to one binary genotype file per chromosome and skip the HMM (--bcf-to-bin-file-by-chromosome). (default: false)"
     }
 
     input {
-        File input_vcf
+        Array[File] input_vcfs
         String prefix
 
         Boolean run_filtration = true
@@ -130,13 +132,18 @@ workflow HmmIBD {
         Boolean bcf_to_bin_file_by_chromosome = false
     }
 
-    # Step 1 (optional): filter input_vcf via the standalone FilterVcfForHmmIBD workflow.
+    # Whether the genotype input for hmmibd-rs is a text table (-i) rather than a BCF/VCF (--from-bcf):
+    # true when we filter (always emits + stitches a table) or when given pre-built per-region tables.
+    Boolean use_table = run_filtration || (hmmibd_input_format == "hmmibd_table")
+
+    # Step 1a (run_filtration): filter each input VCF, reduce to a table, and stitch into ONE
+    # combined table + freq file. The FilterVcfForHmmIBD workflow does the scatter + stitch.
     if (run_filtration) {
-        call FILTER.FilterVcfForHmmIBD as t_01_FilterVcfForHmmIBD {
+        call FILTER.FilterVcfForHmmIBD as t_01_FilterAndCombine {
             input:
-                input_vcf           = input_vcf,
+                input_vcfs          = input_vcfs,
                 prefix              = prefix,
-                output_format       = "bcf",
+                output_format       = "hmmibd_table",
                 min_depth           = min_depth,
                 keep_original_af    = keep_original_af,
                 variant_types       = variant_types,
@@ -150,20 +157,37 @@ workflow HmmIBD {
         }
     }
 
-    # Pick the genotype input + read mode for hmmibd-rs:
-    #  - filtered:     feed the filtered BCF via --from-bcf
-    #  - not filtered: feed input_vcf as-is; --from-bcf for a bcf/vcf, text mode for an hmmIBD table
-    File hmmibd_input    = select_first([t_01_FilterVcfForHmmIBD.filtered_bcf, input_vcf])
-    Boolean use_from_bcf = if run_filtration then true else (hmmibd_input_format != "hmmibd_table")
+    # Step 1b (run_filtration=false + pre-built tables): stitch the provided per-region hmmIBD
+    # tables into one combined table, so IBD can be re-run without re-filtering the raw VCFs.
+    if (!run_filtration && hmmibd_input_format == "hmmibd_table") {
+        call HMMIBD.StitchHmmIBDTables as t_01b_Stitch {
+            input:
+                gt_tables    = input_vcfs,
+                prefix       = prefix,
+                max_variants = max_variants
+        }
+    }
 
-    # Step 2: infer IBD.
+    # Resolve the hmmibd-rs genotype input:
+    #  - combined table (filtered, or stitched from pre-built tables) -> text mode (-i)
+    #  - otherwise (run_filtration=false + bcf/vcf) -> the first prepared file via --from-bcf
+    File hmmibd_input    = select_first([t_01_FilterAndCombine.sample_gt_table, t_01b_Stitch.sample_gt_table, input_vcfs[0]])
+    Boolean use_from_bcf = !use_table
+
+    # Use the caller-supplied freq file if given, else the stitched combined frequencies (text
+    # mode), else none (bcf/vcf mode computes frequencies internally).
+    File? resolved_freq_file1 = if defined(freq_file1) then freq_file1
+                                else if defined(t_01_FilterAndCombine.sample_freq_table) then t_01_FilterAndCombine.sample_freq_table
+                                else t_01b_Stitch.sample_freq_table
+
+    # Step 2: infer IBD on the resolved input.
     call HMMIBD.HmmIBDrs as t_02_HmmIBDrs {
         input:
             input_bcf            = hmmibd_input,
             from_bcf             = use_from_bcf,
             prefix               = prefix,
             data_file2           = data_file2,
-            freq_file1           = freq_file1,
+            freq_file1           = resolved_freq_file1,
             freq_file2           = freq_file2,
             bad_samples_file     = bad_samples_file,
             good_pairs_file      = good_pairs_file,
@@ -202,6 +226,9 @@ workflow HmmIBD {
         Array[File] ibd_segments     = t_02_HmmIBDrs.ibd_segments
         Array[File] ibd_fraction     = t_02_HmmIBDrs.ibd_fraction
         Array[File] binary_genotypes = t_02_HmmIBDrs.binary_genotypes
-        File? filtered_bcf           = t_01_FilterVcfForHmmIBD.filtered_bcf
+
+        Array[File]? filtered_bcfs        = t_01_FilterAndCombine.filtered_bcfs
+        File?        combined_gt_table    = if defined(t_01_FilterAndCombine.sample_gt_table) then t_01_FilterAndCombine.sample_gt_table else t_01b_Stitch.sample_gt_table
+        File?        combined_freq_table  = resolved_freq_file1
     }
 }
