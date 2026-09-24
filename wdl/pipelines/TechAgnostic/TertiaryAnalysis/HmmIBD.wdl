@@ -46,7 +46,10 @@ workflow HmmIBD {
         good_pairs_file:      "Optional list of sample pairs to analyze (-g). (default: none)"
         bcf_filter_config:    "Optional TOML BCF filter config (--bcf-filter-config); only used in --from-bcf mode. (default: none)"
         genome:               "Optional genome/recombination-map spec (--genome); mutually exclusive with rec_rate. (default: none)"
-        bcf_read_mode:        "BCF genotype read mode: dominant-allele | first-ploidy | each-ploidy; only used in --from-bcf mode. (default: dominant-allele)"
+        bcf_read_mode:        "How genotypes are read. In --from-bcf mode: dominant-allele | first-ploidy | each-ploidy. When run_filtration=true this ALSO governs how the combined table is built (dominant-allele | first-ploidy; each-ploidy is --from-bcf only) — so dominant-allele gives the same majority-clone calls whether via table or --from-bcf. (default: dominant-allele)"
+        dom_min_depth:        "dominant-allele table gate: minimum total AD depth (total > dom_min_depth), else missing. Matches hmmibd-rs min_depth. (default: 5)"
+        dom_min_ratio:        "dominant-allele table gate: minimum major-allele fraction (major/total >= dom_min_ratio). Matches hmmibd-rs min_ratio. (default: 0.7)"
+        dom_min_r1_r2:        "dominant-allele table gate: accept only if minor/major < 1/dom_min_r1_r2. Matches hmmibd-rs min_r1_r2. (default: 3.0)"
         max_iter:             "Max EM iterations (-m). (default: 5)"
         k_rec_max:            "Cap on inferred generations (-n). (default: none; hmmibd-rs uses Inf = no cap)"
         eps:                  "Genotyping error rate (--eps). (default: 0.001)"
@@ -102,6 +105,9 @@ workflow HmmIBD {
         File? genome
 
         String bcf_read_mode = "dominant-allele"
+        Int dom_min_depth = 5
+        Float dom_min_ratio = 0.7
+        Float dom_min_r1_r2 = 3.0
 
         Int max_iter = 5
         Float? k_rec_max
@@ -153,7 +159,11 @@ workflow HmmIBD {
                 mask_gq0_genotypes  = mask_gq0_genotypes,
                 populations_file    = populations_file,
                 rename_annots_tsv   = rename_annots_tsv,
-                filter_extra_args   = filter_extra_args
+                filter_extra_args   = filter_extra_args,
+                gt_mode             = bcf_read_mode,
+                dom_min_depth       = dom_min_depth,
+                dom_min_ratio       = dom_min_ratio,
+                dom_min_r1_r2       = dom_min_r1_r2
         }
     }
 

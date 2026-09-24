@@ -494,7 +494,7 @@ task BcfToVcf {
 task BcfToSampleTable {
 
     meta {
-        description: "Convert a bi-allelic BCF/VCF to the hmmIBD text genotype table: a tab-delimited matrix with columns chrom(int) pos then one call per sample, alleles coded 0/1/... and -1 for missing, using the first allele of each GT (matches hmmibd-rs --bcf-read-mode first-ploidy). Also emits a matching bi-allelic allele-frequency file (same sites and order) computed from the matrix, so it can be supplied to both hmmIBD and hmmibd-rs. Non-numeric contigs (MIT/API) are dropped because hmmIBD requires integer chromosomes."
+        description: "Convert a bi-allelic BCF/VCF to the hmmIBD text genotype table: a tab-delimited matrix with columns chrom(int) pos then one call per sample, alleles coded 0/1 and -1 for missing. The per-sample call is derived per gt_mode: 'dominant-allele' (default) reproduces hmmibd-rs --bcf-read-mode dominant-allele (src/bcf.rs read_dom) — from FORMAT/AD it takes the highest-depth allele (ties -> lower allele index) and keeps it only when total>dom_min_depth & major/total>=dom_min_ratio & minor/major<1/dom_min_r1_r2, else -1; GT is intentionally ignored, matching hmmibd-rs, so this is the right choice for polyclonal Pf (majority-clone allele, not GATK's ref-biased GT[0]). 'first-ploidy' instead takes the first allele of GT. Because it runs on the filtered bi-allelic BCF, dominant-allele here matches an hmmibd-rs --from-bcf dominant-allele run on that same BCF. Also emits a matching allele-frequency file (same sites/order) from the resulting calls. Non-numeric contigs (MIT/API) are dropped because hmmIBD requires integer chromosomes."
 
         tool:          "bcftools"
         tool_version:  "1.22"
@@ -509,14 +509,24 @@ task BcfToSampleTable {
     }
 
     parameter_meta {
-        input_bcf:             "Bi-allelic, SNP-filtered BCF/VCF (as produced by FilterVcfForHmmIBD) to convert. (required)"
+        input_bcf:             "Bi-allelic, SNP-filtered BCF/VCF (as produced by FilterVcfForHmmIBD) to convert. Must carry FORMAT/AD when gt_mode='dominant-allele'. (required)"
         prefix:                "Basename for the output tables. (required)"
+        gt_mode:               "How to derive each per-sample call: 'dominant-allele' (default) = max-depth allele from FORMAT/AD with hmmibd-rs read_dom gating (the right choice for polyclonal Pf); 'first-ploidy' = first allele of GT. (default: dominant-allele)"
+        dom_min_depth:         "dominant-allele only: minimum total AD depth (total > dom_min_depth) to accept a call, else missing. Matches hmmibd-rs min_depth. (default: 5)"
+        dom_min_ratio:         "dominant-allele only: minimum major-allele fraction (major/total >= dom_min_ratio) to accept a call. Matches hmmibd-rs min_ratio. (default: 0.7)"
+        dom_min_r1_r2:         "dominant-allele only: a call is accepted only if minor/major < 1/dom_min_r1_r2 (i.e. the minor allele is well below the major). Matches hmmibd-rs min_r1_r2. (default: 3.0)"
         runtime_attr_override: "Override the default runtime attributes. (default: none)"
     }
 
     input {
         File input_bcf
         String prefix
+
+        String gt_mode = "dominant-allele"
+        Int dom_min_depth = 5
+        Float dom_min_ratio = 0.7
+        Float dom_min_r1_r2 = 3.0
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -527,21 +537,56 @@ task BcfToSampleTable {
 
         GT="~{prefix}.sample_gt.txt"
         FRQ="~{prefix}.sample_freq.txt"
+        MODE="~{gt_mode}"
 
         # header: chrom  pos  <sample1> <sample2> ...
         { printf 'chrom\tpos'; bcftools query -l "~{input_bcf}" | awk '{printf "\t%s", $0}'; printf '\n'; } > "${GT}"
 
-        # body: integer chrom, pos, first-allele call per sample (-1 missing)
-        bcftools query -f '%CHROM\t%POS[\t%GT]\n' "~{input_bcf}" | awk 'BEGIN{FS=OFS="\t"}
-        {
-            c=$1; sub(/^Pf3D7_/,"",c); sub(/_v[0-9]+$/,"",c)   # Pf3D7_01_v3 -> 01
-            if (c !~ /^[0-9]+$/) next                          # drop non-numeric contigs
-            printf "%d\t%d", c+0, $2
-            for (i=3;i<=NF;i++){ n=split($i,a,/[\/|]/); g=a[1]; if (g=="."||g=="") g=-1; printf "\t%s", g }
-            printf "\n"
-        }' >> "${GT}"
+        # body: integer chrom, pos, one call per sample (-1 missing). Contig prefix stripped to int.
+        case "${MODE}" in
+            dominant-allele)
+                # Reproduce hmmibd-rs --bcf-read-mode dominant-allele (src/bcf.rs read_dom): from the
+                # bi-allelic FORMAT/AD (ref,alt), pick the higher-depth allele (tie -> lower index),
+                # and accept it only when total>dom_min_depth & major/total>=dom_min_ratio &
+                # minor/major < 1/dom_min_r1_r2; otherwise the site is missing (-1). GT is ignored
+                # (matches hmmibd-rs). Same math as read_dom on the same bi-allelic BCF.
+                bcftools query -f '%CHROM\t%POS[\t%AD]\n' "~{input_bcf}" \
+                | awk -v md=~{dom_min_depth} -v mr=~{dom_min_ratio} -v mrr=~{dom_min_r1_r2} 'BEGIN{FS=OFS="\t"; inv=1.0/mrr}
+                {
+                    c=$1; sub(/^Pf3D7_/,"",c); sub(/_v[0-9]+$/,"",c)
+                    if (c !~ /^[0-9]+$/) next
+                    printf "%d\t%d", c+0, $2
+                    for (i=3;i<=NF;i++){
+                        g=-1
+                        if ($i!="." && $i!=""){
+                            split($i,a,","); ref=(a[1]=="."?0:a[1]+0); alt=(a[2]=="."?0:a[2]+0)
+                            total=ref+alt
+                            if (alt>ref){ major=alt; minor=ref; ma=1 } else { major=ref; minor=alt; ma=0 }
+                            if (total>md && major/total>=mr && minor/major<inv) g=ma
+                        }
+                        printf "\t%s", g
+                    }
+                    printf "\n"
+                }' >> "${GT}"
+                ;;
+            first-ploidy)
+                # First allele of GT per sample (-1 missing); matches hmmibd-rs --bcf-read-mode first-ploidy.
+                bcftools query -f '%CHROM\t%POS[\t%GT]\n' "~{input_bcf}" | awk 'BEGIN{FS=OFS="\t"}
+                {
+                    c=$1; sub(/^Pf3D7_/,"",c); sub(/_v[0-9]+$/,"",c)
+                    if (c !~ /^[0-9]+$/) next
+                    printf "%d\t%d", c+0, $2
+                    for (i=3;i<=NF;i++){ n=split($i,a,/[\/|]/); g=a[1]; if (g=="."||g=="") g=-1; printf "\t%s", g }
+                    printf "\n"
+                }' >> "${GT}"
+                ;;
+            *)
+                echo "ERROR: gt_mode must be 'dominant-allele' or 'first-ploidy' (each-ploidy is only available via hmmibd-rs --from-bcf)." >&2
+                exit 1
+                ;;
+        esac
 
-        # bi-allelic allele frequencies from the matrix (identical sites and order)
+        # bi-allelic allele frequencies from the resulting calls (identical sites and order)
         awk 'NR==1{next}
         {
             c0=0; c1=0; n=0
@@ -550,7 +595,7 @@ task BcfToSampleTable {
             printf "%s\t%s\t%.6f\t%.6f\n", $1, $2, f0, f1
         }' "${GT}" > "${FRQ}"
 
-        echo "variants: $(( $(wc -l < "${GT}") - 1 )); samples: $(( $(head -1 "${GT}" | awk '{print NF}') - 2 ))"
+        echo "variants: $(( $(wc -l < "${GT}") - 1 )); samples: $(( $(head -1 "${GT}" | awk '{print NF}') - 2 )); mode: ${MODE}"
     >>>
 
     output {

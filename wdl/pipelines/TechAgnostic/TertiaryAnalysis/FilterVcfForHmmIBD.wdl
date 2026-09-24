@@ -30,6 +30,10 @@ workflow FilterVcfForHmmIBD {
         biallelic_only:      "Restrict to biallelic sites. (default: true)"
         split_multiallelics: "Split multiallelics into biallelic records to recover SNP alleles. (default: true)"
         max_variants:        "Optional cap on the number of variants; when >0 the callset is thinned evenly to at most this many. For output_format='hmmibd_table' the cap is applied to the COMBINED, genome-wide callset (per-file filtration runs uncapped); for 'bcf'/'vcf' it is applied per input file. (default: 0 = no limit)"
+        gt_mode:             "output_format='hmmibd_table' only: how to derive each per-sample call. 'dominant-allele' (default) = max-depth allele from FORMAT/AD with hmmibd-rs read_dom gating (right for polyclonal Pf; requires AD to survive filtration); 'first-ploidy' = first allele of GT. (default: dominant-allele)"
+        dom_min_depth:       "dominant-allele gate: minimum total AD depth (total > dom_min_depth), else the call is missing. Matches hmmibd-rs min_depth. (default: 5)"
+        dom_min_ratio:       "dominant-allele gate: minimum major-allele fraction (major/total >= dom_min_ratio). Matches hmmibd-rs min_ratio. (default: 0.7)"
+        dom_min_r1_r2:       "dominant-allele gate: accept only if minor/major < 1/dom_min_r1_r2. Matches hmmibd-rs min_r1_r2. (default: 3.0)"
         mask_gq0_genotypes:  "Also set GQ0 genotypes to missing (beyond the DP < min_depth mask). Reproduces the GATK GQ0-hom-ref fix (issue #7792 / PR #8741) for VCFs from pre-4.6.0.0 GenotypeGVCFs or GnarlyGenotyper, where no-/low-confidence hom-refs are 0/0:GQ=0 instead of ./. — the DP mask alone misses GQ0 calls with DP >= min_depth. Conservative: drops all GQ0 hom-refs (use a GVCF cross-reference to keep well-covered ones). (default: false)"
         populations_file:    "Optional sample-to-population file for per-population AN/AC/AF. (default: none)"
         rename_annots_tsv:   "Required when keep_original_af=true: old-name<TAB>new-name TSV. (default: none)"
@@ -55,6 +59,11 @@ workflow FilterVcfForHmmIBD {
         File? populations_file
         File? rename_annots_tsv
         String filter_extra_args = ""
+
+        String gt_mode = "dominant-allele"
+        Int dom_min_depth = 5
+        Float dom_min_ratio = 0.7
+        Float dom_min_r1_r2 = 3.0
 
         RuntimeAttr? filter_runtime_attr_override
         RuntimeAttr? convert_runtime_attr_override
@@ -102,8 +111,12 @@ workflow FilterVcfForHmmIBD {
         if (output_format == "hmmibd_table") {
             call HMMIBD.BcfToSampleTable as t_02_ToTable {
                 input:
-                    input_bcf = t_01_Filter.filtered_bcf,
-                    prefix    = shard_prefix,
+                    input_bcf     = t_01_Filter.filtered_bcf,
+                    prefix        = shard_prefix,
+                    gt_mode       = gt_mode,
+                    dom_min_depth = dom_min_depth,
+                    dom_min_ratio = dom_min_ratio,
+                    dom_min_r1_r2 = dom_min_r1_r2,
                     runtime_attr_override = convert_runtime_attr_override
             }
         }
