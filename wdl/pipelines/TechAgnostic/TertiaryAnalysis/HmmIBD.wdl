@@ -33,6 +33,7 @@ workflow HmmIBD {
         biallelic_only:    "Restrict to biallelic sites. Recommended true: multiallelic sites (especially indels) can exceed hmmibd-rs --max-all and crash it until patched. (default: true)"
         split_multiallelics: "Split multiallelics into biallelic records (bcftools norm -m-any) to recover SNP alleles from multiallelic/spanning-deletion sites instead of dropping them. (default: true)"
         max_variants:      "Optional cap on the number of variants; when >0, sites are thinned evenly across the genome to at most this many. Applied to the COMBINED, genome-wide callset (per-file filtration runs uncapped). (default: 0 = no limit)"
+        max_alt:           "Optional pre-norm site width cap: when >0, sites with more than this many ALT alleles (after trimming unobserved ones) are dropped before `bcftools norm` splits them — bounds the filtration task's memory on Pf hyper-multiallelic (var-gene/indel) sites that OOM-kill norm on whole-cohort joint calls. ~6-8 is safe for Pf SNP IBD. (default: 0 = no cap)"
         mask_gq0_genotypes: "Also set GQ0 genotypes to missing (beyond the DP < min_depth mask). Reproduces the GATK GQ0-hom-ref fix (issue #7792 / PR #8741) for VCFs from pre-4.6.0.0 GenotypeGVCFs or GnarlyGenotyper, where no-/low-confidence hom-refs are 0/0:GQ=0 instead of ./. Conservative (drops all GQ0 hom-refs). Only applied when run_filtration=true. (default: false)"
         populations_file:  "Optional sample-to-population file for per-population AN/AC/AF (bcftools +fill-tags -S). (default: none)"
         rename_annots_tsv: "Required when keep_original_af=true: old-name<TAB>new-name TSV for bcftools annotate --rename-annots. (default: none)"
@@ -90,6 +91,7 @@ workflow HmmIBD {
         Boolean biallelic_only = true
         Boolean split_multiallelics = true
         Int max_variants = 0
+        Int max_alt = 0
         Boolean mask_gq0_genotypes = false
         File? populations_file
         File? rename_annots_tsv
@@ -156,6 +158,7 @@ workflow HmmIBD {
                 biallelic_only      = biallelic_only,
                 split_multiallelics = split_multiallelics,
                 max_variants        = max_variants,
+                max_alt             = max_alt,
                 mask_gq0_genotypes  = mask_gq0_genotypes,
                 populations_file    = populations_file,
                 rename_annots_tsv   = rename_annots_tsv,

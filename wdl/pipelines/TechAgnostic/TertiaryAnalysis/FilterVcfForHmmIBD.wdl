@@ -30,6 +30,7 @@ workflow FilterVcfForHmmIBD {
         biallelic_only:      "Restrict to biallelic sites. (default: true)"
         split_multiallelics: "Split multiallelics into biallelic records to recover SNP alleles. (default: true)"
         max_variants:        "Optional cap on the number of variants; when >0 the callset is thinned evenly to at most this many. For output_format='hmmibd_table' the cap is applied to the COMBINED, genome-wide callset (per-file filtration runs uncapped); for 'bcf'/'vcf' it is applied per input file. (default: 0 = no limit)"
+        max_alt:             "Optional pre-norm site width cap: when >0, sites with more than this many ALT alleles (after trimming unobserved ones) are dropped before `bcftools norm` splits them, bounding norm's memory on Pf hyper-multiallelic sites. ~6-8 is safe for Pf SNP IBD. (default: 0 = no cap)"
         gt_mode:             "output_format='hmmibd_table' only: how to derive each per-sample call. 'dominant-allele' (default) = max-depth allele from FORMAT/AD with hmmibd-rs read_dom gating (right for polyclonal Pf; requires AD to survive filtration); 'first-ploidy' = first allele of GT. (default: dominant-allele)"
         dom_min_depth:       "dominant-allele gate: minimum total AD depth (total > dom_min_depth), else the call is missing. Matches hmmibd-rs min_depth. (default: 5)"
         dom_min_ratio:       "dominant-allele gate: minimum major-allele fraction (major/total >= dom_min_ratio). Matches hmmibd-rs min_ratio. (default: 0.7)"
@@ -55,6 +56,7 @@ workflow FilterVcfForHmmIBD {
         Boolean biallelic_only = true
         Boolean split_multiallelics = true
         Int max_variants = 0
+        Int max_alt = 0
         Boolean mask_gq0_genotypes = false
         File? populations_file
         File? rename_annots_tsv
@@ -89,6 +91,7 @@ workflow FilterVcfForHmmIBD {
                 biallelic_only      = biallelic_only,
                 split_multiallelics = split_multiallelics,
                 max_variants        = per_file_max_variants,
+                max_alt             = max_alt,
                 mask_gq0_genotypes  = mask_gq0_genotypes,
                 populations_file    = populations_file,
                 rename_annots_tsv   = rename_annots_tsv,

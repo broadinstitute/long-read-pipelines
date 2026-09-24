@@ -29,6 +29,7 @@ task FilterVcfForHmmIBD {
         biallelic_only:        "Restrict to biallelic sites (bcftools view -m2 -M2). Recommended true: multiallelic sites (especially indels) can exceed hmmibd-rs --max-all and crash it until that is patched. (default: true)"
         split_multiallelics:   "Split multiallelic records into biallelic ones (bcftools norm -m-any) so SNP alleles at multiallelic/spanning-deletion sites are recovered rather than dropped. Runs after the type pre-select to stay fast. (default: true)"
         max_variants:          "Optional cap on the number of variants kept. When >0 and the filtered callset exceeds it, sites are thinned evenly across the genome down to at most this many (not truncated to the first N). (default: 0 = no limit)"
+        max_alt:               "Optional pre-norm site width cap. When >0, sites whose ALT count (after trimming unobserved alleles) still exceeds this are dropped BEFORE `bcftools norm` splits them — this bounds norm's per-record memory on Pf hyper-multiallelic (var-gene / indel) sites that otherwise OOM-kill it on whole-cohort joint calls. Lossy at the site level (drops those sites' SNPs); genuine multiallelic SNP sites have <=3 ALTs, so ~6-8 is a safe cap for Pf. (default: 0 = no cap)"
         mask_gq0_genotypes:    "Also set GQ0 genotypes to missing (in addition to the FORMAT/DP < min_depth mask). Older GATK (pre-4.6.0.0 GenotypeGVCFs; also GnarlyGenotyper) emitted no-/low-confidence hom-refs as 0/0 with GQ=0 instead of ./. (GATK issue #7792, fixed in PR #8741). Turning this on reproduces that fix downstream — the DP mask alone misses GQ0 calls whose DP >= min_depth. NOTE: this is the conservative choice — it drops ALL GQ0 hom-refs, including any that are genuinely well-covered ref; use a GVCF cross-reference if you need to keep those. (default: false)"
         populations_file:      "Optional sample-to-population file passed to `bcftools +fill-tags -S`; when given, AN/AC/AF are computed per population. When omitted, tags are computed across all samples. (default: none)"
         rename_annots_tsv:     "Required when keep_original_af=true: two-column TSV of old-name<TAB>new-name passed to `bcftools annotate --rename-annots`. (default: none)"
@@ -46,6 +47,7 @@ task FilterVcfForHmmIBD {
         Boolean biallelic_only = true
         Boolean split_multiallelics = true
         Int max_variants = 0
+        Int max_alt = 0
         Boolean mask_gq0_genotypes = false
 
         File? populations_file
@@ -122,6 +124,21 @@ task FilterVcfForHmmIBD {
         NORM_STEP=(cat)
         if [[ "~{split_multiallelics}" == "true" ]] ; then NORM_STEP=(bcftools norm -m-any -Ou) ; fi
 
+        # Pre-norm shrink to keep `norm` memory bounded on wide multiallelic sites (the Pf var-gene /
+        # indel blowups that OOM-kill norm on whole-cohort joint calls). `norm -m-any` memory scales
+        # with (samples x alleles) because it splits a site into one biallelic record per ALT while
+        # carrying FORMAT/AD (Number=R). Two cheap streaming stages cut the allele width BEFORE norm:
+        #   1. --trim-alt-alleles: drop ALT alleles not seen in any (DP-masked) genotype. Lossless --
+        #      those alleles have AC=0 and are trimmed at the end anyway, so the output is identical;
+        #      only the intermediate (and thus norm's per-record work) shrinks.
+        #   2. optional N_ALT cap: drop sites whose remaining ALT count still exceeds max_alt, so a
+        #      pathological hyper-multiallelic site never reaches norm's per-allele split at all.
+        # Note: memory here is per-RECORD (widest site), so this width cut -- not genomic sharding --
+        # is what bounds norm's peak memory.
+        TRIM_STEP=(bcftools view --trim-alt-alleles -Ou)
+        MAXALT_STEP=(cat)
+        if [[ ~{max_alt} -gt 0 ]] ; then MAXALT_STEP=(bcftools view -e "N_ALT > ~{max_alt}" -Ou) ; fi
+
         # keeping the original allele frequencies requires a rename map
         if [[ "~{keep_original_af}" == "true" && -z "~{rename_annots_tsv}" ]] ; then
             echo "ERROR: keep_original_af=true requires rename_annots_tsv to be provided." >&2
@@ -134,6 +151,8 @@ task FilterVcfForHmmIBD {
             bcftools annotate -x '~{fmt_keep}' -Ou ~{input_vcf} \
               | bcftools filter -S . -e "~{gt_mask_expr}" -Ou \
               | bcftools view "${TYPE_FLAGS[@]}" -Ou \
+              | "${TRIM_STEP[@]}" \
+              | "${MAXALT_STEP[@]}" \
               | "${NORM_STEP[@]}" \
               | bcftools annotate --rename-annots ~{rename_annots_tsv} -Ou \
               | bcftools +fill-tags -Ou -- ~{"-S " + populations_file} -t AN,AC,AF \
@@ -148,6 +167,8 @@ task FilterVcfForHmmIBD {
             bcftools annotate -x 'INFO,~{fmt_keep}' -Ou ~{input_vcf} \
               | bcftools filter -S . -e "~{gt_mask_expr}" -Ou \
               | bcftools view "${TYPE_FLAGS[@]}" -Ou \
+              | "${TRIM_STEP[@]}" \
+              | "${MAXALT_STEP[@]}" \
               | "${NORM_STEP[@]}" \
               | bcftools +fill-tags -Ou -- ~{"-S " + populations_file} -t AN,AC,AF \
               | bcftools view "${BIALLELIC_FLAGS[@]}" "${TYPE_FLAGS[@]}" --trim-alt-alleles -i 'MAX(INFO/AC) > 0' -Ob --threads "${NUM_CPUS}" -o ~{prefix}.filtered.bcf
