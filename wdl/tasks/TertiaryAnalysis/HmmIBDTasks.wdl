@@ -190,9 +190,15 @@ task FilterVcfForHmmIBD {
     }
 
     #########################
+    # mem_gb default 16: `bcftools norm -m-any` (split multiallelics) is the memory hog on
+    # whole-cohort joint calls — Pf sites can carry hundreds of ALT alleles and FORMAT/AD is
+    # Number=R, so per-record memory scales with (samples x alleles). A 4 GB default OOM-kills
+    # norm on realistic malaria joint calls (e.g. a 28 GB single-contig cohort VCF). Override
+    # runtime_attr_override.mem_gb higher (32-64) for the widest cohorts; NOTE Cromwell's
+    # memory-retry only bumps memory across attempts if the workspace sets memory_retry_multiplier.
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
-        mem_gb:             4,
+        mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       25,
         preemptible_tries:  1,
