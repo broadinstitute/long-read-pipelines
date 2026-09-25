@@ -238,7 +238,7 @@ task FilterVcfForHmmIBD {
         boot_disk_gb:       25,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.3"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.4"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -512,7 +512,7 @@ task BcfToVcf {
         boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.3"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.4"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -668,7 +668,7 @@ task BcfToSampleTable {
         boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.3"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.4"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -832,7 +832,7 @@ task StitchHmmIBDTables {
         boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.3"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.4"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
