@@ -35,6 +35,8 @@ workflow FilterVcfForHmmIBD {
         dom_min_depth:       "dominant-allele gate: minimum total AD depth (total > dom_min_depth), else the call is missing. Matches hmmibd-rs min_depth. (default: 5)"
         dom_min_ratio:       "dominant-allele gate: minimum major-allele fraction (major/total >= dom_min_ratio). Matches hmmibd-rs min_ratio. (default: 0.7)"
         dom_min_r1_r2:       "dominant-allele gate: accept only if minor/major < 1/dom_min_r1_r2. Matches hmmibd-rs min_r1_r2. (default: 3.0)"
+        min_maf:             "output_format='hmmibd_table' only: drop sites whose minor-allele frequency among non-missing FINAL calls is below this (matches hmmibd-rs min_maf); >0 also drops monomorphic / no-alt-expressed sites. Set 0 to keep rare-variant sites. (default: 0.01)"
+        min_site_nonmissing: "output_format='hmmibd_table' only: drop sites where the fraction of samples with a non-missing call is below this (matches hmmibd-rs min_site_nonmissing). (default: 0.3)"
         mask_gq0_genotypes:  "Also set GQ0 genotypes to missing (beyond the DP < min_depth mask). Reproduces the GATK GQ0-hom-ref fix (issue #7792 / PR #8741) for VCFs from pre-4.6.0.0 GenotypeGVCFs or GnarlyGenotyper, where no-/low-confidence hom-refs are 0/0:GQ=0 instead of ./. — the DP mask alone misses GQ0 calls with DP >= min_depth. Conservative: drops all GQ0 hom-refs (use a GVCF cross-reference to keep well-covered ones). Masks GT only: affects the first-ploidy table (and AC/AF/site selection); the dominant-allele table ignores GT (reads AD), so it is a no-op there — the dom_* AD gates handle GQ0 hom-refs instead. (default: false)"
         populations_file:    "Optional sample-to-population file for per-population AN/AC/AF. (default: none)"
         rename_annots_tsv:   "Required when keep_original_af=true: old-name<TAB>new-name TSV. (default: none)"
@@ -66,6 +68,8 @@ workflow FilterVcfForHmmIBD {
         Int dom_min_depth = 5
         Float dom_min_ratio = 0.7
         Float dom_min_r1_r2 = 3.0
+        Float min_maf = 0.01
+        Float min_site_nonmissing = 0.3
 
         RuntimeAttr? filter_runtime_attr_override
         RuntimeAttr? convert_runtime_attr_override
@@ -114,12 +118,14 @@ workflow FilterVcfForHmmIBD {
         if (output_format == "hmmibd_table") {
             call HMMIBD.BcfToSampleTable as t_02_ToTable {
                 input:
-                    input_bcf     = t_01_Filter.filtered_bcf,
-                    prefix        = shard_prefix,
-                    gt_mode       = gt_mode,
-                    dom_min_depth = dom_min_depth,
-                    dom_min_ratio = dom_min_ratio,
-                    dom_min_r1_r2 = dom_min_r1_r2,
+                    input_bcf           = t_01_Filter.filtered_bcf,
+                    prefix              = shard_prefix,
+                    gt_mode             = gt_mode,
+                    dom_min_depth       = dom_min_depth,
+                    dom_min_ratio       = dom_min_ratio,
+                    dom_min_r1_r2       = dom_min_r1_r2,
+                    min_maf             = min_maf,
+                    min_site_nonmissing = min_site_nonmissing,
                     runtime_attr_override = convert_runtime_attr_override
             }
         }

@@ -51,6 +51,8 @@ workflow HmmIBD {
         dom_min_depth:        "dominant-allele table gate: minimum total AD depth (total > dom_min_depth), else missing. Matches hmmibd-rs min_depth. (default: 5)"
         dom_min_ratio:        "dominant-allele table gate: minimum major-allele fraction (major/total >= dom_min_ratio). Matches hmmibd-rs min_ratio. (default: 0.7)"
         dom_min_r1_r2:        "dominant-allele table gate: accept only if minor/major < 1/dom_min_r1_r2. Matches hmmibd-rs min_r1_r2. (default: 3.0)"
+        min_maf:              "Site prune: drop sites whose minor-allele frequency among non-missing FINAL calls is below this (matches hmmibd-rs min_maf, so the table and --from-bcf paths keep the same sites); >0 also drops monomorphic / no-alt-expressed sites. Set 0 to keep rare-variant sites. (default: 0.01)"
+        min_site_nonmissing:  "Site prune: drop sites where the fraction of samples with a non-missing call is below this (matches hmmibd-rs min_site_nonmissing). (default: 0.3)"
         max_iter:             "Max EM iterations (-m). (default: 5)"
         k_rec_max:            "Cap on inferred generations (-n). (default: none; hmmibd-rs uses Inf = no cap)"
         eps:                  "Genotyping error rate (--eps). (default: 0.001)"
@@ -110,6 +112,8 @@ workflow HmmIBD {
         Int dom_min_depth = 5
         Float dom_min_ratio = 0.7
         Float dom_min_r1_r2 = 3.0
+        Float min_maf = 0.01
+        Float min_site_nonmissing = 0.3
 
         Int max_iter = 5
         Float? k_rec_max
@@ -166,7 +170,9 @@ workflow HmmIBD {
                 gt_mode             = bcf_read_mode,
                 dom_min_depth       = dom_min_depth,
                 dom_min_ratio       = dom_min_ratio,
-                dom_min_r1_r2       = dom_min_r1_r2
+                dom_min_r1_r2       = dom_min_r1_r2,
+                min_maf             = min_maf,
+                min_site_nonmissing = min_site_nonmissing
         }
     }
 

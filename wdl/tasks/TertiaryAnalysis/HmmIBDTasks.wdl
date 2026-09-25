@@ -515,7 +515,7 @@ task BcfToVcf {
 task BcfToSampleTable {
 
     meta {
-        description: "Convert a bi-allelic BCF/VCF to the hmmIBD text genotype table: a tab-delimited matrix with columns chrom(int) pos then one call per sample, alleles coded 0/1 and -1 for missing. The per-sample call is derived per gt_mode: 'dominant-allele' (default) reproduces hmmibd-rs --bcf-read-mode dominant-allele (src/bcf.rs read_dom) — from FORMAT/AD it takes the highest-depth allele (ties -> lower allele index) and keeps it only when total>dom_min_depth & major/total>=dom_min_ratio & minor/major<1/dom_min_r1_r2, else -1; GT is intentionally ignored, matching hmmibd-rs, so this is the right choice for polyclonal Pf (majority-clone allele, not GATK's ref-biased GT[0]). 'first-ploidy' instead takes the first allele of GT. Because it runs on the filtered bi-allelic BCF, dominant-allele here matches an hmmibd-rs --from-bcf dominant-allele run on that same BCF. Also emits a matching allele-frequency file (same sites/order) from the resulting calls. Non-numeric contigs (MIT/API) are dropped because hmmIBD requires integer chromosomes."
+        description: "Convert a bi-allelic BCF/VCF to the hmmIBD text genotype table: a tab-delimited matrix with columns chrom(int) pos then one call per sample, alleles coded 0/1 and -1 for missing. The per-sample call is derived per gt_mode: 'dominant-allele' (default) reproduces hmmibd-rs --bcf-read-mode dominant-allele (src/bcf.rs read_dom) — from FORMAT/AD it takes the highest-depth allele (ties -> lower allele index) and keeps it only when total>dom_min_depth & major/total>=dom_min_ratio & minor/major<1/dom_min_r1_r2, else -1; GT is intentionally ignored, matching hmmibd-rs, so this is the right choice for polyclonal Pf (majority-clone allele, not GATK's ref-biased GT[0]). 'first-ploidy' instead takes the first allele of GT. Because it runs on the filtered bi-allelic BCF, dominant-allele here matches an hmmibd-rs --from-bcf dominant-allele run on that same BCF. Sites are then pruned on the FINAL calls to match hmmibd-rs --from-bcf site filtering (min_maf, min_site_nonmissing), so the table and --from-bcf paths use the same sites; min_maf>0 also drops monomorphic / no-alt-expressed sites, which carry no IBD information. Also emits a matching allele-frequency file (same sites/order) from the retained calls. Non-numeric contigs (MIT/API) are dropped because hmmIBD requires integer chromosomes."
 
         tool:          "bcftools"
         tool_version:  "1.22"
@@ -536,6 +536,8 @@ task BcfToSampleTable {
         dom_min_depth:         "dominant-allele only: minimum total AD depth (total > dom_min_depth) to accept a call, else missing. Matches hmmibd-rs min_depth. (default: 5)"
         dom_min_ratio:         "dominant-allele only: minimum major-allele fraction (major/total >= dom_min_ratio) to accept a call. Matches hmmibd-rs min_ratio. (default: 0.7)"
         dom_min_r1_r2:         "dominant-allele only: a call is accepted only if minor/major < 1/dom_min_r1_r2 (i.e. the minor allele is well below the major). Matches hmmibd-rs min_r1_r2. (default: 3.0)"
+        min_maf:               "Drop sites whose minor-allele frequency among non-missing FINAL calls is below this (matches hmmibd-rs min_maf). Values >0 also drop monomorphic / no-alt-expressed sites (no IBD information); set 0 to keep rare-variant sites (which carry strong IBD signal). (default: 0.01)"
+        min_site_nonmissing:   "Drop sites where the fraction of samples with a non-missing call is below this (matches hmmibd-rs min_site_nonmissing); sparse sites give unreliable allele frequencies. (default: 0.3)"
         runtime_attr_override: "Override the default runtime attributes. (default: none)"
     }
 
@@ -547,6 +549,8 @@ task BcfToSampleTable {
         Int dom_min_depth = 5
         Float dom_min_ratio = 0.7
         Float dom_min_r1_r2 = 3.0
+        Float min_maf = 0.01
+        Float min_site_nonmissing = 0.3
 
         RuntimeAttr? runtime_attr_override
     }
@@ -588,7 +592,7 @@ task BcfToSampleTable {
                         printf "\t%s", g
                     }
                     printf "\n"
-                }' >> "${GT}"
+                }' > body_raw.txt
                 ;;
             first-ploidy)
                 # First allele of GT per sample (-1 missing); matches hmmibd-rs --bcf-read-mode first-ploidy.
@@ -599,13 +603,31 @@ task BcfToSampleTable {
                     printf "%d\t%d", c+0, $2
                     for (i=3;i<=NF;i++){ n=split($i,a,/[\/|]/); g=a[1]; if (g=="."||g=="") g=-1; printf "\t%s", g }
                     printf "\n"
-                }' >> "${GT}"
+                }' > body_raw.txt
                 ;;
             *)
                 echo "ERROR: gt_mode must be 'dominant-allele' or 'first-ploidy' (each-ploidy is only available via hmmibd-rs --from-bcf)." >&2
                 exit 1
                 ;;
         esac
+
+        # Site-level prune (match hmmibd-rs --from-bcf so the table and --from-bcf paths agree on
+        # which sites are used): drop sites below min_site_nonmissing (fraction of samples with a
+        # non-missing call -- sparse sites give unreliable allele frequencies) and below min_maf
+        # (minor-allele frequency among non-missing calls; min_maf>0 also drops monomorphic /
+        # no-alt-expressed sites, which carry no IBD information). Computed on the FINAL calls, so it
+        # honors dominant-allele, over the full sample set (each site is present here with all samples).
+        awk -v mm=~{min_maf} -v mn=~{min_site_nonmissing} 'BEGIN{FS=OFS="\t"}
+        {
+            ns=NF-2; c0=0; c1=0; nm=0
+            for (i=3;i<=NF;i++){ if($i=="0"){c0++;nm++} else if($i=="1"){c1++;nm++} }
+            if (ns<=0 || nm==0) next                       # no samples / all missing -> drop
+            if ((nm/ns) < mn) next                         # too many missing calls
+            maf=(c0<c1?c0:c1)/nm
+            if (maf < mm) next                             # below MAF (min_maf>0 also drops monomorphic)
+            print
+        }' body_raw.txt >> "${GT}"
+        rm -f body_raw.txt
 
         # bi-allelic allele frequencies from the resulting calls (identical sites and order)
         awk 'NR==1{next}
