@@ -33,7 +33,7 @@ task ListGenotypedVCFs {
         memory:  "4 GiB"
         disks: "local-disk 50 HDD"
         bootDiskSizeGb: 25
-        docker:"us.gcr.io/broad-dsp-lrma/lr-basic:latest"
+        docker:"us.gcr.io/broad-dsp-lrma/lr-basic:0.1.3"
     }
 }
 
