@@ -41,6 +41,7 @@ workflow HmmIBD {
         populations_file:  "Optional sample-to-population file for per-population AN/AC/AF (bcftools +fill-tags -S). (default: none)"
         rename_annots_tsv: "Required when keep_original_af=true: old-name<TAB>new-name TSV for bcftools annotate --rename-annots. (default: none)"
         filter_extra_args: "Extra `bcftools view` filters added to the final per-file filtration view (e.g. \"-e MAF<0.01\"); whitespace-separated, no internal spaces. Only applied when run_filtration=true. (default: empty)"
+        emit_progress:     "Write a byte-based progress bar (percent, rate, elapsed, ETA) to each per-file filtration's stderr via pv (installed at runtime if missing). Only applies when run_filtration=true. Off by default. (default: false)"
 
         # ---- Step 2: hmmibd-rs ----
         data_file2:           "Optional second-population genotypes (-I). (default: none)"
@@ -104,6 +105,7 @@ workflow HmmIBD {
         File? populations_file
         File? rename_annots_tsv
         String filter_extra_args = ""
+        Boolean emit_progress = false
 
         # ---- Step 2: hmmibd-rs ----
         File? data_file2
@@ -176,6 +178,7 @@ workflow HmmIBD {
                 populations_file    = populations_file,
                 rename_annots_tsv   = rename_annots_tsv,
                 filter_extra_args   = filter_extra_args,
+                emit_progress       = emit_progress,
                 gt_mode             = bcf_read_mode,
                 dom_min_depth       = dom_min_depth,
                 dom_min_ratio       = dom_min_ratio,

@@ -44,6 +44,7 @@ workflow FilterVcfForHmmIBD {
         populations_file:    "Optional sample-to-population file for per-population AN/AC/AF. (default: none)"
         rename_annots_tsv:   "Required when keep_original_af=true: old-name<TAB>new-name TSV. (default: none)"
         filter_extra_args:   "Additional args appended verbatim to the final bcftools view invocation of each per-file filtration. (default: empty)"
+        emit_progress:       "Write a byte-based progress bar (percent, rate, elapsed, ETA) to each per-file filtration's stderr via pv (installed at runtime if missing). Off by default so scattered runs don't apt-install. (default: false)"
 
         filter_runtime_attr_override:  "Override runtime for the (scattered) filtration task. (default: none)"
         convert_runtime_attr_override: "Override runtime for the vcf/table conversion task. (default: none)"
@@ -69,6 +70,7 @@ workflow FilterVcfForHmmIBD {
         File? populations_file
         File? rename_annots_tsv
         String filter_extra_args = ""
+        Boolean emit_progress = false
 
         String gt_mode = "dominant-allele"
         Int dom_min_depth = 5
@@ -106,6 +108,7 @@ workflow FilterVcfForHmmIBD {
                 populations_file    = populations_file,
                 rename_annots_tsv   = rename_annots_tsv,
                 extra_args          = filter_extra_args,
+                emit_progress       = emit_progress,
                 runtime_attr_override = filter_runtime_attr_override
         }
 

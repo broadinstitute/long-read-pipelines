@@ -34,6 +34,7 @@ task FilterVcfForHmmIBD {
         populations_file:      "Optional sample-to-population file passed to `bcftools +fill-tags -S`; when given, AN/AC/AF are computed per population. When omitted, tags are computed across all samples. (default: none)"
         rename_annots_tsv:     "Required when keep_original_af=true: two-column TSV of old-name<TAB>new-name passed to `bcftools annotate --rename-annots`. (default: none)"
         extra_args:            "Additional `bcftools view` filters appended to the FINAL view (after AN/AC/AF are recomputed, so INFO-based expressions like MAF work). Whitespace-separated tokens; write expressions without internal spaces, e.g. \"-e MAF<0.01\" or \"-i F_MISSING<0.1\". Note the final view already applies -i 'MAX(INFO/AC) > 0'; supply extra exclusions with -e (a second -i would override the built-in one). (default: empty)"
+        emit_progress:         "Stream the input through pv so a byte-based progress bar (percent, rate, elapsed, ETA) is written to stderr; because the pipe applies backpressure, pv's rate tracks the whole filter's end-to-end throughput. pv is installed at runtime if missing (best effort; the run continues without a bar if that fails). Off by default so routine/scattered runs don't apt-install. (default: false)"
         runtime_attr_override: "Override the default runtime attributes. (default: none)"
     }
 
@@ -54,6 +55,7 @@ task FilterVcfForHmmIBD {
         File? rename_annots_tsv
 
         String extra_args = ""
+        Boolean emit_progress = false
 
         RuntimeAttr? runtime_attr_override
     }
@@ -139,6 +141,16 @@ task FilterVcfForHmmIBD {
         MAXALT_STEP=(cat)
         if [[ ~{max_alt} -gt 0 ]] ; then MAXALT_STEP=(bcftools view -e "N_ALT > ~{max_alt}" -Ou) ; fi
 
+        # Optional progress bar: stream the input through pv so its byte-based percent, rate, elapsed,
+        # and ETA go to stderr. The pipe applies backpressure, so pv's read rate tracks the whole
+        # filter's end-to-end throughput (not just decompression). pv is installed if missing (best
+        # effort; the run continues without a bar on failure). `cat` is a no-op passthrough when off.
+        PV=(cat)
+        if [[ "~{emit_progress}" == "true" ]]; then
+            command -v pv >/dev/null 2>&1 || { { apt-get update -qq && apt-get install -y -qq pv ; } >/dev/null 2>&1 || echo "WARN: pv unavailable and install failed; continuing without a progress bar" >&2 ; }
+            if command -v pv >/dev/null 2>&1 ; then PV=(pv -f -p -t -e -r -b -i 15 -N filter) ; fi
+        fi
+
         # keeping the original allele frequencies requires a rename map
         if [[ "~{keep_original_af}" == "true" && -z "~{rename_annots_tsv}" ]] ; then
             echo "ERROR: keep_original_af=true requires rename_annots_tsv to be provided." >&2
@@ -148,7 +160,8 @@ task FilterVcfForHmmIBD {
         # Mask low-depth genotypes, (optionally) preserve original AF via rename, recompute
         # AN/AC/AF (optionally per population), then trim now-unrepresented alt alleles/sites.
         if [[ "~{keep_original_af}" == "true" ]] ; then
-            bcftools annotate -x '~{fmt_keep}' -Ou ~{input_vcf} \
+            "${PV[@]}" ~{input_vcf} \
+              | bcftools annotate -x '~{fmt_keep}' -Ou - \
               | bcftools filter -S . -e "~{gt_mask_expr}" -Ou \
               | bcftools view "${TYPE_FLAGS[@]}" -Ou \
               | "${TRIM_STEP[@]}" \
@@ -164,7 +177,8 @@ task FilterVcfForHmmIBD {
             # quadratic in alleles) / GQ / phasing — is dropped. This is much smaller and ~3x
             # faster on big cohorts, and it removes GATK per-allele INFO (e.g. HAPCOMP) with
             # value counts that disagree with the ALT count and would abort --trim-alt-alleles.
-            bcftools annotate -x 'INFO,~{fmt_keep}' -Ou ~{input_vcf} \
+            "${PV[@]}" ~{input_vcf} \
+              | bcftools annotate -x 'INFO,~{fmt_keep}' -Ou - \
               | bcftools filter -S . -e "~{gt_mask_expr}" -Ou \
               | bcftools view "${TYPE_FLAGS[@]}" -Ou \
               | "${TRIM_STEP[@]}" \
