@@ -35,7 +35,7 @@ workflow FilterVcfForHmmIBD {
         thin_min_snp_sep:    "output_format='hmmibd_table' only: minimum bp spacing between kept sites (MAF-prioritized). 0 disables; set with thin_max_per_window=0 to skip thinning. (default: 50)"
         max_alt:             "Optional pre-norm site width cap: when >0, sites with more than this many ALT alleles (after trimming unobserved ones) are dropped before `bcftools norm` splits them, bounding norm's memory on Pf hyper-multiallelic sites. ~6-8 is safe for Pf SNP IBD. (default: 0 = no cap)"
         gt_mode:             "output_format='hmmibd_table' only: how to derive each per-sample call. 'dominant-allele' (default) = max-depth allele from FORMAT/AD with hmmibd-rs read_dom gating (right for polyclonal Pf; requires AD to survive filtration); 'first-ploidy' = first allele of GT. (default: dominant-allele)"
-        dom_min_depth:       "dominant-allele gate: minimum total AD depth (total > dom_min_depth), else the call is missing. Matches hmmibd-rs min_depth. (default: 5)"
+        dom_min_depth:       "dominant-allele gate: a call is accepted only if total AD depth > dom_min_depth, else missing. Strict '>', so 7 requires >=8 reads. (default: 7; diverges from hmmibd-rs's default of 5)"
         dom_min_ratio:       "dominant-allele gate: minimum major-allele fraction (major/total >= dom_min_ratio). Matches hmmibd-rs min_ratio. (default: 0.7)"
         dom_min_r1_r2:       "dominant-allele gate: accept only if minor/major < 1/dom_min_r1_r2. Matches hmmibd-rs min_r1_r2. (default: 3.0)"
         min_maf:             "output_format='hmmibd_table' only: drop sites whose minor-allele frequency among non-missing FINAL calls is below this (matches hmmibd-rs min_maf); >0 also drops monomorphic / no-alt-expressed sites. Set 0 to keep rare-variant sites. (default: 0.01)"
@@ -73,7 +73,7 @@ workflow FilterVcfForHmmIBD {
         Boolean emit_progress = false
 
         String gt_mode = "dominant-allele"
-        Int dom_min_depth = 5
+        Int dom_min_depth = 7
         Float dom_min_ratio = 0.7
         Float dom_min_r1_r2 = 3.0
         Float min_maf = 0.01

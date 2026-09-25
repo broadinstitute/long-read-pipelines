@@ -52,7 +52,7 @@ workflow HmmIBD {
         bcf_filter_config:    "Optional TOML BCF filter config (--bcf-filter-config); only used in --from-bcf mode. (default: none)"
         genome:               "Optional genome/recombination-map spec (--genome); mutually exclusive with rec_rate. (default: none)"
         bcf_read_mode:        "How genotypes are read. In --from-bcf mode: dominant-allele | first-ploidy | each-ploidy. When run_filtration=true this ALSO governs how the combined table is built (dominant-allele | first-ploidy; each-ploidy is --from-bcf only) — so dominant-allele gives the same majority-clone calls whether via table or --from-bcf. (default: dominant-allele)"
-        dom_min_depth:        "dominant-allele table gate: minimum total AD depth (total > dom_min_depth), else missing. Matches hmmibd-rs min_depth. (default: 5)"
+        dom_min_depth:        "dominant-allele table gate: a call is accepted only if total AD depth > dom_min_depth, else missing. Strict '>', so 7 requires >=8 reads. (default: 7; diverges from hmmibd-rs's default of 5)"
         dom_min_ratio:        "dominant-allele table gate: minimum major-allele fraction (major/total >= dom_min_ratio). Matches hmmibd-rs min_ratio. (default: 0.7)"
         dom_min_r1_r2:        "dominant-allele table gate: accept only if minor/major < 1/dom_min_r1_r2. Matches hmmibd-rs min_r1_r2. (default: 3.0)"
         min_maf:              "Site prune: drop sites whose minor-allele frequency among non-missing FINAL calls is below this (matches hmmibd-rs min_maf, so the table and --from-bcf paths keep the same sites); >0 also drops monomorphic / no-alt-expressed sites. Set 0 to keep rare-variant sites. (default: 0.01)"
@@ -117,7 +117,7 @@ workflow HmmIBD {
         File? genome
 
         String bcf_read_mode = "dominant-allele"
-        Int dom_min_depth = 5
+        Int dom_min_depth = 7
         Float dom_min_ratio = 0.7
         Float dom_min_r1_r2 = 3.0
         Float min_maf = 0.01
