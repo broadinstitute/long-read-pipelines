@@ -23,7 +23,7 @@ task FilterVcfForHmmIBD {
     parameter_meta {
         input_vcf:             "VCF/BCF to filter prior to IBD inference. (required)"
         prefix:                "Basename for the output BCF. (required)"
-        min_depth:             "Genotypes with FORMAT/DP below this value are set to missing (bcftools filter -S .). (default: 5)"
+        min_depth:             "Genotypes with FORMAT/DP below this value are set to missing (bcftools filter -S .). NOTE: this masks GT, so in dominant-allele mode (which ignores GT) it does not gate the calls — dom_min_depth is the read-depth floor there. (default: 8)"
         keep_original_af:      "If true, rename the existing INFO annotations via rename_annots_tsv before recomputing AN/AC/AF, so the original frequencies are preserved under new tags. (default: false)"
         variant_types:         "Which variant types to keep (bcftools view -v): 'snps', 'indels', or 'both'. SNPs are the standard hmmIBD marker set; Pf indels are error-prone. (default: snps)"
         biallelic_only:        "Restrict to biallelic sites (bcftools view -m2 -M2). Recommended true: multiallelic sites (especially indels) can exceed hmmibd-rs --max-all and crash it until that is patched. (default: true)"
@@ -41,7 +41,7 @@ task FilterVcfForHmmIBD {
         File input_vcf
         String prefix
 
-        Int min_depth = 5
+        Int min_depth = 8
         Boolean keep_original_af = false
         String variant_types = "snps"
         Boolean biallelic_only = true
@@ -671,7 +671,7 @@ task BcfToSampleTable {
 task StitchHmmIBDTables {
 
     meta {
-        description: "Combine many per-region hmmIBD genotype tables (one per input VCF, as produced by BcfToSampleTable) into a SINGLE hmmIBD table + matching allele-frequency file for hmmibd-rs. This is the scalable combine step: each huge input VCF is first reduced to its compact integer genotype table, and only these small tables are stitched here — a merged multi-hundred-GB BCF is never materialized. Assumes every input table carries the SAME samples in the SAME column order (i.e. the input VCFs are disjoint regions of ONE joint call, split across files); the sample headers are verified identical and the task aborts if they differ. Rows (sites) from all tables are concatenated and coordinate-sorted by integer chrom then pos (hmmibd-rs assumes sorted input); the allele-frequency file is recomputed on the COMBINED matrix (valid because every table holds the full sample set) so no cross-file reconciliation is needed. An optional max_variants cap is applied to the combined, genome-wide callset (thinned by even stride, not truncated). Input regions are expected to be non-overlapping; same-position rows (e.g. a SNP and an indel from variant_types=both) are left in place and handled downstream by hmmibd-rs --min-snp-sep."
+        description: "Combine many per-region hmmIBD genotype tables (one per input VCF, as produced by BcfToSampleTable) into a SINGLE hmmIBD table + matching allele-frequency file for hmmibd-rs. This is the scalable combine step: each huge input VCF is first reduced to its compact integer genotype table, and only these small tables are stitched here — a merged multi-hundred-GB BCF is never materialized. Assumes every input table carries the SAME samples in the SAME column order (i.e. the input VCFs are disjoint regions of ONE joint call, split across files); the sample headers are verified identical and the task aborts if they differ. Rows (sites) from all tables are concatenated and coordinate-sorted by integer chrom then pos (hmmibd-rs assumes sorted input); closely spaced / linked variants are then thinned (keep at most thin_max_per_window sites per thin_window_bp window and enforce thin_min_snp_sep bp minimum spacing, prioritizing higher minor-allele frequency) because hmmIBD assumes markers are ~independent given IBD state and over-dense linked SNPs inflate IBD; the allele-frequency file is recomputed on the COMBINED, thinned matrix (valid because every table holds the full sample set) so no cross-file reconciliation is needed. An optional max_variants cap is applied after thinning to the combined, genome-wide callset (even stride, not truncated). Input regions are expected to be non-overlapping."
 
         tool:          "coreutils"
         tool_url:      "https://www.gnu.org/software/coreutils/"
@@ -687,13 +687,19 @@ task StitchHmmIBDTables {
     parameter_meta {
         gt_tables:             "hmmIBD genotype tables to combine, one per input VCF (from BcfToSampleTable / FilterVcfForHmmIBD output_format='hmmibd_table'). All must share the same samples in the same column order. (required)"
         prefix:                "Basename for the combined output tables. (required)"
-        max_variants:          "Optional cap on the number of variants in the COMBINED callset. When >0 and the combined site count exceeds it, sites are thinned evenly across the genome down to at most this many (not truncated to the first N). Applied genome-wide here (not per input file), so the cap is meaningful across the merged callset. (default: 0 = no limit)"
+        thin_window_bp:        "LD/density thinning window size in bp (non-overlapping bins). Keep at most thin_max_per_window sites per window. (default: 2000)"
+        thin_max_per_window:   "LD/density thinning: max sites kept per thin_window_bp window, chosen by highest MAF. hmmIBD assumes markers ~independent given IBD state; over-dense linked SNPs inflate IBD. 0 disables the density cap. (default: 12)"
+        thin_min_snp_sep:      "LD/density thinning: minimum bp spacing between kept sites (MAF-prioritized). 0 disables the spacing rule. Set both this and thin_max_per_window to 0 to skip thinning entirely. (default: 50)"
+        max_variants:          "Optional cap on the number of variants in the COMBINED callset, applied AFTER thinning. When >0 and the count still exceeds it, sites are thinned evenly across the genome down to at most this many (not truncated to the first N). Applied genome-wide here (not per input file). (default: 0 = no limit)"
         runtime_attr_override: "Override the default runtime attributes. (default: none)"
     }
 
     input {
         Array[File] gt_tables
         String prefix
+        Int thin_window_bp = 2000
+        Int thin_max_per_window = 12
+        Int thin_min_snp_sep = 50
         Int max_variants = 0
         RuntimeAttr? runtime_attr_override
     }
@@ -725,6 +731,46 @@ task StitchHmmIBDTables {
         # External sort (-T .) keeps temp files on the task disk, so this scales past RAM.
         for t in "${TABLES[@]}"; do tail -n +2 "$t"; done \
             | sort -T . -k1,1n -k2,2n > body_sorted.txt
+
+        # Thin closely spaced / linked variants (default on): keep at most thin_max_per_window sites
+        # per thin_window_bp window and enforce a minimum thin_min_snp_sep bp spacing, PRIORITIZING
+        # higher minor-allele frequency (the more informative markers). hmmIBD assumes markers are
+        # ~independent given IBD state; over-dense linked SNPs violate that and inflate IBD sharing.
+        # Runs on the combined, coordinate-sorted callset (genome-wide; a window never crosses a shard
+        # boundary here) using the dominant-allele-call MAF. Density windows are non-overlapping bins
+        # of thin_window_bp. Set thin_max_per_window=0 and thin_min_snp_sep=0 to disable.
+        if [[ ~{thin_max_per_window} -gt 0 || ~{thin_min_snp_sep} -gt 0 ]]; then
+            BEFORE=$(wc -l < body_sorted.txt)
+            # candidate list: chrom, pos, MAF (from the combined calls)
+            awk 'BEGIN{FS=OFS="\t"} { c0=0;c1=0; for(i=3;i<=NF;i++){ if($i=="0")c0++; else if($i=="1")c1++ }
+                 n=c0+c1; maf=(n==0?0:(c0<c1?c0:c1)/n); print $1,$2,maf }' body_sorted.txt \
+              | sort -T . -k1,1n -k3,3gr -k2,2n > cand.txt         # chrom asc, MAF desc, pos asc (deterministic)
+            # greedy MAF-first: accept a site if its density bin isn't full and no already-accepted
+            # site is within thin_min_snp_sep bp (checked against the site's own +/- S-block neighbors).
+            awk -v W=~{thin_window_bp} -v N=~{thin_max_per_window} -v S=~{thin_min_snp_sep} 'BEGIN{FS=OFS="\t"}
+            {
+                chrom=$1; pos=$2+0
+                if (W>0 && N>0){ bkey=chrom SUBSEP int(pos/W); if (bc[bkey] >= N) next }
+                reject=0
+                if (S>0){
+                    sb=int(pos/S)
+                    for(d=-1; d<=1; d++){
+                        akey=chrom SUBSEP (sb+d)
+                        if (akey in acc){ m=split(acc[akey],pp," "); for(i=1;i<=m;i++){ dd=pos-pp[i]; if(dd<0)dd=-dd; if(dd<S){reject=1;break} } }
+                        if (reject) break
+                    }
+                }
+                if (reject) next
+                if (W>0 && N>0) bc[bkey]++
+                if (S>0){ akey=chrom SUBSEP int(pos/S); acc[akey]=acc[akey] " " pos }
+                print chrom, pos
+            }' cand.txt > accepted.txt
+            # keep only accepted sites, preserving coordinate order
+            awk 'BEGIN{FS=OFS="\t"} NR==FNR{keep[$1 SUBSEP $2]=1; next} (($1 SUBSEP $2) in keep)' accepted.txt body_sorted.txt > body_thinned.txt
+            mv body_thinned.txt body_sorted.txt
+            rm -f cand.txt accepted.txt
+            echo "thinning: ${BEFORE} -> $(wc -l < body_sorted.txt) sites (<= ~{thin_max_per_window}/~{thin_window_bp}bp, min ~{thin_min_snp_sep}bp, MAF-prioritized)"
+        fi
 
         # Write header, then the (optionally thinned) sorted body.
         cat header.txt > "${GT}"

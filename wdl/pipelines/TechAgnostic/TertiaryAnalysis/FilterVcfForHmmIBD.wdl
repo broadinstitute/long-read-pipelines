@@ -24,12 +24,15 @@ workflow FilterVcfForHmmIBD {
         prefix:              "Basename / sample-set name for all outputs. (required)"
         output_format:       "Format to emit: 'bcf' (default) or 'vcf' return the per-input filtered callsets as arrays (not combined); 'hmmibd_table' reduces each filtered file to an hmmIBD genotype table and STITCHES all of them into one combined table + freq file (the scalable path for large cohorts)."
 
-        min_depth:           "Genotypes with FORMAT/DP below this value are set to missing. (default: 5)"
+        min_depth:           "Genotypes with FORMAT/DP below this value are set to missing. NOTE: masks GT, so in dominant-allele mode (ignores GT) it does not gate the calls — dom_min_depth is the read-depth floor there. (default: 8)"
         keep_original_af:    "Preserve the original allele-frequency annotations (via rename_annots_tsv) before recomputing AN/AC/AF. (default: false)"
         variant_types:       "Which variant types to keep: 'snps', 'indels', or 'both'. Default keeps SNPs only; set 'both' to also run IBD on indels (hmmibd-rs codes by allele index, so bi-allelic indels are fine). (default: snps)"
         biallelic_only:      "Restrict to biallelic sites. (default: true)"
         split_multiallelics: "Split multiallelics into biallelic records to recover SNP alleles. (default: true)"
-        max_variants:        "Optional cap on the number of variants; when >0 the callset is thinned evenly to at most this many. For output_format='hmmibd_table' the cap is applied to the COMBINED, genome-wide callset (per-file filtration runs uncapped); for 'bcf'/'vcf' it is applied per input file. (default: 0 = no limit)"
+        max_variants:        "Optional cap on the number of variants; when >0 the callset is thinned evenly to at most this many. For output_format='hmmibd_table' the cap is applied AFTER LD thinning to the COMBINED, genome-wide callset (per-file filtration runs uncapped); for 'bcf'/'vcf' it is applied per input file. (default: 0 = no limit)"
+        thin_window_bp:      "output_format='hmmibd_table' only: LD/density thinning window (bp). Keep at most thin_max_per_window sites per window on the combined callset. (default: 2000)"
+        thin_max_per_window: "output_format='hmmibd_table' only: max sites kept per thin_window_bp window (highest MAF); over-dense linked SNPs inflate IBD. 0 disables. (default: 12)"
+        thin_min_snp_sep:    "output_format='hmmibd_table' only: minimum bp spacing between kept sites (MAF-prioritized). 0 disables; set with thin_max_per_window=0 to skip thinning. (default: 50)"
         max_alt:             "Optional pre-norm site width cap: when >0, sites with more than this many ALT alleles (after trimming unobserved ones) are dropped before `bcftools norm` splits them, bounding norm's memory on Pf hyper-multiallelic sites. ~6-8 is safe for Pf SNP IBD. (default: 0 = no cap)"
         gt_mode:             "output_format='hmmibd_table' only: how to derive each per-sample call. 'dominant-allele' (default) = max-depth allele from FORMAT/AD with hmmibd-rs read_dom gating (right for polyclonal Pf; requires AD to survive filtration); 'first-ploidy' = first allele of GT. (default: dominant-allele)"
         dom_min_depth:       "dominant-allele gate: minimum total AD depth (total > dom_min_depth), else the call is missing. Matches hmmibd-rs min_depth. (default: 5)"
@@ -52,12 +55,15 @@ workflow FilterVcfForHmmIBD {
         String prefix
         String output_format = "bcf"
 
-        Int min_depth = 5
+        Int min_depth = 8
         Boolean keep_original_af = false
         String variant_types = "snps"
         Boolean biallelic_only = true
         Boolean split_multiallelics = true
         Int max_variants = 0
+        Int thin_window_bp = 2000
+        Int thin_max_per_window = 12
+        Int thin_min_snp_sep = 50
         Int max_alt = 0
         Boolean mask_gq0_genotypes = false
         File? populations_file
@@ -136,9 +142,12 @@ workflow FilterVcfForHmmIBD {
     if (output_format == "hmmibd_table") {
         call HMMIBD.StitchHmmIBDTables as t_03_Stitch {
             input:
-                gt_tables    = select_all(t_02_ToTable.sample_gt_table),
-                prefix       = prefix,
-                max_variants = max_variants,
+                gt_tables           = select_all(t_02_ToTable.sample_gt_table),
+                prefix              = prefix,
+                thin_window_bp      = thin_window_bp,
+                thin_max_per_window = thin_max_per_window,
+                thin_min_snp_sep    = thin_min_snp_sep,
+                max_variants        = max_variants,
                 runtime_attr_override = combine_runtime_attr_override
         }
     }

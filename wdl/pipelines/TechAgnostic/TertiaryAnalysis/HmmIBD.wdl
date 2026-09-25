@@ -27,12 +27,15 @@ workflow HmmIBD {
         hmmibd_input_format: "Only used when run_filtration=false: format of input_vcfs — 'hmmibd_table' (per-region hmmIBD text tables, stitched into one) or 'bcf'/'vcf' (first element read via --from-bcf). (default: bcf)"
 
         # ---- Step 1: filtration (bcftools) ----
-        min_depth:         "Genotypes with FORMAT/DP below this value are set to missing. (default: 5)"
+        min_depth:         "Genotypes with FORMAT/DP below this value are set to missing. NOTE: masks GT, so with bcf_read_mode='dominant-allele' (ignores GT) it does not gate the calls — dom_min_depth is the read-depth floor there. (default: 8)"
         keep_original_af:  "Preserve the original allele-frequency annotations (via rename_annots_tsv) before recomputing AN/AC/AF. (default: false)"
         variant_types:     "Which variant types to keep: 'snps', 'indels', or 'both'. Default keeps SNPs only; set 'both' to also run IBD on indels (hmmibd-rs codes by allele index, so bi-allelic indels are fine). (default: snps)"
         biallelic_only:    "Restrict to biallelic sites. Recommended true: multiallelic sites (especially indels) can exceed hmmibd-rs --max-all and crash it until patched. (default: true)"
         split_multiallelics: "Split multiallelics into biallelic records (bcftools norm -m-any) to recover SNP alleles from multiallelic/spanning-deletion sites instead of dropping them. (default: true)"
-        max_variants:      "Optional cap on the number of variants; when >0, sites are thinned evenly across the genome to at most this many. Applied to the COMBINED, genome-wide callset (per-file filtration runs uncapped). (default: 0 = no limit)"
+        max_variants:      "Optional cap on the number of variants; when >0, sites are thinned evenly across the genome to at most this many. Applied AFTER LD thinning to the COMBINED, genome-wide callset (per-file filtration runs uncapped). (default: 0 = no limit)"
+        thin_window_bp:    "LD/density thinning window (bp) on the combined callset; keep at most thin_max_per_window sites per window. (default: 2000)"
+        thin_max_per_window: "Max sites kept per thin_window_bp window (highest MAF). hmmIBD assumes markers ~independent given IBD state; over-dense linked SNPs inflate IBD. 0 disables the density cap. (default: 12)"
+        thin_min_snp_sep:  "Minimum bp spacing between kept sites (MAF-prioritized). 0 disables; set with thin_max_per_window=0 to skip thinning entirely. (default: 50)"
         max_alt:           "Optional pre-norm site width cap: when >0, sites with more than this many ALT alleles (after trimming unobserved ones) are dropped before `bcftools norm` splits them — bounds the filtration task's memory on Pf hyper-multiallelic (var-gene/indel) sites that OOM-kill norm on whole-cohort joint calls. ~6-8 is safe for Pf SNP IBD. (default: 0 = no cap)"
         mask_gq0_genotypes: "Also set GQ0 genotypes to missing (beyond the DP < min_depth mask). Reproduces the GATK GQ0-hom-ref fix (issue #7792 / PR #8741) for VCFs from pre-4.6.0.0 GenotypeGVCFs or GnarlyGenotyper, where no-/low-confidence hom-refs are 0/0:GQ=0 instead of ./. Conservative (drops all GQ0 hom-refs). Only applied when run_filtration=true. Masks GT only, so with bcf_read_mode='dominant-allele' (the default) it is a no-op for the table's call values (that path reads AD, ignores GT) — the dom_min_depth/dom_min_ratio/dom_min_r1_r2 AD gates handle GQ0 hom-refs there; it bites in first-ploidy mode. (default: false)"
         populations_file:  "Optional sample-to-population file for per-population AN/AC/AF (bcftools +fill-tags -S). (default: none)"
@@ -87,12 +90,15 @@ workflow HmmIBD {
         String hmmibd_input_format = "bcf"
 
         # ---- Step 1: filtration ----
-        Int min_depth = 5
+        Int min_depth = 8
         Boolean keep_original_af = false
         String variant_types = "snps"
         Boolean biallelic_only = true
         Boolean split_multiallelics = true
         Int max_variants = 0
+        Int thin_window_bp = 2000
+        Int thin_max_per_window = 12
+        Int thin_min_snp_sep = 50
         Int max_alt = 0
         Boolean mask_gq0_genotypes = false
         File? populations_file
@@ -162,6 +168,9 @@ workflow HmmIBD {
                 biallelic_only      = biallelic_only,
                 split_multiallelics = split_multiallelics,
                 max_variants        = max_variants,
+                thin_window_bp      = thin_window_bp,
+                thin_max_per_window = thin_max_per_window,
+                thin_min_snp_sep    = thin_min_snp_sep,
                 max_alt             = max_alt,
                 mask_gq0_genotypes  = mask_gq0_genotypes,
                 populations_file    = populations_file,
@@ -181,9 +190,12 @@ workflow HmmIBD {
     if (!run_filtration && hmmibd_input_format == "hmmibd_table") {
         call HMMIBD.StitchHmmIBDTables as t_01b_Stitch {
             input:
-                gt_tables    = input_vcfs,
-                prefix       = prefix,
-                max_variants = max_variants
+                gt_tables           = input_vcfs,
+                prefix              = prefix,
+                thin_window_bp      = thin_window_bp,
+                thin_max_per_window = thin_max_per_window,
+                thin_min_snp_sep    = thin_min_snp_sep,
+                max_variants        = max_variants
         }
     }
 
