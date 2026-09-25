@@ -146,7 +146,7 @@ task SplitMultiSampleVCFTask {
         boot_disk_gb:       25,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.4"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
