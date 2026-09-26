@@ -10,7 +10,7 @@ workflow FilterVcfForHmmIBD {
         description: "Filter a LIST of VCFs/BCFs for IBD analysis and (for the hmmIBD-table format) combine them into a SINGLE input for hmmibd-rs. Each input file is filtered independently (scattered): mask low-depth genotypes, optionally preserve original allele frequencies, recompute AN/AC/AF, select variant types / biallelic sites. The list is meant to be disjoint regions of ONE joint call, split across files so that no multi-hundred-GB VCF is ever handled whole. Output depends on output_format: 'hmmibd_table' (recommended at scale) reduces each filtered file to a compact integer genotype table and STITCHES them into one coordinate-sorted table + allele-frequency file (a merged BCF is never materialized); 'bcf' (default) and 'vcf' return the per-file filtered callsets as arrays (not combined). Pass a single file as a one-element array."
 
         outputs: {
-            filtered_bcfs:        "Per-input filtered, AN/AC/AF-recomputed callsets as compressed BCFs (always produced, one per input VCF)",
+            filtered_bcfs:        "Per-input filtered, AN/AC/AF-recomputed callsets as compressed BCFs (one per input VCF for output_format 'bcf'/'vcf'; EMPTY for 'hmmibd_table', where each filtered BCF is converted to a table in-task and deleted rather than delocalized)",
             filtered_bcf_indices: "CSI indices for filtered_bcfs",
             filtered_vcfs:        "Per-input filtered callsets as bgzipped VCFs; only when output_format='vcf'",
             filtered_vcf_indices: "Tabix indices for filtered_vcfs; only when output_format='vcf'",
@@ -88,6 +88,9 @@ workflow FilterVcfForHmmIBD {
     # is applied once to the stitched, genome-wide callset. For the array (bcf/vcf) paths there is no
     # combine step, so the cap is applied per input file.
     Int per_file_max_variants = if output_format == "hmmibd_table" then 0 else max_variants
+    # The filter task only knows 'bcf' vs 'hmmibd_table' (it fuses the table conversion in-task);
+    # a 'vcf' request filters to a BCF here and converts it to VCF per shard afterward.
+    String filter_output_format = if output_format == "hmmibd_table" then "hmmibd_table" else "bcf"
 
     # Filter each input VCF independently. Filtration always produces a BCF.
     scatter (idx in range(length(input_vcfs))) {
@@ -109,43 +112,34 @@ workflow FilterVcfForHmmIBD {
                 rename_annots_tsv   = rename_annots_tsv,
                 extra_args          = filter_extra_args,
                 emit_progress       = emit_progress,
+                output_format       = filter_output_format,
+                gt_mode             = gt_mode,
+                dom_min_depth       = dom_min_depth,
+                dom_min_ratio       = dom_min_ratio,
+                dom_min_r1_r2       = dom_min_r1_r2,
+                min_maf             = min_maf,
+                min_site_nonmissing = min_site_nonmissing,
                 runtime_attr_override = filter_runtime_attr_override
         }
 
-        # For the array outputs, convert each filtered BCF per input file.
+        # For the array vcf output, convert each shard's filtered BCF (glob -> [0]) to VCF.
         if (output_format == "vcf") {
             call HMMIBD.BcfToVcf as t_02_ToVcf {
                 input:
-                    input_bcf = t_01_Filter.filtered_bcf,
+                    input_bcf = t_01_Filter.filtered_bcf[0],
                     prefix    = shard_prefix,
-                    runtime_attr_override = convert_runtime_attr_override
-            }
-        }
-
-        # For the combined-table path, reduce each filtered BCF to its compact hmmIBD table first;
-        # only these small tables are stitched below (a merged BCF is never built).
-        if (output_format == "hmmibd_table") {
-            call HMMIBD.BcfToSampleTable as t_02_ToTable {
-                input:
-                    input_bcf           = t_01_Filter.filtered_bcf,
-                    prefix              = shard_prefix,
-                    gt_mode             = gt_mode,
-                    dom_min_depth       = dom_min_depth,
-                    dom_min_ratio       = dom_min_ratio,
-                    dom_min_r1_r2       = dom_min_r1_r2,
-                    min_maf             = min_maf,
-                    min_site_nonmissing = min_site_nonmissing,
                     runtime_attr_override = convert_runtime_attr_override
             }
         }
     }
 
     # Stitch the per-file genotype tables into ONE combined table + freq file (applies the cap
-    # to the combined callset). select_all drops the None entries from the scattered optionals.
+    # to the combined callset). Each shard's filter emits its table as a 1-element glob; flatten
+    # collects them across the scatter.
     if (output_format == "hmmibd_table") {
         call HMMIBD.StitchHmmIBDTables as t_03_Stitch {
             input:
-                gt_tables           = select_all(t_02_ToTable.sample_gt_table),
+                gt_tables           = flatten(t_01_Filter.sample_gt_table),
                 prefix              = prefix,
                 thin_window_bp      = thin_window_bp,
                 thin_max_per_window = thin_max_per_window,
@@ -156,8 +150,9 @@ workflow FilterVcfForHmmIBD {
     }
 
     output {
-        Array[File]  filtered_bcfs        = t_01_Filter.filtered_bcf
-        Array[File]  filtered_bcf_indices = t_01_Filter.filtered_bcf_index
+        # filter task emits bcf/index as 1-element globs per shard (empty for the table path); flatten.
+        Array[File]  filtered_bcfs        = flatten(t_01_Filter.filtered_bcf)
+        Array[File]  filtered_bcf_indices = flatten(t_01_Filter.filtered_bcf_index)
         Array[File?] filtered_vcfs        = t_02_ToVcf.filtered_vcf
         Array[File?] filtered_vcf_indices = t_02_ToVcf.filtered_vcf_index
         File? sample_gt_table   = t_03_Stitch.sample_gt_table

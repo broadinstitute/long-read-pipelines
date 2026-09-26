@@ -5,7 +5,7 @@ import "../../structs/Structs.wdl"
 task FilterVcfForHmmIBD {
 
     meta {
-        description: "Pre-filter a VCF for IBD inference: mask low-depth genotypes (FMT/DP < min_depth), optionally preserve the original allele-frequency annotations, recompute AN/AC/AF (optionally per population), and drop alleles/sites that are no longer represented. Emits a compressed BCF ready for hmmibd-rs --from-bcf."
+        description: "Pre-filter a VCF for IBD inference: mask low-depth genotypes (FMT/DP < min_depth), optionally preserve the original allele-frequency annotations, recompute AN/AC/AF (optionally per population), and drop alleles/sites that are no longer represented. With output_format='bcf' (default) emits a compressed BCF ready for hmmibd-rs --from-bcf. With output_format='hmmibd_table' it FUSES the table conversion into this task: the filtered BCF is converted in-place to the hmmIBD genotype table (dominant-allele/first-ploidy) + freq file and the BCF is deleted, so the (often enormous) BCF is never delocalized to GCS or shipped to a separate conversion task."
 
         tool:          "bcftools"
         tool_version:  "1.22"
@@ -15,8 +15,10 @@ task FilterVcfForHmmIBD {
         author: "Jonn Smith"
 
         outputs: {
-            filtered_bcf:       "Filtered, AN/AC/AF-recomputed callset as a compressed BCF",
-            filtered_bcf_index: "CSI index for filtered_bcf"
+            filtered_bcf:       "Filtered, AN/AC/AF-recomputed callset as a compressed BCF (glob: one file when output_format='bcf', empty when 'hmmibd_table')",
+            filtered_bcf_index: "CSI index for filtered_bcf (same emptiness as filtered_bcf)",
+            sample_gt_table:    "hmmIBD genotype table (glob: one file when output_format='hmmibd_table', else empty)",
+            sample_freq_table:  "Matching allele-frequency file (same emptiness as sample_gt_table)"
         }
     }
 
@@ -34,6 +36,13 @@ task FilterVcfForHmmIBD {
         populations_file:      "Optional sample-to-population file passed to `bcftools +fill-tags -S`; when given, AN/AC/AF are computed per population. When omitted, tags are computed across all samples. (default: none)"
         rename_annots_tsv:     "Required when keep_original_af=true: two-column TSV of old-name<TAB>new-name passed to `bcftools annotate --rename-annots`. (default: none)"
         extra_args:            "Additional `bcftools view` filters appended to the FINAL view (after AN/AC/AF are recomputed, so INFO-based expressions like MAF work). Whitespace-separated tokens; write expressions without internal spaces, e.g. \"-e MAF<0.01\" or \"-i F_MISSING<0.1\". Note the final view already applies -i 'MAX(INFO/AC) > 0'; supply extra exclusions with -e (a second -i would override the built-in one). (default: empty)"
+        output_format:         "'bcf' (default) delocalizes the filtered BCF; 'hmmibd_table' converts it in-task to the hmmIBD genotype table + freq file and deletes the BCF (never delocalized). (default: bcf)"
+        gt_mode:               "hmmibd_table only: 'dominant-allele' (default, from FORMAT/AD, reproduces hmmibd-rs read_dom) or 'first-ploidy' (GT[0]). (default: dominant-allele)"
+        dom_min_depth:         "hmmibd_table dominant-allele: accept a call only if total AD depth > this (7 => >=8 reads). (default: 7)"
+        dom_min_ratio:         "hmmibd_table dominant-allele: accept only if major/total >= this. (default: 0.7)"
+        dom_min_r1_r2:         "hmmibd_table dominant-allele: accept only if minor/major < 1/this. (default: 3.0)"
+        min_maf:               "hmmibd_table site prune: drop sites with minor-allele freq (of final calls) below this; >0 also drops monomorphic sites. (default: 0.01)"
+        min_site_nonmissing:   "hmmibd_table site prune: drop sites with non-missing-call fraction below this. (default: 0.3)"
         emit_progress:         "Stream the input through pv so a byte-based progress bar (percent, rate, elapsed, ETA) is written to stderr; because the pipe applies backpressure, pv's rate tracks the whole filter's end-to-end throughput. pv is installed at runtime if missing (best effort; the run continues without a bar if that fails). Off by default so routine/scattered runs don't apt-install. (default: false)"
         runtime_attr_override: "Override the default runtime attributes. (default: none)"
     }
@@ -56,6 +65,14 @@ task FilterVcfForHmmIBD {
 
         String extra_args = ""
         Boolean emit_progress = false
+
+        String output_format = "bcf"
+        String gt_mode = "dominant-allele"
+        Int dom_min_depth = 7
+        Float dom_min_ratio = 0.7
+        Float dom_min_r1_r2 = 3.0
+        Float min_maf = 0.01
+        Float min_site_nonmissing = 0.3
 
         RuntimeAttr? runtime_attr_override
     }
@@ -217,11 +234,78 @@ task FilterVcfForHmmIBD {
                 echo "variant cap: retained $(bcftools index -n ~{prefix}.filtered.bcf) variants (stride ${STRIDE})"
             fi
         fi
+        # Fused table generation: when output_format=hmmibd_table, convert the LOCAL filtered BCF to
+        # the hmmIBD genotype table (+ freq) right here and DELETE the BCF, so the enormous file is
+        # never delocalized to GCS or shipped to a second task. gt_mode dominant-allele reproduces
+        # hmmibd-rs read_dom; then the min_maf/min_site_nonmissing site prune (see BcfToSampleTable).
+        if [[ "~{output_format}" == "hmmibd_table" ]]; then
+            GT="~{prefix}.sample_gt.txt"; FRQ="~{prefix}.sample_freq.txt"; MODE="~{gt_mode}"
+            { printf 'chrom\tpos'; bcftools query -l ~{prefix}.filtered.bcf | awk '{printf "\t%s", $0}'; printf '\n'; } > "${GT}"
+            case "${MODE}" in
+                dominant-allele)
+                    bcftools query -f '%CHROM\t%POS[\t%AD]\n' ~{prefix}.filtered.bcf \
+                    | awk -v md=~{dom_min_depth} -v mr=~{dom_min_ratio} -v mrr=~{dom_min_r1_r2} 'BEGIN{FS=OFS="\t"; inv=1.0/mrr}
+                    {
+                        c=$1; sub(/^Pf3D7_/,"",c); sub(/_v[0-9]+$/,"",c)
+                        if (c !~ /^[0-9]+$/) next
+                        printf "%d\t%d", c+0, $2
+                        for (i=3;i<=NF;i++){
+                            g=-1
+                            if ($i!="." && $i!=""){
+                                split($i,a,","); ref=(a[1]=="."?0:a[1]+0); alt=(a[2]=="."?0:a[2]+0)
+                                total=ref+alt
+                                if (alt>ref){ major=alt; minor=ref; ma=1 } else { major=ref; minor=alt; ma=0 }
+                                if (total>md && major/total>=mr && minor/major<inv) g=ma
+                            }
+                            printf "\t%s", g
+                        }
+                        printf "\n"
+                    }' > body_raw.txt
+                    ;;
+                first-ploidy)
+                    bcftools query -f '%CHROM\t%POS[\t%GT]\n' ~{prefix}.filtered.bcf | awk 'BEGIN{FS=OFS="\t"}
+                    {
+                        c=$1; sub(/^Pf3D7_/,"",c); sub(/_v[0-9]+$/,"",c)
+                        if (c !~ /^[0-9]+$/) next
+                        printf "%d\t%d", c+0, $2
+                        for (i=3;i<=NF;i++){ n=split($i,a,/[\/|]/); g=a[1]; if (g=="."||g=="") g=-1; printf "\t%s", g }
+                        printf "\n"
+                    }' > body_raw.txt
+                    ;;
+                *)
+                    echo "ERROR: gt_mode must be 'dominant-allele' or 'first-ploidy'." >&2; exit 1 ;;
+            esac
+            # site prune on the final calls (match hmmibd-rs --from-bcf); LD/density thinning is later at the stitch
+            awk -v mm=~{min_maf} -v mn=~{min_site_nonmissing} 'BEGIN{FS=OFS="\t"}
+            {
+                ns=NF-2; c0=0; c1=0; nm=0
+                for (i=3;i<=NF;i++){ if($i=="0"){c0++;nm++} else if($i=="1"){c1++;nm++} }
+                if (ns<=0 || nm==0) next
+                if ((nm/ns) < mn) next
+                maf=(c0<c1?c0:c1)/nm
+                if (maf < mm) next
+                print
+            }' body_raw.txt >> "${GT}"
+            rm -f body_raw.txt
+            awk 'NR==1{next}
+            {
+                c0=0; c1=0; n=0
+                for (i=3;i<=NF;i++){ if($i=="0"){c0++;n++} else if($i=="1"){c1++;n++} }
+                if (n==0){ f0=1; f1=0 } else { f0=c0/n; f1=c1/n }
+                printf "%s\t%s\t%.6f\t%.6f\n", $1, $2, f0, f1
+            }' "${GT}" > "${FRQ}"
+            rm -f ~{prefix}.filtered.bcf ~{prefix}.filtered.bcf.csi
+            echo "fused table: variants=$(( $(wc -l < "${GT}") - 1 )); samples=$(( $(head -1 "${GT}" | awk '{print NF}') - 2 )); mode=${MODE}"
+        fi
     >>>
 
     output {
-        File filtered_bcf       = "~{prefix}.filtered.bcf"
-        File filtered_bcf_index = "~{prefix}.filtered.bcf.csi"
+        # glob-backed so each is present only for the chosen output_format: 'bcf' delocalizes the BCF
+        # (+ index); 'hmmibd_table' deletes the BCF and delocalizes only the small table (+ freq).
+        Array[File] filtered_bcf       = glob("~{prefix}.filtered.bcf")
+        Array[File] filtered_bcf_index = glob("~{prefix}.filtered.bcf.csi")
+        Array[File] sample_gt_table    = glob("~{prefix}.sample_gt.txt")
+        Array[File] sample_freq_table  = glob("~{prefix}.sample_freq.txt")
     }
 
     #########################
@@ -231,12 +315,16 @@ task FilterVcfForHmmIBD {
     # norm on realistic malaria joint calls (e.g. a 28 GB single-contig cohort VCF). Override
     # runtime_attr_override.mem_gb higher (32-64) for the widest cohorts; NOTE Cromwell's
     # memory-retry only bumps memory across attempts if the workspace sets memory_retry_multiplier.
+    # preemptible_tries 0: this task is long (hours) on whole-cohort joint calls, and a Spot/preemptible
+    # VM eviction restarts it from scratch — observed ~3 h shards preempted repeatedly and never
+    # converging. On-demand costs more per hour but actually finishes. Override to >0 only for inputs
+    # small enough to complete inside a preemption window.
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       25,
-        preemptible_tries:  1,
+        preemptible_tries:  0,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.4"
     }
