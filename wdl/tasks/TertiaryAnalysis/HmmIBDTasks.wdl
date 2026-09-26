@@ -43,6 +43,7 @@ task FilterVcfForHmmIBD {
         dom_min_r1_r2:         "hmmibd_table dominant-allele: accept only if minor/major < 1/this. (default: 3.0)"
         min_maf:               "hmmibd_table site prune: drop sites with minor-allele freq (of final calls) below this; >0 also drops monomorphic sites. (default: 0.01)"
         min_site_nonmissing:   "hmmibd_table site prune: drop sites with non-missing-call fraction below this. (default: 0.3)"
+        keep_filtered_bcf:     "hmmibd_table only: also keep and delocalize the filtered BCF (+ index) instead of deleting it after the table is built. (default: false)"
         emit_progress:         "Stream the input through pv so a byte-based progress bar (percent, rate, elapsed, ETA) is written to stderr; because the pipe applies backpressure, pv's rate tracks the whole filter's end-to-end throughput. pv is installed at runtime if missing (best effort; the run continues without a bar if that fails). Off by default so routine/scattered runs don't apt-install. (default: false)"
         runtime_attr_override: "Override the default runtime attributes. (default: none)"
     }
@@ -73,6 +74,7 @@ task FilterVcfForHmmIBD {
         Float dom_min_r1_r2 = 3.0
         Float min_maf = 0.01
         Float min_site_nonmissing = 0.3
+        Boolean keep_filtered_bcf = false
 
         RuntimeAttr? runtime_attr_override
     }
@@ -294,8 +296,9 @@ task FilterVcfForHmmIBD {
                 if (n==0){ f0=1; f1=0 } else { f0=c0/n; f1=c1/n }
                 printf "%s\t%s\t%.6f\t%.6f\n", $1, $2, f0, f1
             }' "${GT}" > "${FRQ}"
-            rm -f ~{prefix}.filtered.bcf ~{prefix}.filtered.bcf.csi
-            echo "fused table: variants=$(( $(wc -l < "${GT}") - 1 )); samples=$(( $(head -1 "${GT}" | awk '{print NF}') - 2 )); mode=${MODE}"
+            # Delete the BCF (never delocalized) unless the caller asked to keep it as an output.
+            if [[ "~{keep_filtered_bcf}" != "true" ]]; then rm -f ~{prefix}.filtered.bcf ~{prefix}.filtered.bcf.csi ; fi
+            echo "fused table: variants=$(( $(wc -l < "${GT}") - 1 )); samples=$(( $(head -1 "${GT}" | awk '{print NF}') - 2 )); mode=${MODE}; keep_bcf=~{keep_filtered_bcf}"
         fi
     >>>
 
