@@ -236,69 +236,80 @@ task FilterVcfForHmmIBD {
                 echo "variant cap: retained $(bcftools index -n ~{prefix}.filtered.bcf) variants (stride ${STRIDE})"
             fi
         fi
-        # Fused table generation: when output_format=hmmibd_table, convert the LOCAL filtered BCF to
-        # the hmmIBD genotype table (+ freq) right here and DELETE the BCF, so the enormous file is
-        # never delocalized to GCS or shipped to a second task. gt_mode dominant-allele reproduces
-        # hmmibd-rs read_dom; then the min_maf/min_site_nonmissing site prune (see BcfToSampleTable).
+        # Fused table generation (output_format=hmmibd_table): convert the LOCAL filtered BCF to the
+        # hmmIBD genotype table (+ freq) here and DELETE the BCF, so the enormous file is never
+        # delocalized or shipped to a second task. The conversion (bcftools query over samples x sites
+        # + per-sample call/prune/freq) was the run's real bottleneck, so it is (a) a SINGLE awk pass
+        # that computes the call [dominant-allele | first-ploidy], applies the min_maf/min_site_nonmissing
+        # site prune, and emits the freq row inline (was 3 passes + a temp file), and (b) run in PARALLEL
+        # across NUM_CPUS genomic windows (rows are independent). The stitch re-sorts, so window order is
+        # not load-bearing.
         if [[ "~{output_format}" == "hmmibd_table" ]]; then
-            GT="~{prefix}.sample_gt.txt"; FRQ="~{prefix}.sample_freq.txt"; MODE="~{gt_mode}"
-            { printf 'chrom\tpos'; bcftools query -l ~{prefix}.filtered.bcf | awk '{printf "\t%s", $0}'; printf '\n'; } > "${GT}"
-            case "${MODE}" in
-                dominant-allele)
-                    bcftools query -f '%CHROM\t%POS[\t%AD]\n' ~{prefix}.filtered.bcf \
-                    | awk -v md=~{dom_min_depth} -v mr=~{dom_min_ratio} -v mrr=~{dom_min_r1_r2} 'BEGIN{FS=OFS="\t"; inv=1.0/mrr}
-                    {
-                        c=$1; sub(/^Pf3D7_/,"",c); sub(/_v[0-9]+$/,"",c)
-                        if (c !~ /^[0-9]+$/) next
-                        printf "%d\t%d", c+0, $2
-                        for (i=3;i<=NF;i++){
-                            g=-1
-                            if ($i!="." && $i!=""){
-                                split($i,a,","); ref=(a[1]=="."?0:a[1]+0); alt=(a[2]=="."?0:a[2]+0)
-                                total=ref+alt
-                                if (alt>ref){ major=alt; minor=ref; ma=1 } else { major=ref; minor=alt; ma=0 }
-                                if (total>md && major/total>=mr && minor/major<inv) g=ma
-                            }
-                            printf "\t%s", g
-                        }
-                        printf "\n"
-                    }' > body_raw.txt
-                    ;;
-                first-ploidy)
-                    bcftools query -f '%CHROM\t%POS[\t%GT]\n' ~{prefix}.filtered.bcf | awk 'BEGIN{FS=OFS="\t"}
-                    {
-                        c=$1; sub(/^Pf3D7_/,"",c); sub(/_v[0-9]+$/,"",c)
-                        if (c !~ /^[0-9]+$/) next
-                        printf "%d\t%d", c+0, $2
-                        for (i=3;i<=NF;i++){ n=split($i,a,/[\/|]/); g=a[1]; if (g=="."||g=="") g=-1; printf "\t%s", g }
-                        printf "\n"
-                    }' > body_raw.txt
-                    ;;
-                *)
-                    echo "ERROR: gt_mode must be 'dominant-allele' or 'first-ploidy'." >&2; exit 1 ;;
-            esac
-            # site prune on the final calls (match hmmibd-rs --from-bcf); LD/density thinning is later at the stitch
-            awk -v mm=~{min_maf} -v mn=~{min_site_nonmissing} 'BEGIN{FS=OFS="\t"}
-            {
-                ns=NF-2; c0=0; c1=0; nm=0
-                for (i=3;i<=NF;i++){ if($i=="0"){c0++;nm++} else if($i=="1"){c1++;nm++} }
-                if (ns<=0 || nm==0) next
-                if ((nm/ns) < mn) next
-                maf=(c0<c1?c0:c1)/nm
-                if (maf < mm) next
-                print
-            }' body_raw.txt >> "${GT}"
-            rm -f body_raw.txt
-            awk 'NR==1{next}
-            {
-                c0=0; c1=0; n=0
-                for (i=3;i<=NF;i++){ if($i=="0"){c0++;n++} else if($i=="1"){c1++;n++} }
-                if (n==0){ f0=1; f1=0 } else { f0=c0/n; f1=c1/n }
-                printf "%s\t%s\t%.6f\t%.6f\n", $1, $2, f0, f1
-            }' "${GT}" > "${FRQ}"
+            GT="~{prefix}.sample_gt.txt"; FRQ="~{prefix}.sample_freq.txt"
+            BCF="~{prefix}.filtered.bcf"
+            export BCF
+            export MODE="~{gt_mode}"
+            export MD=~{dom_min_depth} MR=~{dom_min_ratio} MRR=~{dom_min_r1_r2} MM=~{min_maf} MSN=~{min_site_nonmissing}
+
+            # header: chrom  pos  <samples...>
+            { printf 'chrom\tpos'; bcftools query -l "${BCF}" | awk '{printf "\t%s", $0}'; printf '\n'; } > "${GT}"
+            : > "${FRQ}"
+
+            # Split each contig into NUM_CPUS windows for parallel conversion (bare contig id when the
+            # header lacks a length; __ALL__ = whole file when no usable ##contig lines exist).
+            bcftools view -h "${BCF}" | awk -v n="${NUM_CPUS}" -F'[<>,=]' '
+                /^##contig/ { id=""; len=0; for(i=1;i<=NF;i++){ if($i=="ID")id=$(i+1); if($i=="length")len=$(i+1)+0 }
+                    if(id!=""){ if(len>0){ step=int((len+n-1)/n); if(step<1)step=1; for(s=1;s<=len;s+=step){ e=s+step-1; if(e>len)e=len; print id":"s"-"e } } else { print id } } }' > regions.txt
+            if [[ ! -s regions.txt ]]; then echo "__ALL__" > regions.txt ; fi
+
+            # Single-pass per-region converter: call + prune + inline freq. Reads params from the
+            # exported env; writes reg_<idx>.gt and reg_<idx>.frq. (heredoc quoted -> written verbatim)
+            cat > convert_region.sh <<'CONV'
+#!/usr/bin/env bash
+set -euo pipefail
+region="$1"; idx="$2"
+if [[ "${MODE}" == "dominant-allele" ]]; then Q='%CHROM\t%POS[\t%AD]\n'; else Q='%CHROM\t%POS[\t%GT]\n'; fi
+if [[ "${region}" == "__ALL__" ]]; then RFLAG=(); else RFLAG=(-r "${region}"); fi
+bcftools query "${RFLAG[@]}" -f "${Q}" "${BCF}" \
+| awk -v MODE="${MODE}" -v md="${MD}" -v mr="${MR}" -v mrr="${MRR}" -v mm="${MM}" -v msn="${MSN}" -v gt="reg_${idx}.gt" -v fq="reg_${idx}.frq" '
+BEGIN{ FS=OFS="\t"; inv=1.0/mrr }
+{
+    c=$1; sub(/^Pf3D7_/,"",c); sub(/_v[0-9]+$/,"",c); if (c !~ /^[0-9]+$/) next
+    ns=NF-2; c0=0; c1=0; nm=0; row=(c+0) "\t" $2
+    for (i=3;i<=NF;i++){
+        g=-1
+        if (MODE=="dominant-allele"){
+            if ($i!="." && $i!=""){ split($i,a,","); ref=(a[1]=="."?0:a[1]+0); alt=(a[2]=="."?0:a[2]+0); t=ref+alt
+                if (alt>ref){ mj=alt; mnr=ref; ma=1 } else { mj=ref; mnr=alt; ma=0 }
+                if (t>md && mj/t>=mr && mnr/mj<inv) g=ma }
+        } else { np=split($i,a,/[\/|]/); gg=a[1]; if (gg=="."||gg=="") g=-1; else g=gg }
+        if (g==0){c0++;nm++} else if (g==1){c1++;nm++}
+        row=row "\t" g
+    }
+    if (ns<=0 || nm==0) next
+    if ((nm/ns) < msn) next
+    maf=(c0<c1?c0:c1)/nm
+    if (maf < mm) next
+    print row > gt
+    printf "%s\t%s\t%.6f\t%.6f\n", (c+0), $2, c0/nm, c1/nm > fq
+}'
+CONV
+            chmod +x convert_region.sh
+
+            # Number the regions and run NUM_CPUS at a time; concat in numeric order.
+            : > jobs.txt; ridx=0
+            while IFS= read -r r; do printf '%s %s\n' "$r" "${ridx}" >> jobs.txt; ridx=$((ridx+1)); done < regions.txt
+            xargs -P "${NUM_CPUS}" -L1 -a jobs.txt bash convert_region.sh
+            NREG=$(wc -l < regions.txt)
+            for (( j=0; j<NREG; j++ )); do
+                [[ -f "reg_${j}.gt"  ]] && cat "reg_${j}.gt"  >> "${GT}"
+                [[ -f "reg_${j}.frq" ]] && cat "reg_${j}.frq" >> "${FRQ}"
+            done
+            rm -f regions.txt jobs.txt convert_region.sh reg_*.gt reg_*.frq
+
             # Delete the BCF (never delocalized) unless the caller asked to keep it as an output.
             if [[ "~{keep_filtered_bcf}" != "true" ]]; then rm -f ~{prefix}.filtered.bcf ~{prefix}.filtered.bcf.csi ; fi
-            echo "fused table: variants=$(( $(wc -l < "${GT}") - 1 )); samples=$(( $(head -1 "${GT}" | awk '{print NF}') - 2 )); mode=${MODE}; keep_bcf=~{keep_filtered_bcf}"
+            echo "fused table (parallel x${NUM_CPUS}): variants=$(( $(wc -l < "${GT}") - 1 )); samples=$(( $(head -1 "${GT}" | awk '{print NF}') - 2 )); mode=${MODE}; keep_bcf=~{keep_filtered_bcf}"
         fi
     >>>
 
@@ -323,7 +334,7 @@ task FilterVcfForHmmIBD {
     # converging. On-demand costs more per hour but actually finishes. Override to >0 only for inputs
     # small enough to complete inside a preemption window.
     RuntimeAttr default_attr = object {
-        cpu_cores:          2,
+        cpu_cores:          4,
         mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       25,
