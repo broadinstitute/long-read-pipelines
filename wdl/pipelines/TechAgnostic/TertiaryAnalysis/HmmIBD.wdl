@@ -69,7 +69,7 @@ workflow HmmIBD {
         fit_thresh_dk:        "Convergence threshold on k (--fit-thresh-dk). (default: 0.01)"
         fit_thresh_drelk:     "Convergence threshold on relative k (--fit-thresh-drelk). (default: 0.001)"
         rec_rate:             "Constant recombination rate per generation per bp (-r); ignored when genome is set. (default: 0.00000074)"
-        max_all:              "Maximum unique alleles per site (--max-all). (default: 8)"
+        max_all:              "Maximum unique alleles per site (--max-all). Calls stored as i8 (hard ceiling 127); memory scales linearly. (default: 64)"
         buffer_size_segments: "Segments-output write buffer in bytes (--buffer-size-segments). (default: none; hmmibd-rs uses 8Kb)"
         buffer_size_frac:     "Fraction-output write buffer in bytes (--buffer-size-frac). (default: none; hmmibd-rs uses 8Kb)"
         filt_min_seg_cm:      "Drop output segments shorter than this many cM (--filt-min-seg-cm). (default: none)"
@@ -137,7 +137,7 @@ workflow HmmIBD {
         Float fit_thresh_drelk = 0.001
         String rec_rate = "0.00000074"
 
-        Int max_all = 8
+        Int max_all = 64
         Int? buffer_size_segments
         Int? buffer_size_frac
 

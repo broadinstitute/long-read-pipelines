@@ -400,7 +400,7 @@ task HmmIBDrs {
         fit_thresh_drelk:      "Convergence threshold on relative k (--fit-thresh-drelk). (default: 0.001)"
         rec_rate:              "Constant recombination rate per generation per bp (-r/--rec-rate); ignored when genome is set. (default: 0.00000074)"
 
-        max_all:               "Maximum number of unique alleles per site (--max-all). (default: 8)"
+        max_all:               "Maximum number of unique alleles per site (--max-all). Allele calls are stored as i8, so the hard ceiling is 127; memory scales linearly (per-site freq matrix). (default: 64)"
         buffer_size_segments:  "Write buffer size in bytes for the segments output (--buffer-size-segments). (default: none; hmmibd-rs uses 8Kb)"
         buffer_size_frac:      "Write buffer size in bytes for the fraction output (--buffer-size-frac). (default: none; hmmibd-rs uses 8Kb)"
 
@@ -447,7 +447,7 @@ task HmmIBDrs {
         Float fit_thresh_drelk = 0.001
         String rec_rate = "0.00000074"
 
-        Int max_all = 8
+        Int max_all = 64
         Int? buffer_size_segments
         Int? buffer_size_frac
 
