@@ -26,9 +26,9 @@ workflow FilterVcfForHmmIBD {
 
         min_depth:           "Genotypes with FORMAT/DP below this value are set to missing. NOTE: masks GT, so in dominant-allele mode (ignores GT) it does not gate the calls — dom_min_depth is the read-depth floor there. (default: 8)"
         keep_original_af:    "Preserve the original allele-frequency annotations (via rename_annots_tsv) before recomputing AN/AC/AF. (default: false)"
-        variant_types:       "Which variant types to keep: 'snps', 'indels', or 'both'. Default keeps SNPs only; set 'both' to also run IBD on indels (hmmibd-rs codes by allele index, so bi-allelic indels are fine). (default: snps)"
-        biallelic_only:      "Restrict to biallelic sites. (default: true)"
-        split_multiallelics: "Split multiallelics into biallelic records to recover SNP alleles. (default: true)"
+        variant_types:       "Which variant types to keep: 'snps', 'indels', or 'both'. Default 'both' (SNP+indel alleles, on equal footing). With split_multiallelics=false, 'snps' keeps SNP sites but their indel alleles remain at mixed sites; strict SNP-only-alleles needs split_multiallelics=true. (default: both)"
+        biallelic_only:      "Restrict to biallelic sites. Default false to keep multiallelic sites (hmmibd-rs handles up to max_all alleles). (default: false)"
+        split_multiallelics: "Split multiallelics into biallelic records (bcftools norm). Default FALSE: skip the slow single-threaded split and feed multiallelic sites directly; set true for the strict biallelic path. (default: false)"
         max_variants:        "Optional cap on the number of variants; when >0 the callset is thinned evenly to at most this many. For output_format='hmmibd_table' the cap is applied AFTER LD thinning to the COMBINED, genome-wide callset (per-file filtration runs uncapped); for 'bcf'/'vcf' it is applied per input file. (default: 0 = no limit)"
         thin_window_bp:      "output_format='hmmibd_table' only: LD/density thinning window (bp). Keep at most thin_max_per_window sites per window on the combined callset. (default: 2000)"
         thin_max_per_window: "output_format='hmmibd_table' only: max sites kept per thin_window_bp window (highest MAF); over-dense linked SNPs inflate IBD. 0 disables. (default: 12)"
@@ -40,6 +40,7 @@ workflow FilterVcfForHmmIBD {
         dom_min_r1_r2:       "dominant-allele gate: accept only if minor/major < 1/dom_min_r1_r2. Matches hmmibd-rs min_r1_r2. (default: 3.0)"
         min_maf:             "output_format='hmmibd_table' only: drop sites whose minor-allele frequency among non-missing FINAL calls is below this (matches hmmibd-rs min_maf); >0 also drops monomorphic / no-alt-expressed sites. Set 0 to keep rare-variant sites. (default: 0.01)"
         min_site_nonmissing: "output_format='hmmibd_table' only: drop sites where the fraction of samples with a non-missing call is below this (matches hmmibd-rs min_site_nonmissing). (default: 0.3)"
+        max_all:             "output_format='hmmibd_table' only: sites with more than this many alleles are dropped whole (never truncated) during conversion; must equal hmmibd-rs --max-all. (default: 64)"
         keep_filtered_bcf:   "output_format='hmmibd_table' only: also emit the per-input filtered BCFs (filtered_bcfs) instead of deleting them after the table is built. (default: false)"
         mask_gq0_genotypes:  "Also set GQ0 genotypes to missing (beyond the DP < min_depth mask). Reproduces the GATK GQ0-hom-ref fix (issue #7792 / PR #8741) for VCFs from pre-4.6.0.0 GenotypeGVCFs or GnarlyGenotyper, where no-/low-confidence hom-refs are 0/0:GQ=0 instead of ./. — the DP mask alone misses GQ0 calls with DP >= min_depth. Conservative: drops all GQ0 hom-refs (use a GVCF cross-reference to keep well-covered ones). Masks GT only: affects the first-ploidy table (and AC/AF/site selection); the dominant-allele table ignores GT (reads AD), so it is a no-op there — the dom_* AD gates handle GQ0 hom-refs instead. (default: false)"
         populations_file:    "Optional sample-to-population file for per-population AN/AC/AF. (default: none)"
@@ -59,9 +60,9 @@ workflow FilterVcfForHmmIBD {
 
         Int min_depth = 8
         Boolean keep_original_af = false
-        String variant_types = "snps"
-        Boolean biallelic_only = true
-        Boolean split_multiallelics = true
+        String variant_types = "both"
+        Boolean biallelic_only = false
+        Boolean split_multiallelics = false
         Int max_variants = 0
         Int thin_window_bp = 2000
         Int thin_max_per_window = 12
@@ -79,6 +80,7 @@ workflow FilterVcfForHmmIBD {
         Float dom_min_r1_r2 = 3.0
         Float min_maf = 0.01
         Float min_site_nonmissing = 0.3
+        Int max_all = 64
         Boolean keep_filtered_bcf = false
 
         RuntimeAttr? filter_runtime_attr_override
@@ -121,6 +123,7 @@ workflow FilterVcfForHmmIBD {
                 dom_min_r1_r2       = dom_min_r1_r2,
                 min_maf             = min_maf,
                 min_site_nonmissing = min_site_nonmissing,
+                max_all             = max_all,
                 keep_filtered_bcf   = keep_filtered_bcf,
                 runtime_attr_override = filter_runtime_attr_override
         }

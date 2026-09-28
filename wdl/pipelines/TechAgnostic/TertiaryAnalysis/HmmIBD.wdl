@@ -29,9 +29,9 @@ workflow HmmIBD {
         # ---- Step 1: filtration (bcftools) ----
         min_depth:         "Genotypes with FORMAT/DP below this value are set to missing. NOTE: masks GT, so with bcf_read_mode='dominant-allele' (ignores GT) it does not gate the calls — dom_min_depth is the read-depth floor there. (default: 8)"
         keep_original_af:  "Preserve the original allele-frequency annotations (via rename_annots_tsv) before recomputing AN/AC/AF. (default: false)"
-        variant_types:     "Which variant types to keep: 'snps', 'indels', or 'both'. Default keeps SNPs only; set 'both' to also run IBD on indels (hmmibd-rs codes by allele index, so bi-allelic indels are fine). (default: snps)"
-        biallelic_only:    "Restrict to biallelic sites. Recommended true: multiallelic sites (especially indels) can exceed hmmibd-rs --max-all and crash it until patched. (default: true)"
-        split_multiallelics: "Split multiallelics into biallelic records (bcftools norm -m-any) to recover SNP alleles from multiallelic/spanning-deletion sites instead of dropping them. (default: true)"
+        variant_types:     "Which variant types to keep: 'snps', 'indels', or 'both'. Default 'both' — run IBD on SNP+indel alleles (hmmibd-rs treats them on equal footing). With split_multiallelics=false, 'snps' keeps SNP sites but their indel alleles remain at mixed sites; strict SNP-only-alleles needs split_multiallelics=true. (default: both)"
+        biallelic_only:    "Restrict to biallelic sites. Default false to keep MULTIALLELIC sites (hmmibd-rs handles up to max_all alleles); set true (with split_multiallelics=true) for the strict biallelic path. (default: false)"
+        split_multiallelics: "Split multiallelics (bcftools norm -m-any). Default FALSE: skip the slow single-threaded split and feed multiallelic sites straight to the table/hmmibd-rs (the fast path). Set true for the strict biallelic path (needed to separate SNP alleles from indel alleles at mixed sites). (default: false)"
         max_variants:      "Optional cap on the number of variants; when >0, sites are thinned evenly across the genome to at most this many. Applied AFTER LD thinning to the COMBINED, genome-wide callset (per-file filtration runs uncapped). (default: 0 = no limit)"
         thin_window_bp:    "LD/density thinning window (bp) on the combined callset; keep at most thin_max_per_window sites per window. (default: 2000)"
         thin_max_per_window: "Max sites kept per thin_window_bp window (highest MAF). hmmIBD assumes markers ~independent given IBD state; over-dense linked SNPs inflate IBD. 0 disables the density cap. (default: 12)"
@@ -94,9 +94,9 @@ workflow HmmIBD {
         # ---- Step 1: filtration ----
         Int min_depth = 8
         Boolean keep_original_af = false
-        String variant_types = "snps"
-        Boolean biallelic_only = true
-        Boolean split_multiallelics = true
+        String variant_types = "both"
+        Boolean biallelic_only = false
+        Boolean split_multiallelics = false
         Int max_variants = 0
         Int thin_window_bp = 2000
         Int thin_max_per_window = 12
@@ -187,6 +187,7 @@ workflow HmmIBD {
                 dom_min_r1_r2       = dom_min_r1_r2,
                 min_maf             = min_maf,
                 min_site_nonmissing = min_site_nonmissing,
+                max_all             = max_all,
                 keep_filtered_bcf   = keep_filtered_bcf
         }
     }

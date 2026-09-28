@@ -27,9 +27,9 @@ task FilterVcfForHmmIBD {
         prefix:                "Basename for the output BCF. (required)"
         min_depth:             "Genotypes with FORMAT/DP below this value are set to missing (bcftools filter -S .). NOTE: this masks GT, so in dominant-allele mode (which ignores GT) it does not gate the calls — dom_min_depth is the read-depth floor there. (default: 8)"
         keep_original_af:      "If true, rename the existing INFO annotations via rename_annots_tsv before recomputing AN/AC/AF, so the original frequencies are preserved under new tags. (default: false)"
-        variant_types:         "Which variant types to keep (bcftools view -v): 'snps', 'indels', or 'both'. SNPs are the standard hmmIBD marker set; Pf indels are error-prone. (default: snps)"
-        biallelic_only:        "Restrict to biallelic sites (bcftools view -m2 -M2). Recommended true: multiallelic sites (especially indels) can exceed hmmibd-rs --max-all and crash it until that is patched. (default: true)"
-        split_multiallelics:   "Split multiallelic records into biallelic ones (bcftools norm -m-any) so SNP alleles at multiallelic/spanning-deletion sites are recovered rather than dropped. Runs after the type pre-select to stay fast. (default: true)"
+        variant_types:         "Which variant types to keep (bcftools view -v): 'snps', 'indels', or 'both'. Default 'both' keeps SNP+indel alleles (hmmibd-rs treats them on equal footing). NOTE: with split_multiallelics=false a mixed site keeps its indel alleles; strict SNP-only-ALLELES needs split_multiallelics=true. (default: both)"
+        biallelic_only:        "Restrict to biallelic sites (bcftools view -m2 -M2). Default false so MULTIALLELIC sites are kept (hmmibd-rs handles up to --max-all alleles); set true (with split_multiallelics=true) for the strict biallelic path. (default: false)"
+        split_multiallelics:   "Split multiallelic records into biallelic ones (bcftools norm -m-any). Default FALSE: skip the (single-threaded, slow) split and feed multiallelic sites directly to hmmibd-rs. Set true only for the strict biallelic path (needed to cleanly separate SNP alleles from indel alleles at mixed sites). (default: false)"
         max_variants:          "Optional cap on the number of variants kept. When >0 and the filtered callset exceeds it, sites are thinned evenly across the genome down to at most this many (not truncated to the first N). (default: 0 = no limit)"
         max_alt:               "Optional pre-norm site width cap. When >0, sites whose ALT count (after trimming unobserved alleles) still exceeds this are dropped BEFORE `bcftools norm` splits them — this bounds norm's per-record memory on Pf hyper-multiallelic (var-gene / indel) sites that otherwise OOM-kill it on whole-cohort joint calls. Lossy at the site level (drops those sites' SNPs); genuine multiallelic SNP sites have <=3 ALTs, so ~6-8 is a safe cap for Pf. (default: 0 = no cap)"
         mask_gq0_genotypes:    "Also set GQ0 genotypes to missing (in addition to the FORMAT/DP < min_depth mask). Older GATK (pre-4.6.0.0 GenotypeGVCFs; also GnarlyGenotyper) emitted no-/low-confidence hom-refs as 0/0 with GQ=0 instead of ./. (GATK issue #7792, fixed in PR #8741). Turning this on reproduces that fix downstream — the DP mask alone misses GQ0 calls whose DP >= min_depth. NOTE: this is the conservative choice — it drops ALL GQ0 hom-refs, including any that are genuinely well-covered ref; use a GVCF cross-reference if you need to keep those. This masks GT only, so it feeds the GT-based path (FilterVcfForHmmIBD's first-ploidy table, plus AC/AF and site/allele selection); the dominant-allele table reads FORMAT/AD and ignores GT, so it is a no-op for those call values there — the dom_min_depth/dom_min_ratio/dom_min_r1_r2 AD gates handle GQ0 hom-refs evidence-based (matching hmmibd-rs read_dom). (default: false)"
@@ -43,6 +43,7 @@ task FilterVcfForHmmIBD {
         dom_min_r1_r2:         "hmmibd_table dominant-allele: accept only if minor/major < 1/this. (default: 3.0)"
         min_maf:               "hmmibd_table site prune: drop sites with minor-allele freq (of final calls) below this; >0 also drops monomorphic sites. (default: 0.01)"
         min_site_nonmissing:   "hmmibd_table site prune: drop sites with non-missing-call fraction below this. (default: 0.3)"
+        max_all:               "hmmibd_table only: sites with more than this many alleles are DROPPED during conversion (whole site, never truncated) — must match hmmibd-rs --max-all so the table never exceeds what it can read (i8 call storage, hard ceiling 127). (default: 64)"
         keep_filtered_bcf:     "hmmibd_table only: also keep and delocalize the filtered BCF (+ index) instead of deleting it after the table is built. (default: false)"
         emit_progress:         "Stream the input through pv so a byte-based progress bar (percent, rate, elapsed, ETA) is written to stderr; because the pipe applies backpressure, pv's rate tracks the whole filter's end-to-end throughput. pv is installed at runtime if missing (best effort; the run continues without a bar if that fails). Off by default so routine/scattered runs don't apt-install. (default: false)"
         runtime_attr_override: "Override the default runtime attributes. (default: none)"
@@ -54,9 +55,9 @@ task FilterVcfForHmmIBD {
 
         Int min_depth = 8
         Boolean keep_original_af = false
-        String variant_types = "snps"
-        Boolean biallelic_only = true
-        Boolean split_multiallelics = true
+        String variant_types = "both"
+        Boolean biallelic_only = false
+        Boolean split_multiallelics = false
         Int max_variants = 0
         Int max_alt = 0
         Boolean mask_gq0_genotypes = false
@@ -74,6 +75,7 @@ task FilterVcfForHmmIBD {
         Float dom_min_r1_r2 = 3.0
         Float min_maf = 0.01
         Float min_site_nonmissing = 0.3
+        Int max_all = 64
         Boolean keep_filtered_bcf = false
 
         RuntimeAttr? runtime_attr_override
@@ -249,7 +251,7 @@ task FilterVcfForHmmIBD {
             BCF="~{prefix}.filtered.bcf"
             export BCF
             export MODE="~{gt_mode}"
-            export MD=~{dom_min_depth} MR=~{dom_min_ratio} MRR=~{dom_min_r1_r2} MM=~{min_maf} MSN=~{min_site_nonmissing}
+            export MD=~{dom_min_depth} MR=~{dom_min_ratio} MRR=~{dom_min_r1_r2} MM=~{min_maf} MSN=~{min_site_nonmissing} MAXALL=~{max_all}
 
             # header: chrom  pos  <samples...>
             { printf 'chrom\tpos'; bcftools query -l "${BCF}" | awk '{printf "\t%s", $0}'; printf '\n'; } > "${GT}"
@@ -268,30 +270,39 @@ task FilterVcfForHmmIBD {
 #!/usr/bin/env bash
 set -euo pipefail
 region="$1"; idx="$2"
-if [[ "${MODE}" == "dominant-allele" ]]; then Q='%CHROM\t%POS[\t%AD]\n'; else Q='%CHROM\t%POS[\t%GT]\n'; fi
+# Query ALT (field 3) so the site's allele count is robust (per-sample AD can be '.'); samples from 4.
+if [[ "${MODE}" == "dominant-allele" ]]; then Q='%CHROM\t%POS\t%ALT[\t%AD]\n'; else Q='%CHROM\t%POS\t%ALT[\t%GT]\n'; fi
 if [[ "${region}" == "__ALL__" ]]; then RFLAG=(); else RFLAG=(-r "${region}"); fi
 bcftools query "${RFLAG[@]}" -f "${Q}" "${BCF}" \
-| awk -v MODE="${MODE}" -v md="${MD}" -v mr="${MR}" -v mrr="${MRR}" -v mm="${MM}" -v msn="${MSN}" -v gt="reg_${idx}.gt" -v fq="reg_${idx}.frq" '
+| awk -v MODE="${MODE}" -v md="${MD}" -v mr="${MR}" -v mrr="${MRR}" -v mm="${MM}" -v msn="${MSN}" -v maxall="${MAXALL}" -v gt="reg_${idx}.gt" -v fq="reg_${idx}.frq" '
 BEGIN{ FS=OFS="\t"; inv=1.0/mrr }
 {
     c=$1; sub(/^Pf3D7_/,"",c); sub(/_v[0-9]+$/,"",c); if (c !~ /^[0-9]+$/) next
-    ns=NF-2; c0=0; c1=0; nm=0; row=(c+0) "\t" $2
-    for (i=3;i<=NF;i++){
+    nA=split($3,alt,",")+1                                 # alleles at the site = ref + ALTs
+    if (nA>maxall) next                                    # drop the whole over-cap site (never truncate)
+    ns=NF-3; nm=0; delete cnt; for(k=0;k<nA;k++) cnt[k]=0
+    row=(c+0) "\t" $2
+    for (i=4;i<=NF;i++){
         g=-1
         if (MODE=="dominant-allele"){
-            if ($i!="." && $i!=""){ split($i,a,","); ref=(a[1]=="."?0:a[1]+0); alt=(a[2]=="."?0:a[2]+0); t=ref+alt
-                if (alt>ref){ mj=alt; mnr=ref; ma=1 } else { mj=ref; mnr=alt; ma=0 }
-                if (t>md && mj/t>=mr && mnr/mj<inv) g=ma }
-        } else { np=split($i,a,/[\/|]/); gg=a[1]; if (gg=="."||gg=="") g=-1; else g=gg }
-        if (g==0){c0++;nm++} else if (g==1){c1++;nm++}
+            # argmax over ALL alleles (matches hmmibd-rs read_dom): major=max-depth (lower index on tie),
+            # minor=2nd depth; accept iff total>md & major/total>=mr & minor/major<1/mrr.
+            if ($i!="." && $i!=""){
+                m=split($i,a,","); tot=0; maxd=-1; maxi=-1; secd=-1
+                for(k=1;k<=m;k++){ d=(a[k]=="."?0:a[k]+0); tot+=d
+                    if(d>maxd){ secd=maxd; maxd=d; maxi=k-1 } else if(d>secd){ secd=d } }
+                if (maxi>=0 && tot>md && maxd/tot>=mr && (secd<=0?0:secd/maxd)<inv) g=maxi
+            }
+        } else { np=split($i,a,/[\/|]/); gg=a[1]; if (gg=="."||gg=="") g=-1; else g=gg+0 }
+        if (g>=0){ cnt[g]++; nm++ }
         row=row "\t" g
     }
     if (ns<=0 || nm==0) next
     if ((nm/ns) < msn) next
-    maf=(c0<c1?c0:c1)/nm
-    if (maf < mm) next
+    maxf=0; for(k=0;k<nA;k++){ f=cnt[k]/nm; if(f>maxf) maxf=f }   # MAF = 1 - major-allele freq
+    if ((1-maxf) < mm) next
     print row > gt
-    printf "%s\t%s\t%.6f\t%.6f\n", (c+0), $2, c0/nm, c1/nm > fq
+    line=(c+0) "\t" $2; for(k=0;k<nA;k++){ line=line "\t" sprintf("%.6f", cnt[k]/nm) }; print line > fq
 }'
 CONV
             chmod +x convert_region.sh
@@ -631,7 +642,7 @@ task BcfToVcf {
 task BcfToSampleTable {
 
     meta {
-        description: "Convert a bi-allelic BCF/VCF to the hmmIBD text genotype table: a tab-delimited matrix with columns chrom(int) pos then one call per sample, alleles coded 0/1 and -1 for missing. The per-sample call is derived per gt_mode: 'dominant-allele' (default) reproduces hmmibd-rs --bcf-read-mode dominant-allele (src/bcf.rs read_dom) — from FORMAT/AD it takes the highest-depth allele (ties -> lower allele index) and keeps it only when total>dom_min_depth & major/total>=dom_min_ratio & minor/major<1/dom_min_r1_r2, else -1; GT is intentionally ignored, matching hmmibd-rs, so this is the right choice for polyclonal Pf (majority-clone allele, not GATK's ref-biased GT[0]). 'first-ploidy' instead takes the first allele of GT. Because it runs on the filtered bi-allelic BCF, dominant-allele here matches an hmmibd-rs --from-bcf dominant-allele run on that same BCF. Sites are then pruned on the FINAL calls to match hmmibd-rs --from-bcf site filtering (min_maf, min_site_nonmissing), so the table and --from-bcf paths use the same sites; min_maf>0 also drops monomorphic / no-alt-expressed sites, which carry no IBD information. Also emits a matching allele-frequency file (same sites/order) from the retained calls. Non-numeric contigs (MIT/API) are dropped because hmmIBD requires integer chromosomes."
+        description: "NOTE: standalone BIALLELIC-only converter, no longer used by the pipelines (FilterVcfForHmmIBD fuses a multiallelic-aware conversion into its task). Kept for standalone/biallelic use; for multiallelic use the fused FilterVcfForHmmIBD output_format='hmmibd_table' path. Convert a bi-allelic BCF/VCF to the hmmIBD text genotype table: a tab-delimited matrix with columns chrom(int) pos then one call per sample, alleles coded 0/1 and -1 for missing. The per-sample call is derived per gt_mode: 'dominant-allele' (default) reproduces hmmibd-rs --bcf-read-mode dominant-allele (src/bcf.rs read_dom) — from FORMAT/AD it takes the highest-depth allele (ties -> lower allele index) and keeps it only when total>dom_min_depth & major/total>=dom_min_ratio & minor/major<1/dom_min_r1_r2, else -1; GT is intentionally ignored, matching hmmibd-rs, so this is the right choice for polyclonal Pf (majority-clone allele, not GATK's ref-biased GT[0]). 'first-ploidy' instead takes the first allele of GT. Because it runs on the filtered bi-allelic BCF, dominant-allele here matches an hmmibd-rs --from-bcf dominant-allele run on that same BCF. Sites are then pruned on the FINAL calls to match hmmibd-rs --from-bcf site filtering (min_maf, min_site_nonmissing), so the table and --from-bcf paths use the same sites; min_maf>0 also drops monomorphic / no-alt-expressed sites, which carry no IBD information. Also emits a matching allele-frequency file (same sites/order) from the retained calls. Non-numeric contigs (MIT/API) are dropped because hmmIBD requires integer chromosomes."
 
         tool:          "bcftools"
         tool_version:  "1.22"
@@ -862,9 +873,11 @@ task StitchHmmIBDTables {
         if [[ ~{thin_max_per_window} -gt 0 || ~{thin_min_snp_sep} -gt 0 ]]; then
             BEFORE=$(wc -l < body_sorted.txt)
 
-            # (chrom, pos, MAF) for every site, from the combined calls.
-            awk 'BEGIN{FS=OFS="\t"} { c0=0;c1=0; for(i=3;i<=NF;i++){ if($i=="0")c0++; else if($i=="1")c1++ }
-                 n=c0+c1; maf=(n==0?0:(c0<c1?c0:c1)/n); printf "%s\t%s\t%.6f\n",$1,$2,maf }' body_sorted.txt > site_maf.txt
+            # (chrom, pos, MAF) for every site, from the combined calls. Multiallelic-aware:
+            # MAF = 1 - major-allele frequency over all called alleles (== min(f0,f1) for biallelic).
+            awk 'BEGIN{FS=OFS="\t"} { delete cnt; nm=0; mx=0
+                 for(i=3;i<=NF;i++){ v=$i; if(v!="-1" && v!="" && v!="."){ cnt[v]++; nm++; if(cnt[v]>mx)mx=cnt[v] } }
+                 maf=(nm==0?0:1-mx/nm); printf "%s\t%s\t%.6f\n",$1,$2,maf }' body_sorted.txt > site_maf.txt
 
             # Minimum spacing: greedy by MAF descending; drop a site if a higher-MAF kept site is
             # within thin_min_snp_sep bp (checked against its own +/- S-block neighbors).
@@ -922,15 +935,19 @@ task StitchHmmIBDTables {
         fi
         rm -f body_sorted.txt
 
-        # Recompute bi-allelic allele frequencies on the COMBINED matrix (explicit freq file,
-        # same sites/order as GT). Valid because every input table carries the full sample set,
-        # so a per-site frequency over the merged rows equals concatenating per-file frequencies.
+        # Recompute allele frequencies on the COMBINED matrix (explicit freq file, same sites/order
+        # as GT). Multiallelic-aware: emit f0..fK per site (K = max called allele index), each
+        # count/non-missing; hmmibd-rs reads variable columns (padded to --max-all) and takes
+        # nall = number of alleles with freq>0. Reduces to f0,f1 for biallelic. Valid because every
+        # input table carries the full sample set.
         awk 'NR==1{next}
         {
-            c0=0; c1=0; n=0
-            for (i=3;i<=NF;i++){ if($i=="0"){c0++;n++} else if($i=="1"){c1++;n++} }
-            if (n==0){ f0=1; f1=0 } else { f0=c0/n; f1=c1/n }
-            printf "%s\t%s\t%.6f\t%.6f\n", $1, $2, f0, f1
+            delete cnt; nm=0; maxidx=-1
+            for (i=3;i<=NF;i++){ v=$i; if(v!="-1" && v!="" && v!="."){ cnt[v]++; nm++; if(v+0>maxidx)maxidx=v+0 } }
+            line=$1 "\t" $2
+            if (maxidx<0){ line=line "\t1.000000\t0.000000" }
+            else { for(k=0;k<=maxidx;k++){ f=(nm==0?0:((k in cnt)?cnt[k]:0)/nm); line=line "\t" sprintf("%.6f", f) } }
+            print line
         }' "${GT}" > "${FRQ}"
 
         echo "combined variants: $(( $(wc -l < "${GT}") - 1 )); samples: $(( $(head -1 "${GT}" | awk '{print NF}') - 2 )); tables: ${#TABLES[@]}"
