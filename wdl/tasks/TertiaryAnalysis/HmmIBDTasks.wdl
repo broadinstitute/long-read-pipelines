@@ -45,7 +45,7 @@ task FilterVcfForHmmIBD {
         min_site_nonmissing:   "hmmibd_table site prune: drop sites with non-missing-call fraction below this. (default: 0.3)"
         max_all:               "hmmibd_table only: sites with more than this many alleles are DROPPED during conversion (whole site, never truncated) — must match hmmibd-rs --max-all so the table never exceeds what it can read (i8 call storage, hard ceiling 127). (default: 64)"
         keep_filtered_bcf:     "hmmibd_table only: also keep and delocalize the filtered BCF (+ index) instead of deleting it after the table is built. (default: false)"
-        emit_progress:         "Stream the input through pv so a byte-based progress bar (percent, rate, elapsed, ETA) is written to stderr; because the pipe applies backpressure, pv's rate tracks the whole filter's end-to-end throughput. pv is installed at runtime if missing (best effort; the run continues without a bar if that fails). Off by default so routine/scattered runs don't apt-install. (default: false)"
+        emit_progress:         "Write progress bars (percent, rate, elapsed, ETA) to stderr via pv: a byte-based bar over the input during filtration, and a windows-done bar over the parallel table conversion (output_format=hmmibd_table). pv ships in lr-basic:0.1.4 (installed at runtime if missing). Off by default. (default: false)"
         runtime_attr_override: "Override the default runtime attributes. (default: none)"
     }
 
@@ -304,14 +304,23 @@ BEGIN{ FS=OFS="\t"; inv=1.0/mrr }
     print row > gt
     line=(c+0) "\t" $2; for(k=0;k<nA;k++){ line=line "\t" sprintf("%.6f", cnt[k]/nm) }; print line > fq
 }'
+echo "converted ${region}"     # completion signal (one line/window) for the optional progress bar
 CONV
             chmod +x convert_region.sh
 
             # Number the regions and run NUM_CPUS at a time; concat in numeric order.
             : > jobs.txt; ridx=0
             while IFS= read -r r; do printf '%s %s\n' "$r" "${ridx}" >> jobs.txt; ridx=$((ridx+1)); done < regions.txt
-            xargs -P "${NUM_CPUS}" -L1 -a jobs.txt bash convert_region.sh
             NREG=$(wc -l < regions.txt)
+            # Optional conversion progress bar (percent + rate + ETA) over the NREG windows: each
+            # completed window prints one line, counted by pv against the known total (pv ships in
+            # lr-basic:0.1.4). Falls back to plain xargs when emit_progress is off or pv is missing.
+            if [[ "~{emit_progress}" == "true" ]] && command -v pv >/dev/null 2>&1 ; then
+                xargs -P "${NUM_CPUS}" -L1 -a jobs.txt bash convert_region.sh \
+                  | pv -f -l -s "${NREG}" -N convert -p -e -t -r -i 5 >/dev/null
+            else
+                xargs -P "${NUM_CPUS}" -L1 -a jobs.txt bash convert_region.sh >/dev/null
+            fi
             for (( j=0; j<NREG; j++ )); do
                 [[ -f "reg_${j}.gt"  ]] && cat "reg_${j}.gt"  >> "${GT}"
                 [[ -f "reg_${j}.frq" ]] && cat "reg_${j}.frq" >> "${FRQ}"
