@@ -488,7 +488,12 @@ task HmmIBDrs {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 10 + ceil(5.0 * size(input_bcf, "GB"))
+    # NOTE: hmmibd-rs OUTPUT scales with sample-PAIRS (~N^2), not with the (tiny) genotype-table
+    # input -- .hmm_fract.txt is ~1 line/pair and .hmm.txt is >=1 segment/pair. A ~12k-sample cohort
+    # is ~69M pairs -> tens of GB of output. The old 10+5*input formula (sized off the input) badly
+    # under-provisioned disk and risks a disk-full failure hours in. Use a generous base and override
+    # disk_gb higher for large cohorts (or set suppress_frac / filt_ibd_only to cut output).
+    Int disk_size = 50 + ceil(20.0 * size(input_bcf, "GB"))
 
     # --genome and -r/--rec-rate are mutually exclusive; genome wins when supplied.
     String recombination_arg = if defined(genome) then "--genome " + select_first([genome]) else "-r " + rec_rate
