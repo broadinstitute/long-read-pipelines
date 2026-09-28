@@ -561,12 +561,16 @@ task HmmIBDrs {
     }
 
     #########################
+    # IBD is O(N^2) over sample PAIRS (e.g. ~12k samples -> ~69M pairs), and hmmibd-rs parallelizes
+    # over pairs, so cpu_cores is the main throughput lever -- default 16 and override MUCH higher
+    # (32-64) for large cohorts (also consider par_mode=1 for large sample sets). preemptible_tries=0
+    # because this can run for hours; a Spot eviction wastes the whole attempt.
     RuntimeAttr default_attr = object {
-        cpu_cores:          8,
+        cpu_cores:          16,
         mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       25,
-        preemptible_tries:  1,
+        preemptible_tries:  0,
         max_retries:        1,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-hmmibd-rs:0.1.5"
     }
