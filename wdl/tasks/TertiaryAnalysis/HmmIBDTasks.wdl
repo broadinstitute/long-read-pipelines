@@ -437,6 +437,7 @@ task HmmIBDrs {
         bcf_to_bin_file_by_chromosome: "Convert the BCF to one binary genotype file per chromosome and skip the HMM (--bcf-to-bin-file-by-chromosome); yields binary_genotypes, leaves ibd_segments/ibd_fraction empty. (default: false)"
 
         extra_args:            "Additional command-line args appended verbatim to the hmmibd-rs invocation. (default: empty)"
+        emit_progress:         "Pass hmmibd-rs --print-progress so it periodically reports progress to stderr during the O(N^2) pair sweep (lets you gauge ETA on large cohorts). (default: false)"
         runtime_attr_override: "Override the default runtime attributes. (default: none)"
     }
 
@@ -484,6 +485,7 @@ task HmmIBDrs {
         Boolean bcf_to_bin_file_by_chromosome = false
 
         String extra_args = ""
+        Boolean emit_progress = false
 
         RuntimeAttr? runtime_attr_override
     }
@@ -552,6 +554,7 @@ task HmmIBDrs {
             --num-threads ~{num_threads} \
             --par-mode ~{par_mode} \
             --par-chunk-size ~{par_chunk_size} \
+            ~{true="--print-progress" false="" emit_progress} \
             ~{true="--suppress-frac" false="" suppress_frac} \
             ~{true="--bcf-to-bin-file" false="" bcf_to_bin_file} \
             ~{true="--bcf-to-bin-file-by-chromosome" false="" bcf_to_bin_file_by_chromosome} \
@@ -567,11 +570,11 @@ task HmmIBDrs {
 
     #########################
     # IBD is O(N^2) over sample PAIRS (e.g. ~12k samples -> ~69M pairs), and hmmibd-rs parallelizes
-    # over pairs, so cpu_cores is the main throughput lever -- default 16 and override MUCH higher
-    # (32-64) for large cohorts (also consider par_mode=1 for large sample sets). preemptible_tries=0
+    # over pairs, so cpu_cores is the main throughput lever -- override MUCH higher (32-64) for large
+    # cohorts when speed matters (also consider par_mode=1 for large sample sets). preemptible_tries=0
     # because this can run for hours; a Spot eviction wastes the whole attempt.
     RuntimeAttr default_attr = object {
-        cpu_cores:          16,
+        cpu_cores:          8,
         mem_gb:             16,
         disk_gb:            disk_size,
         boot_disk_gb:       25,

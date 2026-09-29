@@ -41,7 +41,7 @@ workflow HmmIBD {
         populations_file:  "Optional sample-to-population file for per-population AN/AC/AF (bcftools +fill-tags -S). (default: none)"
         rename_annots_tsv: "Required when keep_original_af=true: old-name<TAB>new-name TSV for bcftools annotate --rename-annots. (default: none)"
         filter_extra_args: "Extra `bcftools view` filters added to the final per-file filtration view (e.g. \"-e MAF<0.01\"); whitespace-separated, no internal spaces. Only applied when run_filtration=true. (default: empty)"
-        emit_progress:     "Write a byte-based progress bar (percent, rate, elapsed, ETA) to each per-file filtration's stderr via pv (installed at runtime if missing). Only applies when run_filtration=true. Off by default. (default: false)"
+        emit_progress:     "Emit progress to stderr: pv bars over the per-file filtration + table conversion (when run_filtration=true), AND hmmibd-rs --print-progress during the O(N^2) IBD sweep (helps gauge ETA on large cohorts). Off by default. (default: false)"
 
         # ---- Step 2: hmmibd-rs ----
         data_file2:           "Optional second-population genotypes (-I). (default: none)"
@@ -254,7 +254,8 @@ workflow HmmIBD {
             par_chunk_size       = par_chunk_size,
             suppress_frac                 = suppress_frac,
             bcf_to_bin_file               = bcf_to_bin_file,
-            bcf_to_bin_file_by_chromosome = bcf_to_bin_file_by_chromosome
+            bcf_to_bin_file_by_chromosome = bcf_to_bin_file_by_chromosome,
+            emit_progress                 = emit_progress
     }
 
     output {
