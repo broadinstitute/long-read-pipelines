@@ -25,6 +25,8 @@ task FilterVcfForHmmIBD {
     parameter_meta {
         input_vcf:             "VCF/BCF to filter prior to IBD inference. (required)"
         prefix:                "Basename for the output BCF. (required)"
+        restrict_to_core:      "Restrict the input to the core genome BEFORE all other filtering (bcftools view -T core_regions_bed). Default true: hmmIBD should run on the core genome only — subtelomeric / hypervariable / VAR-gene regions have poor mapping and extreme diversity that break IBD. When true, core_regions_bed is required. (default: true)"
+        core_regions_bed:      "BED of core-genome regions to KEEP when restrict_to_core=true. Streamed via `bcftools view -T` so it needs no index and works on the piped input. Contig names must match the VCF. The HmmIBD / FilterVcfForHmmIBD pipelines default this to the Pf3D7 core BED (regions-20130225.Core.bed); supply your own for other organisms. (default: none at the task level — set by callers)"
         min_depth:             "Genotypes with FORMAT/DP below this value are set to missing (bcftools filter -S .). NOTE: this masks GT, so in dominant-allele mode (which ignores GT) it does not gate the calls — dom_min_depth is the read-depth floor there. (default: 8)"
         keep_original_af:      "If true, rename the existing INFO annotations via rename_annots_tsv before recomputing AN/AC/AF, so the original frequencies are preserved under new tags. (default: false)"
         variant_types:         "Which variant types to keep (bcftools view -v): 'snps', 'indels', or 'both'. Default 'both' keeps SNP+indel alleles (hmmibd-rs treats them on equal footing). NOTE: with split_multiallelics=false a mixed site keeps its indel alleles; strict SNP-only-ALLELES needs split_multiallelics=true. (default: both)"
@@ -52,6 +54,9 @@ task FilterVcfForHmmIBD {
     input {
         File input_vcf
         String prefix
+
+        Boolean restrict_to_core = true
+        File? core_regions_bed
 
         Int min_depth = 8
         Boolean keep_original_af = false
@@ -162,6 +167,20 @@ task FilterVcfForHmmIBD {
         MAXALT_STEP=(cat)
         if [[ ~{max_alt} -gt 0 ]] ; then MAXALT_STEP=(bcftools view -e "N_ALT > ~{max_alt}" -Ou) ; fi
 
+        # Restrict to the core genome FIRST (before every other stage), so subtelomeric /
+        # hypervariable / VAR-gene regions -- poor mapping, extreme diversity -- never enter IBD.
+        # Streamed with `bcftools view -T` (targets file), which filters the piped input by
+        # position without needing an index (unlike -R, which requires random access). `cat` is a
+        # no-op passthrough when off.
+        CORE_STEP=(cat)
+        if [[ "~{restrict_to_core}" == "true" ]] ; then
+            if [[ -z "~{core_regions_bed}" ]] ; then
+                echo "ERROR: restrict_to_core=true requires core_regions_bed to be provided." >&2
+                exit 1
+            fi
+            CORE_STEP=(bcftools view -T "~{core_regions_bed}" -Ou)
+        fi
+
         # Optional progress bar: stream the input through pv so its byte-based percent, rate, elapsed,
         # and ETA go to stderr. The pipe applies backpressure, so pv's read rate tracks the whole
         # filter's end-to-end throughput (not just decompression). pv is installed if missing (best
@@ -182,6 +201,7 @@ task FilterVcfForHmmIBD {
         # AN/AC/AF (optionally per population), then trim now-unrepresented alt alleles/sites.
         if [[ "~{keep_original_af}" == "true" ]] ; then
             "${PV[@]}" ~{input_vcf} \
+              | "${CORE_STEP[@]}" \
               | bcftools annotate -x '~{fmt_keep}' -Ou - \
               | bcftools filter -S . -e "~{gt_mask_expr}" -Ou \
               | bcftools view "${TYPE_FLAGS[@]}" -Ou \
@@ -199,6 +219,7 @@ task FilterVcfForHmmIBD {
             # faster on big cohorts, and it removes GATK per-allele INFO (e.g. HAPCOMP) with
             # value counts that disagree with the ALT count and would abort --trim-alt-alleles.
             "${PV[@]}" ~{input_vcf} \
+              | "${CORE_STEP[@]}" \
               | bcftools annotate -x 'INFO,~{fmt_keep}' -Ou - \
               | bcftools filter -S . -e "~{gt_mask_expr}" -Ou \
               | bcftools view "${TYPE_FLAGS[@]}" -Ou \

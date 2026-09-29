@@ -24,6 +24,9 @@ workflow FilterVcfForHmmIBD {
         prefix:              "Basename / sample-set name for all outputs. (required)"
         output_format:       "Format to emit: 'bcf' (default) or 'vcf' return the per-input filtered callsets as arrays (not combined); 'hmmibd_table' reduces each filtered file to an hmmIBD genotype table and STITCHES all of them into one combined table + freq file (the scalable path for large cohorts)."
 
+        restrict_to_core:    "Restrict each input to the core genome before all other filtering. Default TRUE: hmmIBD should run on the core genome only (subtelomeric / hypervariable / VAR-gene regions break IBD). (default: true)"
+        core_regions_bed:    "BED of core-genome regions to KEEP when restrict_to_core=true. Defaults to the Pf3D7 core BED (regions-20130225.Core.bed); override for other organisms. Contig names must match the input VCFs. (default: Pf3D7 core BED)"
+
         min_depth:           "Genotypes with FORMAT/DP below this value are set to missing. NOTE: masks GT, so in dominant-allele mode (ignores GT) it does not gate the calls — dom_min_depth is the read-depth floor there. (default: 8)"
         keep_original_af:    "Preserve the original allele-frequency annotations (via rename_annots_tsv) before recomputing AN/AC/AF. (default: false)"
         variant_types:       "Which variant types to keep: 'snps', 'indels', or 'both'. Default 'both' (SNP+indel alleles, on equal footing). With split_multiallelics=false, 'snps' keeps SNP sites but their indel alleles remain at mixed sites; strict SNP-only-alleles needs split_multiallelics=true. (default: both)"
@@ -57,6 +60,9 @@ workflow FilterVcfForHmmIBD {
         Array[File] input_vcfs
         String prefix
         String output_format = "bcf"
+
+        Boolean restrict_to_core = true
+        File core_regions_bed = "gs://broad-malaria-public/short_read_workspace_data/regions/regions-20130225.Core.bed"
 
         Int min_depth = 8
         Boolean keep_original_af = false
@@ -104,6 +110,8 @@ workflow FilterVcfForHmmIBD {
             input:
                 input_vcf           = input_vcfs[idx],
                 prefix              = shard_prefix,
+                restrict_to_core    = restrict_to_core,
+                core_regions_bed    = core_regions_bed,
                 min_depth           = min_depth,
                 keep_original_af    = keep_original_af,
                 variant_types       = variant_types,
