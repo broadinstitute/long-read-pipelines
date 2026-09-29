@@ -13,7 +13,8 @@ workflow HmmIBD {
             ibd_segments:       "Per sample-pair IBD/non-IBD segments (<prefix>.hmm.txt); empty when the HMM is skipped via a bcf-to-bin mode",
             ibd_fraction:       "Per sample-pair IBD-fraction summary (<prefix>.hmm_fract.txt); empty when suppress_frac=true or a bcf-to-bin mode is used",
             binary_genotypes:   "Binary genotype file(s) (<prefix>*.bin); populated only when bcf_to_bin_file or bcf_to_bin_file_by_chromosome is set",
-            filtered_bcfs:      "The per-input filtered BCFs (one per input VCF); populated when run_filtration=true",
+            filtered_bcfs:      "The per-input filtered BCFs (one per input VCF); populated when run_filtration=true AND keep_filtered_bcf=true (empty on the fused hmmibd_table path when the BCF is deleted)",
+            filtered_bcf_indices: "CSI indices for filtered_bcfs (same population conditions)",
             combined_gt_table:  "The single stitched hmmIBD genotype table hmmibd-rs was run on (when the combined-table path is used)",
             combined_freq_table:"The matching combined allele-frequency file (when the combined-table path is used)"
         }
@@ -266,8 +267,9 @@ workflow HmmIBD {
         Array[File] ibd_fraction     = t_02_HmmIBDrs.ibd_fraction
         Array[File] binary_genotypes = t_02_HmmIBDrs.binary_genotypes
 
-        Array[File]? filtered_bcfs        = t_01_FilterAndCombine.filtered_bcfs
-        File?        combined_gt_table    = if defined(t_01_FilterAndCombine.sample_gt_table) then t_01_FilterAndCombine.sample_gt_table else t_01b_Stitch.sample_gt_table
-        File?        combined_freq_table  = resolved_freq_file1
+        Array[File]? filtered_bcfs         = t_01_FilterAndCombine.filtered_bcfs
+        Array[File]? filtered_bcf_indices  = t_01_FilterAndCombine.filtered_bcf_indices
+        File?        combined_gt_table     = if defined(t_01_FilterAndCombine.sample_gt_table) then t_01_FilterAndCombine.sample_gt_table else t_01b_Stitch.sample_gt_table
+        File?        combined_freq_table   = resolved_freq_file1
     }
 }
