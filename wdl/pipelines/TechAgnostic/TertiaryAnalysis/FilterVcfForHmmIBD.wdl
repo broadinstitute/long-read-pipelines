@@ -60,6 +60,8 @@ workflow FilterVcfForHmmIBD {
         String prefix
         String output_format = "bcf"
 
+        # Recommended default (Pf3D7 core genome):
+        #   gs://broad-malaria-public/short_read_workspace_data/regions/regions-20130225.Core.bed
         File? regions_bed
 
         Int min_depth = 8
