@@ -26,8 +26,7 @@ workflow HmmIBD {
 
         run_filtration:      "Filter + reduce + stitch input_vcfs via the FilterVcfForHmmIBD workflow before IBD. Set false to feed a prepared input straight to hmmibd-rs (see input_vcfs / hmmibd_input_format). (default: true)"
         hmmibd_input_format: "Only used when run_filtration=false: format of input_vcfs — 'hmmibd_table' (per-region hmmIBD text tables, stitched into one) or 'bcf'/'vcf' (first element read via --from-bcf). (default: bcf)"
-        restrict_to_core:    "Restrict inputs to the core genome before filtering (only when run_filtration=true). Default TRUE — hmmIBD should run on the core genome only. (default: true)"
-        core_regions_bed:    "BED of core-genome regions to KEEP when restrict_to_core=true. Defaults to the Pf3D7 core BED (regions-20130225.Core.bed); override for other organisms. (default: Pf3D7 core BED)"
+        regions_bed:         "Optional BED or positions file of sites/regions to KEEP, applied FIRST during filtration (only when run_filtration=true) via `bcftools view -T`. When provided, inputs are restricted to it; when omitted, no region restriction is done. Use it to confine IBD to the core genome (e.g. the Pf3D7 core BED gs://broad-malaria-public/short_read_workspace_data/regions/regions-20130225.Core.bed) or a curated site list. '.bed' = BED (0-based); any other name = 1-based CHROM<TAB>POS. (default: none = no restriction)"
 
         # ---- Step 1: filtration (bcftools) ----
         min_depth:         "Genotypes with FORMAT/DP below this value are set to missing. NOTE: masks GT, so with bcf_read_mode='dominant-allele' (ignores GT) it does not gate the calls — dom_min_depth is the read-depth floor there. (default: 8)"
@@ -95,8 +94,7 @@ workflow HmmIBD {
         String hmmibd_input_format = "bcf"
 
         # ---- Step 1: filtration ----
-        Boolean restrict_to_core = true
-        File core_regions_bed = "gs://broad-malaria-public/short_read_workspace_data/regions/regions-20130225.Core.bed"
+        File? regions_bed
         Int min_depth = 8
         Boolean keep_original_af = false
         String variant_types = "both"
@@ -171,8 +169,7 @@ workflow HmmIBD {
                 input_vcfs          = input_vcfs,
                 prefix              = prefix,
                 output_format       = "hmmibd_table",
-                restrict_to_core    = restrict_to_core,
-                core_regions_bed    = core_regions_bed,
+                regions_bed         = regions_bed,
                 min_depth           = min_depth,
                 keep_original_af    = keep_original_af,
                 variant_types       = variant_types,
