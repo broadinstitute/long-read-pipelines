@@ -455,7 +455,7 @@ task HmmIBDrs {
         bcf_to_bin_file_by_chromosome: "Convert the BCF to one binary genotype file per chromosome and skip the HMM (--bcf-to-bin-file-by-chromosome); yields binary_genotypes, leaves ibd_segments/ibd_fraction empty. (default: false)"
 
         extra_args:            "Additional command-line args appended verbatim to the hmmibd-rs invocation. (default: empty)"
-        emit_progress:         "Pass hmmibd-rs --print-progress so it periodically reports progress to stderr during the O(N^2) pair sweep (lets you gauge ETA on large cohorts). (default: false)"
+        emit_progress:         "Pass hmmibd-rs --print-progress so it periodically reports progress during the O(N^2) pair sweep. Each PROGRESS line is reformatted on stderr to prepend a wall-clock UTC timestamp and append an estimated-time-remaining column, e.g. `[14:03:27 UTC] PROGRESS 43.7%  pairs=1830412  elapsed=00:10:12  ETA=00:13:08` (ETA = elapsed*(1-frac)/frac, linear extrapolation). (default: false)"
         runtime_attr_override: "Override the default runtime attributes. (default: none)"
     }
 
@@ -541,6 +541,33 @@ task HmmIBDrs {
         echo "NUM_CPUS=${NUM_CPUS}  RAM_IN_GB=${RAM_IN_GB}  USABLE_RAM_GB=${USABLE_RAM_GB}  MEM_PER_THREAD_GB=${MEM_PER_THREAD_GB}  JAVA_MEM_GB=${JAVA_MEM_GB}"
         # ---- end preamble ----
 
+        # Reformat hmmibd-rs --print-progress lines on stderr: prepend a wall-clock (UTC) timestamp
+        # and append an estimated-time-remaining column, derived from the fraction + elapsed seconds
+        # the binary already prints (ETA = elapsed * (1 - frac) / frac). Pure bash + coreutils `date`
+        # -- the hmmibd-rs image is debian-slim with no awk. Non-PROGRESS stderr (the Arguments dump,
+        # any error trace) passes through verbatim. `set +x` keeps the per-line loop out of xtrace.
+        _fmt_hms() { local s=$1 h m; if [ "${s}" -lt 0 ] 2>/dev/null; then printf '?'; return; fi; h=$((s/3600)); m=$(((s%3600)/60)); s=$((s%60)); printf '%02d:%02d:%02d' "${h}" "${m}" "${s}"; }
+        _hmm_progress() {
+            set +x
+            local line frac pairs el ip dp pm eta
+            while IFS= read -r line; do
+                case "${line}" in
+                    PROGRESS*)
+                        read -r frac pairs el _ <<< "${line#PROGRESS}"   # frac pairs elapsed_s
+                        ip=${frac%%.*}; dp=${frac#*.}
+                        if [ "${dp}" = "${frac}" ]; then dp=0; fi
+                        dp=${dp}000; dp=${dp:0:3}
+                        pm=$(( 10#${ip:-0} * 1000 + 10#${dp:-0} ))        # progress in permille (0..1000)
+                        if [ "${pm}" -gt 0 ]; then eta=$(( el * (1000 - pm) / pm )); else eta=-1; fi
+                        printf '[%s UTC] PROGRESS %s.%s%%  pairs=%s  elapsed=%s  ETA=%s\n' \
+                            "$(date -u +%H:%M:%S)" "$(( pm / 10 ))" "$(( pm % 10 ))" \
+                            "${pairs}" "$(_fmt_hms "${el}")" "$(_fmt_hms "${eta}")"
+                        ;;
+                    *) printf '%s\n' "${line}" ;;
+                esac
+            done
+        }
+
         hmmibd-rs \
             ~{true="--from-bcf" false="" from_bcf} \
             -i ~{input_bcf} \
@@ -576,7 +603,8 @@ task HmmIBDrs {
             ~{true="--suppress-frac" false="" suppress_frac} \
             ~{true="--bcf-to-bin-file" false="" bcf_to_bin_file} \
             ~{true="--bcf-to-bin-file-by-chromosome" false="" bcf_to_bin_file_by_chromosome} \
-            ~{extra_args}
+            ~{extra_args} \
+            2> >(_hmm_progress >&2)
     >>>
 
     output {
