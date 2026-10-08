@@ -1,7 +1,6 @@
 version 1.0
 
 import "tasks/Utils.wdl" as Utils
-import "tasks/Hifiasm.wdl" as Hifiasm
 import "tasks/CallAssemblyVariants.wdl" as Align
 
 workflow LocalAssembly {
@@ -11,12 +10,13 @@ workflow LocalAssembly {
         File   aligned_bai
         String prefix
 #        Boolean add_unaligned_reads = false
-        File maternal_bam
+        String maternal_bam
         File maternal_bai
-        File paternal_bam
+        String paternal_bam
         File paternal_bai
 
         File ref_map_file
+        String? requester_pays_project
     }
 
     parameter_meta {
@@ -38,7 +38,10 @@ workflow LocalAssembly {
             input:
                 bam = paternal_bam,
                 bai = paternal_bai,
-                locus = locus
+                locus = locus,
+                ref_fasta = ref_map['fasta'],
+                ref_fasta_fai = ref_map['fai'],
+                requester_pays_project = requester_pays_project
         }
     }
 
@@ -47,7 +50,10 @@ workflow LocalAssembly {
             input:
                 bam = maternal_bam,
                 bai = maternal_bai,
-                locus = locus
+                locus = locus,
+                ref_fasta = ref_map['fasta'],
+                ref_fasta_fai = ref_map['fai'],
+                requester_pays_project = requester_pays_project
         }
     }
 
@@ -101,7 +107,10 @@ workflow LocalAssembly {
             input:
                 bam = aligned_bam,
                 bai = aligned_bai,
-                locus = locus
+                locus = locus,
+                ref_fasta = ref_map['fasta'],
+                ref_fasta_fai = ref_map['fai'],
+                requester_pays_project = requester_pays_project
         }
     }
 
