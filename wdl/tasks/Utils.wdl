@@ -1284,6 +1284,10 @@ task SubsetBam {
         String locus
         String prefix = "subset"
 
+        File? ref_fasta
+        File? ref_fasta_fai
+        String? requester_pays_project
+
         RuntimeAttr? runtime_attr_override
     }
 
@@ -1292,16 +1296,20 @@ task SubsetBam {
         bai:    "index for bam file"
         locus:  "genomic locus to select"
         prefix: "prefix for output bam and bai file names"
+        ref_fasta: "reference fasta (required if bam is a CRAM)"
+        ref_fasta_fai: "index for reference fasta"
+        requester_pays_project: "Google project to bill when bam is in a requester-pays bucket"
     }
 
-    Int disk_size = 4*ceil(size([bam, bai], "GB"))
+    Int disk_size = 4*ceil(size([bam, bai], "GB")) + ceil(size(ref_fasta, "GB"))
 
     command <<<
         set -euxo pipefail
 
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        ~{if defined(requester_pays_project) then "export GCS_REQUESTER_PAYS_PROJECT=" + requester_pays_project else ""}
 
-        samtools view -bhX ~{bam} ~{bai} ~{locus} > ~{prefix}.bam
+        samtools view -bhX ~{"-T " + ref_fasta} ~{bam} ~{bai} ~{locus} > ~{prefix}.bam
         samtools index ~{prefix}.bam
     >>>
 
