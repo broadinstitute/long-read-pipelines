@@ -7,22 +7,21 @@ workflow FilterVcfForHmmIBD {
 
     meta {
         author: "Jonn Smith"
-        description: "Filter a LIST of VCFs/BCFs for IBD analysis and (for the hmmIBD-table format) combine them into a SINGLE input for hmmibd-rs. Each input file is filtered independently (scattered): mask low-depth genotypes, optionally preserve original allele frequencies, recompute AN/AC/AF, select variant types / biallelic sites. The list is meant to be disjoint regions of ONE joint call, split across files so that no multi-hundred-GB VCF is ever handled whole. Output depends on output_format: 'hmmibd_table' (recommended at scale) reduces each filtered file to a compact integer genotype table and STITCHES them into one coordinate-sorted table + allele-frequency file (a merged BCF is never materialized); 'bcf' (default) and 'vcf' return the per-file filtered callsets as arrays (not combined). Pass a single file as a one-element array."
+        description: "Filter a LIST of VCFs/BCFs for IBD analysis and (for the hmmIBD-table format) combine them into a SINGLE input for hmmibd-rs. Each input file is filtered independently (scattered): mask low-depth genotypes, optionally preserve original allele frequencies, recompute AN/AC/AF, select variant types / biallelic sites. The list is meant to be disjoint regions of ONE joint call, split across files so that no multi-hundred-GB VCF is ever handled whole. Output depends on output_format: 'hmmibd_table' (recommended at scale) reduces each filtered file to a compact integer genotype table and STITCHES them into one coordinate-sorted genotype table (a merged BCF is never materialized; hmmibd-rs computes allele frequencies from the table itself); 'bcf' (default) and 'vcf' return the per-file filtered callsets as arrays (not combined). Pass a single file as a one-element array."
 
         outputs: {
             filtered_bcfs:        "Per-input filtered, AN/AC/AF-recomputed callsets as compressed BCFs (one per input VCF for output_format 'bcf'/'vcf'; EMPTY for 'hmmibd_table', where each filtered BCF is converted to a table in-task and deleted rather than delocalized)",
             filtered_bcf_indices: "CSI indices for filtered_bcfs",
             filtered_vcfs:        "Per-input filtered callsets as bgzipped VCFs; only when output_format='vcf'",
             filtered_vcf_indices: "Tabix indices for filtered_vcfs; only when output_format='vcf'",
-            sample_gt_table:      "SINGLE combined hmmIBD text genotype table across all inputs; only when output_format='hmmibd_table'",
-            sample_freq_table:    "Matching bi-allelic allele-frequency file for the combined table; only when output_format='hmmibd_table'"
+            sample_gt_table:      "SINGLE combined hmmIBD text genotype table across all inputs; only when output_format='hmmibd_table'"
         }
     }
 
     parameter_meta {
         input_vcfs:          "VCFs/BCFs to filter prior to IBD inference. Meant to be disjoint regions of one joint call (same samples across files). Pass a single VCF as a one-element array. (required)"
         prefix:              "Basename / sample-set name for all outputs. (required)"
-        output_format:       "Format to emit: 'bcf' (default) or 'vcf' return the per-input filtered callsets as arrays (not combined); 'hmmibd_table' reduces each filtered file to an hmmIBD genotype table and STITCHES all of them into one combined table + freq file (the scalable path for large cohorts)."
+        output_format:       "Format to emit: 'bcf' (default) or 'vcf' return the per-input filtered callsets as arrays (not combined); 'hmmibd_table' reduces each filtered file to an hmmIBD genotype table and STITCHES all of them into one combined genotype table (the scalable path for large cohorts; hmmibd-rs computes allele frequencies from the table itself)."
 
         regions_bed:         "Optional BED or positions file of sites/regions to KEEP, applied FIRST (before all other filtering) via `bcftools view -T`. When provided, each input is restricted to it; when omitted, no region restriction is done. Use it to confine IBD to the core genome (e.g. the Pf3D7 core BED gs://broad-malaria-public/short_read_workspace_data/regions/regions-20130225.Core.bed) or to a curated site list. '.bed' = BED (0-based); any other name = 1-based CHROM<TAB>POS. Contig names must match the input VCFs. (default: none = no restriction)"
 
@@ -146,7 +145,7 @@ workflow FilterVcfForHmmIBD {
         }
     }
 
-    # Stitch the per-file genotype tables into ONE combined table + freq file (applies the cap
+    # Stitch the per-file genotype tables into ONE combined genotype table (applies the cap
     # to the combined callset). Each shard's filter emits its table as a 1-element glob; flatten
     # collects them across the scatter.
     if (output_format == "hmmibd_table") {
@@ -169,6 +168,5 @@ workflow FilterVcfForHmmIBD {
         Array[File?] filtered_vcfs        = t_02_ToVcf.filtered_vcf
         Array[File?] filtered_vcf_indices = t_02_ToVcf.filtered_vcf_index
         File? sample_gt_table   = t_03_Stitch.sample_gt_table
-        File? sample_freq_table = t_03_Stitch.sample_freq_table
     }
 }

@@ -5,7 +5,7 @@ import "../../structs/Structs.wdl"
 task FilterVcfForHmmIBD {
 
     meta {
-        description: "Pre-filter a VCF for IBD inference: mask low-depth genotypes (FMT/DP < min_depth), optionally preserve the original allele-frequency annotations, recompute AN/AC/AF (optionally per population), and drop alleles/sites that are no longer represented. With output_format='bcf' (default) emits a compressed BCF ready for hmmibd-rs --from-bcf. With output_format='hmmibd_table' it FUSES the table conversion into this task: the filtered BCF is converted in-place to the hmmIBD genotype table (dominant-allele/first-ploidy) + freq file and the BCF is deleted, so the (often enormous) BCF is never delocalized to GCS or shipped to a separate conversion task."
+        description: "Pre-filter a VCF for IBD inference: mask low-depth genotypes (FMT/DP < min_depth), optionally preserve the original allele-frequency annotations, recompute AN/AC/AF (optionally per population), and drop alleles/sites that are no longer represented. With output_format='bcf' (default) emits a compressed BCF ready for hmmibd-rs --from-bcf. With output_format='hmmibd_table' it FUSES the table conversion into this task: the filtered BCF is converted in-place to the hmmIBD genotype table (dominant-allele/first-ploidy) and the BCF is deleted, so the (often enormous) BCF is never delocalized to GCS or shipped to a separate conversion task. hmmibd-rs computes allele frequencies from the table itself, so no frequency file is produced."
 
         tool:          "bcftools"
         tool_version:  "1.22"
@@ -17,8 +17,7 @@ task FilterVcfForHmmIBD {
         outputs: {
             filtered_bcf:       "Filtered, AN/AC/AF-recomputed callset as a compressed BCF (glob: one file when output_format='bcf', empty when 'hmmibd_table')",
             filtered_bcf_index: "CSI index for filtered_bcf (same emptiness as filtered_bcf)",
-            sample_gt_table:    "hmmIBD genotype table (glob: one file when output_format='hmmibd_table', else empty)",
-            sample_freq_table:  "Matching allele-frequency file (same emptiness as sample_gt_table)"
+            sample_gt_table:    "hmmIBD genotype table (glob: one file when output_format='hmmibd_table', else empty)"
         }
     }
 
@@ -259,13 +258,13 @@ task FilterVcfForHmmIBD {
         # Fused table generation (output_format=hmmibd_table): convert the LOCAL filtered BCF to the
         # hmmIBD genotype table (+ freq) here and DELETE the BCF, so the enormous file is never
         # delocalized or shipped to a second task. The conversion (bcftools query over samples x sites
-        # + per-sample call/prune/freq) was the run's real bottleneck, so it is (a) a SINGLE awk pass
-        # that computes the call [dominant-allele | first-ploidy], applies the min_maf/min_site_nonmissing
-        # site prune, and emits the freq row inline (was 3 passes + a temp file), and (b) run in PARALLEL
+        # + per-sample call/prune) was the run's real bottleneck, so it is (a) a SINGLE awk pass
+        # that computes the call [dominant-allele | first-ploidy] and applies the min_maf/min_site_nonmissing
+        # site prune (was 3 passes + a temp file), and (b) run in PARALLEL
         # across NUM_CPUS genomic windows (rows are independent). The stitch re-sorts, so window order is
         # not load-bearing.
         if [[ "~{output_format}" == "hmmibd_table" ]]; then
-            GT="~{prefix}.sample_gt.txt"; FRQ="~{prefix}.sample_freq.txt"
+            GT="~{prefix}.sample_gt.txt"
             BCF="~{prefix}.filtered.bcf"
             export BCF
             export MODE="~{gt_mode}"
@@ -273,7 +272,6 @@ task FilterVcfForHmmIBD {
 
             # header: chrom  pos  <samples...>
             { printf 'chrom\tpos'; bcftools query -l "${BCF}" | awk '{printf "\t%s", $0}'; printf '\n'; } > "${GT}"
-            : > "${FRQ}"
 
             # Split each contig into NUM_CPUS windows for parallel conversion (bare contig id when the
             # header lacks a length; __ALL__ = whole file when no usable ##contig lines exist).
@@ -292,7 +290,7 @@ region="$1"; idx="$2"
 if [[ "${MODE}" == "dominant-allele" ]]; then Q='%CHROM\t%POS\t%ALT[\t%AD]\n'; else Q='%CHROM\t%POS\t%ALT[\t%GT]\n'; fi
 if [[ "${region}" == "__ALL__" ]]; then RFLAG=(); else RFLAG=(-r "${region}"); fi
 bcftools query "${RFLAG[@]}" -f "${Q}" "${BCF}" \
-| awk -v MODE="${MODE}" -v md="${MD}" -v mr="${MR}" -v mrr="${MRR}" -v mm="${MM}" -v msn="${MSN}" -v maxall="${MAXALL}" -v gt="reg_${idx}.gt" -v fq="reg_${idx}.frq" '
+| awk -v MODE="${MODE}" -v md="${MD}" -v mr="${MR}" -v mrr="${MRR}" -v mm="${MM}" -v msn="${MSN}" -v maxall="${MAXALL}" -v gt="reg_${idx}.gt" '
 BEGIN{ FS=OFS="\t"; inv=1.0/mrr }
 {
     c=$1; sub(/^Pf3D7_/,"",c); sub(/_v[0-9]+$/,"",c); if (c !~ /^[0-9]+$/) next
@@ -320,7 +318,6 @@ BEGIN{ FS=OFS="\t"; inv=1.0/mrr }
     maxf=0; for(k=0;k<nA;k++){ f=cnt[k]/nm; if(f>maxf) maxf=f }   # MAF = 1 - major-allele freq
     if ((1-maxf) < mm) next
     print row > gt
-    line=(c+0) "\t" $2; for(k=0;k<nA;k++){ line=line "\t" sprintf("%.6f", cnt[k]/nm) }; print line > fq
 }'
 echo "converted ${region}"     # completion signal (one line/window) for the optional progress bar
 CONV
@@ -341,9 +338,8 @@ CONV
             fi
             for (( j=0; j<NREG; j++ )); do
                 [[ -f "reg_${j}.gt"  ]] && cat "reg_${j}.gt"  >> "${GT}"
-                [[ -f "reg_${j}.frq" ]] && cat "reg_${j}.frq" >> "${FRQ}"
             done
-            rm -f regions.txt jobs.txt convert_region.sh reg_*.gt reg_*.frq
+            rm -f regions.txt jobs.txt convert_region.sh reg_*.gt
 
             # Delete the BCF (never delocalized) unless the caller asked to keep it as an output.
             if [[ "~{keep_filtered_bcf}" != "true" ]]; then rm -f ~{prefix}.filtered.bcf ~{prefix}.filtered.bcf.csi ; fi
@@ -353,11 +349,10 @@ CONV
 
     output {
         # glob-backed so each is present only for the chosen output_format: 'bcf' delocalizes the BCF
-        # (+ index); 'hmmibd_table' deletes the BCF and delocalizes only the small table (+ freq).
+        # (+ index); 'hmmibd_table' deletes the BCF and delocalizes only the small genotype table.
         Array[File] filtered_bcf       = glob("~{prefix}.filtered.bcf")
         Array[File] filtered_bcf_index = glob("~{prefix}.filtered.bcf.csi")
         Array[File] sample_gt_table    = glob("~{prefix}.sample_gt.txt")
-        Array[File] sample_freq_table  = glob("~{prefix}.sample_freq.txt")
     }
 
     #########################
@@ -417,8 +412,6 @@ task HmmIBDrs {
         from_bcf:              "Read the input as BCF/VCF (--from-bcf, applies --bcf-read-mode). Set false to read a pre-built hmmIBD text genotype table instead. (default: true)"
 
         data_file2:            "Optional second-population genotypes (-I/--data-file2). (default: none)"
-        freq_file1:            "Optional allele-frequency file for population 1 (-f/--freq-file1); computed from data when omitted. (default: none)"
-        freq_file2:            "Optional allele-frequency file for population 2 (-F/--freq-file2). (default: none)"
         bad_samples_file:      "Optional list of sample IDs to exclude (-b/--bad-file). (default: none)"
         good_pairs_file:       "Optional list of sample pairs to analyze (-g/--good-file). (default: none)"
         bcf_filter_config:     "Optional TOML BCF filter config (--bcf-filter-config); a default is generated when omitted. (default: none)"
@@ -464,8 +457,6 @@ task HmmIBDrs {
         String prefix
 
         File? data_file2
-        File? freq_file1
-        File? freq_file2
         File? bad_samples_file
         File? good_pairs_file
         File? bcf_filter_config
@@ -574,8 +565,6 @@ task HmmIBDrs {
             -o ~{prefix} \
             ~{read_mode_arg} \
             ~{"-I " + data_file2} \
-            ~{"-f " + freq_file1} \
-            ~{"-F " + freq_file2} \
             ~{"-b " + bad_samples_file} \
             ~{"-g " + good_pairs_file} \
             ~{"--bcf-filter-config " + bcf_filter_config} \
@@ -709,7 +698,7 @@ task BcfToVcf {
 task BcfToSampleTable {
 
     meta {
-        description: "NOTE: standalone BIALLELIC-only converter, no longer used by the pipelines (FilterVcfForHmmIBD fuses a multiallelic-aware conversion into its task). Kept for standalone/biallelic use; for multiallelic use the fused FilterVcfForHmmIBD output_format='hmmibd_table' path. Convert a bi-allelic BCF/VCF to the hmmIBD text genotype table: a tab-delimited matrix with columns chrom(int) pos then one call per sample, alleles coded 0/1 and -1 for missing. The per-sample call is derived per gt_mode: 'dominant-allele' (default) reproduces hmmibd-rs --bcf-read-mode dominant-allele (src/bcf.rs read_dom) — from FORMAT/AD it takes the highest-depth allele (ties -> lower allele index) and keeps it only when total>dom_min_depth & major/total>=dom_min_ratio & minor/major<1/dom_min_r1_r2, else -1; GT is intentionally ignored, matching hmmibd-rs, so this is the right choice for polyclonal Pf (majority-clone allele, not GATK's ref-biased GT[0]). 'first-ploidy' instead takes the first allele of GT. Because it runs on the filtered bi-allelic BCF, dominant-allele here matches an hmmibd-rs --from-bcf dominant-allele run on that same BCF. Sites are then pruned on the FINAL calls to match hmmibd-rs --from-bcf site filtering (min_maf, min_site_nonmissing), so the table and --from-bcf paths use the same sites; min_maf>0 also drops monomorphic / no-alt-expressed sites, which carry no IBD information. Also emits a matching allele-frequency file (same sites/order) from the retained calls. Non-numeric contigs (MIT/API) are dropped because hmmIBD requires integer chromosomes."
+        description: "NOTE: standalone BIALLELIC-only converter, no longer used by the pipelines (FilterVcfForHmmIBD fuses a multiallelic-aware conversion into its task). Kept for standalone/biallelic use; for multiallelic use the fused FilterVcfForHmmIBD output_format='hmmibd_table' path. Convert a bi-allelic BCF/VCF to the hmmIBD text genotype table: a tab-delimited matrix with columns chrom(int) pos then one call per sample, alleles coded 0/1 and -1 for missing. The per-sample call is derived per gt_mode: 'dominant-allele' (default) reproduces hmmibd-rs --bcf-read-mode dominant-allele (src/bcf.rs read_dom) — from FORMAT/AD it takes the highest-depth allele (ties -> lower allele index) and keeps it only when total>dom_min_depth & major/total>=dom_min_ratio & minor/major<1/dom_min_r1_r2, else -1; GT is intentionally ignored, matching hmmibd-rs, so this is the right choice for polyclonal Pf (majority-clone allele, not GATK's ref-biased GT[0]). 'first-ploidy' instead takes the first allele of GT. Because it runs on the filtered bi-allelic BCF, dominant-allele here matches an hmmibd-rs --from-bcf dominant-allele run on that same BCF. Sites are then pruned on the FINAL calls to match hmmibd-rs --from-bcf site filtering (min_maf, min_site_nonmissing), so the table and --from-bcf paths use the same sites; min_maf>0 also drops monomorphic / no-alt-expressed sites, which carry no IBD information. hmmibd-rs computes allele frequencies from the table itself, so no frequency file is produced. Non-numeric contigs (MIT/API) are dropped because hmmIBD requires integer chromosomes."
 
         tool:          "bcftools"
         tool_version:  "1.22"
@@ -718,8 +707,7 @@ task BcfToSampleTable {
         author: "Jonn Smith"
 
         outputs: {
-            sample_gt_table:   "hmmIBD text genotype table (<prefix>.sample_gt.txt); hmmibd-rs input in text mode (from_bcf=false)",
-            sample_freq_table: "Bi-allelic allele-frequency file (<prefix>.sample_freq.txt), same sites/order as the genotype table"
+            sample_gt_table:   "hmmIBD text genotype table (<prefix>.sample_gt.txt); hmmibd-rs input in text mode (from_bcf=false)"
         }
     }
 
@@ -755,7 +743,6 @@ task BcfToSampleTable {
         set -euxo pipefail
 
         GT="~{prefix}.sample_gt.txt"
-        FRQ="~{prefix}.sample_freq.txt"
         MODE="~{gt_mode}"
 
         # header: chrom  pos  <sample1> <sample2> ...
@@ -823,21 +810,11 @@ task BcfToSampleTable {
         }' body_raw.txt >> "${GT}"
         rm -f body_raw.txt
 
-        # bi-allelic allele frequencies from the resulting calls (identical sites and order)
-        awk 'NR==1{next}
-        {
-            c0=0; c1=0; n=0
-            for (i=3;i<=NF;i++){ if($i=="0"){c0++;n++} else if($i=="1"){c1++;n++} }
-            if (n==0){ f0=1; f1=0 } else { f0=c0/n; f1=c1/n }
-            printf "%s\t%s\t%.6f\t%.6f\n", $1, $2, f0, f1
-        }' "${GT}" > "${FRQ}"
-
         echo "variants: $(( $(wc -l < "${GT}") - 1 )); samples: $(( $(head -1 "${GT}" | awk '{print NF}') - 2 )); mode: ${MODE}"
     >>>
 
     output {
         File sample_gt_table   = "~{prefix}.sample_gt.txt"
-        File sample_freq_table = "~{prefix}.sample_freq.txt"
     }
 
     #########################
@@ -865,7 +842,7 @@ task BcfToSampleTable {
 task StitchHmmIBDTables {
 
     meta {
-        description: "Combine many per-region hmmIBD genotype tables (one per input VCF, as produced by BcfToSampleTable) into a SINGLE hmmIBD table + matching allele-frequency file for hmmibd-rs. This is the scalable combine step: each huge input VCF is first reduced to its compact integer genotype table, and only these small tables are stitched here — a merged multi-hundred-GB BCF is never materialized. Assumes every input table carries the SAME samples in the SAME column order (i.e. the input VCFs are disjoint regions of ONE joint call, split across files); the sample headers are verified identical and the task aborts if they differ. Rows (sites) from all tables are concatenated and coordinate-sorted by integer chrom then pos (hmmibd-rs assumes sorted input); closely spaced / linked variants are then thinned (keep at most thin_max_per_window sites per thin_window_bp window and enforce thin_min_snp_sep bp minimum spacing, prioritizing higher minor-allele frequency) because hmmIBD assumes markers are ~independent given IBD state and over-dense linked SNPs inflate IBD; the allele-frequency file is recomputed on the COMBINED, thinned matrix (valid because every table holds the full sample set) so no cross-file reconciliation is needed. An optional max_variants cap is applied after thinning to the combined, genome-wide callset (even stride, not truncated). Input regions are expected to be non-overlapping."
+        description: "Combine many per-region hmmIBD genotype tables (one per input VCF, as produced by BcfToSampleTable) into a SINGLE hmmIBD genotype table for hmmibd-rs. This is the scalable combine step: each huge input VCF is first reduced to its compact integer genotype table, and only these small tables are stitched here — a merged multi-hundred-GB BCF is never materialized. Assumes every input table carries the SAME samples in the SAME column order (i.e. the input VCFs are disjoint regions of ONE joint call, split across files); the sample headers are verified identical and the task aborts if they differ. Rows (sites) from all tables are concatenated and coordinate-sorted by integer chrom then pos (hmmibd-rs assumes sorted input); closely spaced / linked variants are then thinned (keep at most thin_max_per_window sites per thin_window_bp window and enforce thin_min_snp_sep bp minimum spacing, prioritizing higher minor-allele frequency) because hmmIBD assumes markers are ~independent given IBD state and over-dense linked SNPs inflate IBD. hmmibd-rs computes allele frequencies from the combined table itself, so no frequency file is produced. An optional max_variants cap is applied after thinning to the combined, genome-wide callset (even stride, not truncated). Input regions are expected to be non-overlapping."
 
         tool:          "bcftools"
         tool_version:  "1.22"
@@ -874,8 +851,7 @@ task StitchHmmIBDTables {
         author: "Jonn Smith"
 
         outputs: {
-            sample_gt_table:   "Combined hmmIBD text genotype table (<prefix>.sample_gt.txt): all input sites, coordinate-sorted, one first-allele call per sample (-1 missing)",
-            sample_freq_table: "Combined bi-allelic allele-frequency file (<prefix>.sample_freq.txt), same sites/order as the genotype table, recomputed across all samples"
+            sample_gt_table:   "Combined hmmIBD text genotype table (<prefix>.sample_gt.txt): all input sites, coordinate-sorted, one first-allele call per sample (-1 missing)"
         }
     }
 
@@ -906,7 +882,6 @@ task StitchHmmIBDTables {
         set -euxo pipefail
 
         GT="~{prefix}.sample_gt.txt"
-        FRQ="~{prefix}.sample_freq.txt"
 
         TABLES=(~{sep=' ' gt_tables})
 
@@ -1002,27 +977,11 @@ task StitchHmmIBDTables {
         fi
         rm -f body_sorted.txt
 
-        # Recompute allele frequencies on the COMBINED matrix (explicit freq file, same sites/order
-        # as GT). Multiallelic-aware: emit f0..fK per site (K = max called allele index), each
-        # count/non-missing; hmmibd-rs reads variable columns (padded to --max-all) and takes
-        # nall = number of alleles with freq>0. Reduces to f0,f1 for biallelic. Valid because every
-        # input table carries the full sample set.
-        awk 'NR==1{next}
-        {
-            delete cnt; nm=0; maxidx=-1
-            for (i=3;i<=NF;i++){ v=$i; if(v!="-1" && v!="" && v!="."){ cnt[v]++; nm++; if(v+0>maxidx)maxidx=v+0 } }
-            line=$1 "\t" $2
-            if (maxidx<0){ line=line "\t1.000000\t0.000000" }
-            else { for(k=0;k<=maxidx;k++){ f=(nm==0?0:((k in cnt)?cnt[k]:0)/nm); line=line "\t" sprintf("%.6f", f) } }
-            print line
-        }' "${GT}" > "${FRQ}"
-
         echo "combined variants: $(( $(wc -l < "${GT}") - 1 )); samples: $(( $(head -1 "${GT}" | awk '{print NF}') - 2 )); tables: ${#TABLES[@]}"
     >>>
 
     output {
         File sample_gt_table   = "~{prefix}.sample_gt.txt"
-        File sample_freq_table = "~{prefix}.sample_freq.txt"
     }
 
     #########################
