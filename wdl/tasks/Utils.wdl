@@ -1306,7 +1306,11 @@ task SubsetBam {
     command <<<
         set -euxo pipefail
 
-        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        # htslib 1.12 (lr-utils:0.1.9) can't read requester-pays buckets, so use htslib 1.20;
+        # that image has no gcloud, so get the token from the VM metadata server
+        export GCS_OAUTH_TOKEN=$(curl -sS -H "Metadata-Flavor: Google" \
+            http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
         ~{if defined(requester_pays_project) then "export GCS_REQUESTER_PAYS_PROJECT=" + requester_pays_project else ""}
 
         samtools view -bhX ~{"-T " + ref_fasta} ~{bam} ~{bai} ~{locus} > ~{prefix}.bam
@@ -1326,7 +1330,7 @@ task SubsetBam {
         boot_disk_gb:       10,
         preemptible_tries:  3,
         max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-utils:0.1.9"
+        docker:             "quay.io/ymostovoy/lr-utils-basic:2.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
