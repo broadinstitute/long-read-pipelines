@@ -44,6 +44,8 @@ dependencies:
   - pyvcf=0.6.8=py36_0
   - readline=8.1=h27cfd23_0
   - samtools=1.11=h6270b1f_0
+  - numpy=1.19.5
+  - pandas=1.1.5
   - setuptools=52.0.0=py36h06a4308_0
   - six=1.15.0=py36h06a4308_0
   - sqlite=3.35.4=hdfb4753_0
