@@ -1,5 +1,6 @@
 import glob
 import logging
+import subprocess
 from pathlib import Path, PurePosixPath, PurePath
 
 Logger = logging.getLogger(__name__)
@@ -62,3 +63,36 @@ def get_all_files_with_extension(directory: Path, ext: str) -> list:
 
     Logger.debug(f'Getting all files with extension {ext} in {directory}...')
     return glob.glob(f'{directory}/**/*.{ext}', recursive=True)
+
+
+def run_command(command: list, log_output=True, ) -> None:
+    """
+    Run a shell command and wait for it to complete.
+
+    :param command: A list representing the shell command to execute.
+    :param log_output: Whether to log the command's output (default is True).
+    :return: None
+
+    This function runs the specified shell command and waits for it to complete.
+    It logs the command before execution and raises an exception if the command fails.
+    """
+    cmd_str = ' '.join(command)  # Convert the command list to a string for logging
+    logging.debug(f'Running command: {cmd_str}...')
+
+    try:
+        result = subprocess.run(command, check=True, shell=False,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                text=True, encoding='utf-8')
+
+        if log_output:
+            if result.stdout:
+                logging.debug(f'Command output (stdout):\n{result.stdout}')
+            if result.stderr:
+                logging.debug(f'Command output (stderr):\n{result.stderr}')
+    except subprocess.CalledProcessError as e:
+        logging.error(f'Command failed with error: {e}')
+        raise
+    except Exception as e:
+        logging.error(f'An unexpected error occurred: {e}')
+        raise
+
