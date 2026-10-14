@@ -1,5 +1,5 @@
 IMAGE_NAME = lr-hmmibd-rs
-VERSION = 0.1.6 # This version number should follow the hmmibd-rs crate version
+VERSION = 0.1.7 # This version number should follow the hmmibd-rs crate version
 
 TAG1 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):$(VERSION)
 TAG2 = us.gcr.io/broad-dsp-lrma/$(IMAGE_NAME):latest

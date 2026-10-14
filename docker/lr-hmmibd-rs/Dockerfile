@@ -1,15 +1,15 @@
-# hmmibd-rs: the Rust reimplementation of hmmIBD. Built from a pinned commit of the
-# jonn-smith/hmmibd-rs fork (branch jts_bugfixes_for_compatibility -- compatibility bug fixes
-# not yet upstream in bguo068/hmmibd-rs). The VCF pre-filtering that precedes IBD inference
-# runs bcftools from the shared lr-basic image, not this container.
+# hmmibd-rs: the Rust reimplementation of hmmIBD. Built from upstream bguo068/hmmibd-rs, pinned to
+# release v0.1.7 (the compatibility bug fixes previously carried on the jonn-smith fork are now
+# merged upstream and released). The VCF pre-filtering that precedes IBD inference runs bcftools
+# from the shared lr-basic image, not this container.
 
 # ---- Builder: compile hmmibd-rs (and the bundled C hmmIBD, kept for parity) ----
 FROM rust:1.82-slim-bookworm AS builder
 
 LABEL maintainer="Jonn Smith"
 
-# Pin the exact fork commit (tip of branch jts_bugfixes_for_compatibility) for reproducible builds.
-ARG HMMIBD_RS_COMMIT=5b836591df9e8dc56a0259ec9a7443e6147aad8f
+# Pin to a tagged upstream release for reproducible builds (tag v0.1.7 -> commit 8ed3317832f365ecabafda75d804027102d865e4).
+ARG HMMIBD_RS_REF=v0.1.7
 
 # install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -20,9 +20,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /build
 
-# clone and pin the fork source
-RUN git clone https://github.com/jonn-smith/hmmibd-rs.git . && \
-    git checkout ${HMMIBD_RS_COMMIT}
+# clone and check out the pinned upstream release
+RUN git clone https://github.com/bguo068/hmmibd-rs.git . && \
+    git checkout ${HMMIBD_RS_REF}
 
 # build hmmibd-rs (the bcf_reader crate is pure-Rust + zlib, so no htslib/system libs needed)
 RUN cargo build --release
