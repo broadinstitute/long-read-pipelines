@@ -446,6 +446,8 @@ task HmmIBDrs {
         suppress_frac:                 "Suppress the per-pair fraction output (--suppress-frac); leaves ibd_fraction empty. (default: false)"
         bcf_to_bin_file:               "Convert the BCF to a single binary genotype file and skip the HMM (--bcf-to-bin-file); yields binary_genotypes, leaves ibd_segments/ibd_fraction empty. (default: false)"
         bcf_to_bin_file_by_chromosome: "Convert the BCF to one binary genotype file per chromosome and skip the HMM (--bcf-to-bin-file-by-chromosome); yields binary_genotypes, leaves ibd_segments/ibd_fraction empty. (default: false)"
+        ibd_output_disk_factor: "Disk multiplier applied to the UNCOMPRESSED input genotype volume to provision for the O(N^2) hmm.txt output (disk_size = 50 + ibd_output_disk_factor*genotype_vol_gb + 3*input). Large by design (hmm.txt was ~175x the table on a 32k-sample cohort); raise for very large N, or set runtime_attr_override.disk_gb directly. (default: 200)"
+        bcf_decompression_factor: "When from_bcf=true the input is a compressed BCF; multiply its file size by this to estimate the uncompressed genotype volume the output scales with. Ignored when from_bcf=false (text table already uncompressed). (default: 8.0)"
 
         extra_args:            "Additional command-line args appended verbatim to the hmmibd-rs invocation. (default: empty)"
         emit_progress:         "Pass hmmibd-rs --print-progress so it periodically reports progress during the O(N^2) pair sweep. Each PROGRESS line is reformatted on stderr to prepend a wall-clock UTC timestamp and append an estimated-time-remaining column, e.g. `[14:03:27 UTC] PROGRESS 43.7%  pairs=1830412  elapsed=00:10:12  ETA=00:13:08` (ETA = elapsed*(1-frac)/frac, linear extrapolation). (default: false)"
@@ -493,18 +495,31 @@ task HmmIBDrs {
         Boolean bcf_to_bin_file = false
         Boolean bcf_to_bin_file_by_chromosome = false
 
+        # Disk sizing for the O(N^2) hmm.txt output (see disk_size below).
+        Int ibd_output_disk_factor = 200
+        Float bcf_decompression_factor = 8.0
+
         String extra_args = ""
         Boolean emit_progress = false
 
         RuntimeAttr? runtime_attr_override
     }
 
-    # NOTE: hmmibd-rs OUTPUT scales with sample-PAIRS (~N^2), not with the (tiny) genotype-table
-    # input -- .hmm_fract.txt is ~1 line/pair and .hmm.txt is >=1 segment/pair. A ~12k-sample cohort
-    # is ~69M pairs -> tens of GB of output. The old 10+5*input formula (sized off the input) badly
-    # under-provisioned disk and risks a disk-full failure hours in. Use a generous base and override
-    # disk_gb higher for large cohorts (or set suppress_frac / filt_ibd_only to cut output).
-    Int disk_size = 50 + ceil(20.0 * size(input_bcf, "GB"))
+    # hmmibd-rs OUTPUT scales with sample-PAIRS (~N^2/2), NOT with the genotype-table input:
+    # .hmm.txt is >=1 UNCOMPRESSED segment line per pair and is the disk hog, and .hmm_fract.txt is
+    # ~1 line/pair. A StorageFull panic here -- hours/days into the O(N^2) sweep -- is the usual
+    # failure (a ~32k-sample Gambia run filled a 104 GB disk at ~21% of pairs; it needed ~470 GB).
+    # We can't read N from the file at workflow-graph time, so size disk off the input GENOTYPE
+    # VOLUME, compression-aware, times a generous factor for the quadratic output:
+    #   from_bcf=false -> input is the UNCOMPRESSED hmmIBD text table: use its size as-is
+    #   from_bcf=true  -> input is a COMPRESSED BCF: scale up by bcf_decompression_factor first
+    # ibd_output_disk_factor is large on purpose: hmm.txt was ~175x the uncompressed table on that
+    # 32k-sample cohort, and the ratio GROWS with N (it is O(N^2) output over O(N) input). For very
+    # large N raise ibd_output_disk_factor (or set runtime_attr_override.disk_gb), or cut the output
+    # with filt_ibd_only / filt_min_seg_cm / suppress_frac.
+    Float input_data_gb   = size(input_bcf, "GB") + size(data_file2, "GB")
+    Float genotype_vol_gb = if from_bcf then input_data_gb * bcf_decompression_factor else input_data_gb
+    Int disk_size = 50 + ceil(ibd_output_disk_factor * genotype_vol_gb) + ceil(3.0 * input_data_gb)
 
     # --genome and -r/--rec-rate are mutually exclusive; genome wins when supplied.
     String recombination_arg = if defined(genome) then "--genome " + select_first([genome]) else "-r " + rec_rate

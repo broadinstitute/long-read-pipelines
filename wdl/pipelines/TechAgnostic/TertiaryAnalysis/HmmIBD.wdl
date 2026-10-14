@@ -81,6 +81,7 @@ workflow HmmIBD {
         suppress_frac:                 "Suppress the per-pair fraction output (--suppress-frac); leaves ibd_fraction empty. (default: false)"
         bcf_to_bin_file:               "Convert to a single binary genotype file and skip the HMM (--bcf-to-bin-file). (default: false)"
         bcf_to_bin_file_by_chromosome: "Convert to one binary genotype file per chromosome and skip the HMM (--bcf-to-bin-file-by-chromosome). (default: false)"
+        ibd_output_disk_factor: "Disk multiplier for the hmmibd-rs step, applied to the uncompressed genotype volume to provision for the O(N^2) hmm.txt output (the usual out-of-disk failure). Large by design; raise it for very large cohorts (hmm.txt grows with N^2). (default: 200)"
     }
 
     input {
@@ -152,6 +153,8 @@ workflow HmmIBD {
         Boolean suppress_frac = false
         Boolean bcf_to_bin_file = false
         Boolean bcf_to_bin_file_by_chromosome = false
+
+        Int ibd_output_disk_factor = 200
     }
 
     # Whether the genotype input for hmmibd-rs is a text table (-i) rather than a BCF/VCF (--from-bcf):
@@ -249,6 +252,7 @@ workflow HmmIBD {
             suppress_frac                 = suppress_frac,
             bcf_to_bin_file               = bcf_to_bin_file,
             bcf_to_bin_file_by_chromosome = bcf_to_bin_file_by_chromosome,
+            ibd_output_disk_factor        = ibd_output_disk_factor,
             emit_progress                 = emit_progress
     }
 
