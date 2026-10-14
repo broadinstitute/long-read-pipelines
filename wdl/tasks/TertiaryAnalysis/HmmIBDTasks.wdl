@@ -448,6 +448,9 @@ task HmmIBDrs {
         bcf_to_bin_file_by_chromosome: "Convert the BCF to one binary genotype file per chromosome and skip the HMM (--bcf-to-bin-file-by-chromosome); yields binary_genotypes, leaves ibd_segments/ibd_fraction empty. (default: false)"
         ibd_output_disk_factor: "Disk multiplier applied to the UNCOMPRESSED input genotype volume to provision for the O(N^2) hmm.txt output (disk_size = 50 + ibd_output_disk_factor*genotype_vol_gb + 3*input). Large by design (hmm.txt was ~175x the table on a 32k-sample cohort); raise for very large N, or set runtime_attr_override.disk_gb directly. (default: 200)"
         bcf_decompression_factor: "When from_bcf=true the input is a compressed BCF; multiply its file size by this to estimate the uncompressed genotype volume the output scales with. Ignored when from_bcf=false (text table already uncompressed). (default: 8.0)"
+        ibd_core_seconds_per_gb2: "CPU auto-sizing calibration: hmmibd-rs core-seconds per (uncompressed genotype GB)^2 for the O(N^2) pair sweep. From a Gambia run (8 cores, 2.68 GB table, ~18.9 days). cpu_cores is derived so the run finishes within ibd_target_runtime_hours. (default: 1.82e6)"
+        ibd_target_runtime_hours: "CPU auto-sizing target wall-clock (hours). cpu_cores = smallest power of two (<= ibd_max_cores) that finishes the estimated work within this time. (default: 48)"
+        ibd_max_cores: "Cap on auto-sized cpu_cores (power of two). Above ~3.5 GB genotype volume even this cannot hit the target (O(N^2) output) -> pair-shard. (default: 128)"
 
         extra_args:            "Additional command-line args appended verbatim to the hmmibd-rs invocation. (default: empty)"
         emit_progress:         "Pass hmmibd-rs --print-progress so it periodically reports progress during the O(N^2) pair sweep. Each PROGRESS line is reformatted on stderr to prepend a wall-clock UTC timestamp and append an estimated-time-remaining column, e.g. `[14:03:27 UTC] PROGRESS 43.7%  pairs=1830412  elapsed=00:10:12  ETA=00:13:08` (ETA = elapsed*(1-frac)/frac, linear extrapolation). (default: false)"
@@ -499,6 +502,12 @@ task HmmIBDrs {
         Int ibd_output_disk_factor = 200
         Float bcf_decompression_factor = 8.0
 
+        # CPU auto-sizing for the O(N^2) IBD sweep (see cpu_cores below): enough cores to finish
+        # within ibd_target_runtime_hours, rounded UP to a power of two and capped at ibd_max_cores.
+        Float ibd_core_seconds_per_gb2 = 1820000.0
+        Int ibd_target_runtime_hours = 48
+        Int ibd_max_cores = 128
+
         String extra_args = ""
         Boolean emit_progress = false
 
@@ -520,6 +529,24 @@ task HmmIBDrs {
     Float input_data_gb   = size(input_bcf, "GB") + size(data_file2, "GB")
     Float genotype_vol_gb = if from_bcf then input_data_gb * bcf_decompression_factor else input_data_gb
     Int disk_size = 50 + ceil(ibd_output_disk_factor * genotype_vol_gb) + ceil(3.0 * input_data_gb)
+
+    # CPU auto-sizing. hmmibd-rs runtime is dominated by the O(N^2) pair sweep, cost ~ (pairs x sites)
+    # = O(N^2 x S). The genotype table is ~ N x S bytes and the pipeline thins S to a bounded
+    # genome-wide density, so total core-seconds scale ~ with the (uncompressed) table size SQUARED.
+    # Calibrated on a Gambia run: 8 cores, 2.68 GB table, ~526M pairs, ~18.9 days => ~13.1M
+    # core-seconds => ~1.82e6 core-sec / GB^2. cores_needed = core_sec / target_seconds; round UP to a
+    # power of two, clamp to [8, ibd_max_cores]. NOTE: output is O(N^2), so above ~3.5 GB even 128
+    # cores cannot hit 2 days -> pair-shard the run, or raise ibd_target_runtime_hours / ibd_max_cores.
+    Float ibd_core_seconds = ibd_core_seconds_per_gb2 * genotype_vol_gb * genotype_vol_gb
+    Float ibd_raw_cores    = ibd_core_seconds / (ibd_target_runtime_hours * 3600)
+    Int ibd_pow2_cores = if      ibd_raw_cores <= 8.0  then 8
+                         else if ibd_raw_cores <= 16.0 then 16
+                         else if ibd_raw_cores <= 32.0 then 32
+                         else if ibd_raw_cores <= 64.0 then 64
+                         else 128
+    Int ibd_cpu_cores = if ibd_pow2_cores < ibd_max_cores then ibd_pow2_cores else ibd_max_cores
+    # keep the GCP custom-machine mem/CPU ratio valid (>= 0.9 GB/vCPU): ~1 GB/core, floor 16.
+    Int ibd_mem_gb = if ibd_cpu_cores < 16 then 16 else ibd_cpu_cores
 
     # --genome and -r/--rec-rate are mutually exclusive; genome wins when supplied.
     String recombination_arg = if defined(genome) then "--genome " + select_first([genome]) else "-r " + rec_rate
@@ -620,12 +647,14 @@ task HmmIBDrs {
 
     #########################
     # IBD is O(N^2) over sample PAIRS (e.g. ~12k samples -> ~69M pairs), and hmmibd-rs parallelizes
-    # over pairs, so cpu_cores is the main throughput lever -- override MUCH higher (32-64) for large
-    # cohorts when speed matters (also consider par_mode=1 for large sample sets). preemptible_tries=0
-    # because this can run for hours; a Spot eviction wastes the whole attempt.
+    # over pairs, so cpu_cores is the main throughput lever. cpu_cores/mem_gb are AUTO-SIZED above
+    # (ibd_cpu_cores/ibd_mem_gb) to finish within ibd_target_runtime_hours (default 48h); override via
+    # runtime_attr_override.cpu_cores (+ mem_gb) to force a size, or consider par_mode=1 / pair-sharding
+    # for very large sample sets. preemptible_tries=0 because this can run for days; a Spot eviction
+    # wastes the whole attempt.
     RuntimeAttr default_attr = object {
-        cpu_cores:          8,
-        mem_gb:             16,
+        cpu_cores:          ibd_cpu_cores,
+        mem_gb:             ibd_mem_gb,
         disk_gb:            disk_size,
         boot_disk_gb:       25,
         preemptible_tries:  0,
