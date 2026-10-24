@@ -24,7 +24,17 @@ WORKDIR /build
 RUN git clone https://github.com/bguo068/hmmibd-rs.git . && \
     git checkout ${HMMIBD_RS_REF}
 
-# build hmmibd-rs (the bcf_reader crate is pure-Rust + zlib, so no htslib/system libs needed)
+# Add the standalone BCF -> hmmIBD-table converter `bcf2hmmibd` as a new in-tree
+# binary. It is NOT a reimplementation: it calls hmmibd-rs's OWN conversion code
+# verbatim (BcfGenotype::new_from_processing_bcf + into_genotype_siteinfo -- the
+# exact path --from-bcf runs), so it cannot drift. The only library change is a
+# tiny patch exposing three getters on SiteInfoRaw so a separate bin target can
+# read the site info back out. See bcf2hmmibd/README.md for the equivalence proof.
+COPY bcf2hmmibd/bcf2hmmibd.rs src/bin/bcf2hmmibd.rs
+COPY bcf2hmmibd/0001-expose-SiteInfoRaw-getters.patch /tmp/bcf2hmmibd.patch
+RUN git apply /tmp/bcf2hmmibd.patch
+
+# build hmmibd-rs AND bcf2hmmibd (the bcf_reader crate is pure-Rust + zlib, so no htslib/system libs needed)
 RUN cargo build --release
 
 # build the bundled C hmmIBD as well, for parity with the upstream image
@@ -46,8 +56,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # copy only the compiled binaries from the builder stage
 COPY --from=builder /build/target/release/hmmibd-rs /usr/local/bin/
+COPY --from=builder /build/target/release/bcf2hmmibd /usr/local/bin/
 COPY --from=builder /build/c/hmmIBD /usr/local/bin/
-RUN chmod +x /usr/local/bin/hmmibd-rs /usr/local/bin/hmmIBD
+RUN chmod +x /usr/local/bin/hmmibd-rs /usr/local/bin/bcf2hmmibd /usr/local/bin/hmmIBD
 
 WORKDIR /data
 

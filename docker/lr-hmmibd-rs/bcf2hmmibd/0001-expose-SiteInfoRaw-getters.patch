@@ -1,0 +1,20 @@
+diff --git a/src/sites.rs b/src/sites.rs
+index e8a3d02..5deaa20 100644
+--- a/src/sites.rs
++++ b/src/sites.rs
+@@ -111,6 +111,15 @@ impl SiteInfoRaw {
+     pub fn add_chr_pos(&mut self, chr_pos: u32) {
+         self.chr_pos_vec.push(chr_pos);
+     }
++    pub fn chrname_vec(&self) -> &[String] {
++        &self.chrname_vec
++    }
++    pub fn chr_idx_vec(&self) -> &[usize] {
++        &self.chr_idx_vec
++    }
++    pub fn chr_pos_vec(&self) -> &[u32] {
++        &self.chr_pos_vec
++    }
+ 
+     pub fn into_sites_and_genome(self, rec_args: &RecombinationArg) -> Result<(Sites, Genome)> {
+         match rec_args.genome.as_ref() {
