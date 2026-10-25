@@ -46,12 +46,20 @@ FROM debian:bookworm-slim
 
 LABEL maintainer="Jonn Smith"
 
-# minimal runtime C libraries (the Rust bcf_reader build needs no htslib/system libs),
-# plus procps for `free`, which the WDL task command preamble uses to size memory.
+# Runtime deps:
+#  - libgcc-s1 / libc6: the Rust binaries (bcf_reader is pure-Rust + zlib, no htslib needed).
+#  - procps: `free`, used by the WDL task command preamble to size memory.
+#  - bcftools + tabix: the VCF pre-filtration that precedes IBD now runs IN this image, so the
+#    enormous filtered BCF is converted to the hmmIBD table (via bcf2hmmibd) on the same machine
+#    and never delocalized. bcftools ships its plugins (e.g. +fill-tags) at the distro default path.
+#  - gawk: the filtration task's resource preamble + variant-cap use awk.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libgcc-s1 \
         libc6 \
         procps \
+        bcftools \
+        tabix \
+        gawk \
     && rm -rf /var/lib/apt/lists/*
 
 # copy only the compiled binaries from the builder stage

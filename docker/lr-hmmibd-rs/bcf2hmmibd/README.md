@@ -45,8 +45,28 @@ bcf2hmmibd -i <input.bcf> -o <table.txt>
 ```
 
 Output: header `chrom<TAB>pos<TAB>sample...`, one data row per site
-`chrname<TAB>pos<TAB>call...`, `-1` = missing. (CLI reuses hmmibd-rs's own
-`Arguments`, so other hmmibd-rs flags are accepted and ignored.)
+`chrname<TAB>pos<TAB>call...`, `-1` = missing. chrom is the BCF contig NAME
+(hmmibd-rs reads string chrom; feed with `hmmibd-rs -i`, not the integer-only C
+hmmIBD). (CLI reuses hmmibd-rs's own `Arguments`, so other hmmibd-rs flags are
+accepted and ignored.)
+
+NOTE: because the CLI is hmmibd-rs's own, `--bcf-filter-config` requires the
+`--from-bcf` flag to also be present (a clap group constraint). `--from-bcf` is a
+no-op for bcf2hmmibd — it always converts — so just pass it alongside a config:
+`bcf2hmmibd --from-bcf -i in.bcf -o out.txt --bcf-filter-config cfg.toml`.
+
+## Pipeline wiring
+
+The `HmmIBD` WDL (`FilterVcfForHmmIBD` task, `output_format=hmmibd_table`) uses
+bcf2hmmibd to convert each per-shard filtered BCF in-image (bcftools + bcf2hmmibd
+co-located in `lr-hmmibd-rs`), so the big BCF never leaves the machine. It writes
+a `BcfFilterArgs` TOML from the WDL knobs with `nonmissing_rates = []`: that
+iterative site+SAMPLE missingness refinement needs whole-callset missingness,
+which isn't available when the callset is sharded across input VCFs (a sample
+dropped in one shard but not another would desync the per-shard columns and break
+the stitch). All per-SITE filters stay on, so the per-shard table is byte-identical
+to `--from-bcf` run on that shard under the same config. `StitchHmmIBDTables`
+version-sorts chrom so contig names order correctly.
 
 ## Equivalence (verified)
 

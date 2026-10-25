@@ -5,7 +5,7 @@ import "../../structs/Structs.wdl"
 task FilterVcfForHmmIBD {
 
     meta {
-        description: "Pre-filter a VCF for IBD inference: mask low-depth genotypes (FMT/DP < min_depth), optionally preserve the original allele-frequency annotations, recompute AN/AC/AF (optionally per population), and drop alleles/sites that are no longer represented. With output_format='bcf' (default) emits a compressed BCF ready for hmmibd-rs --from-bcf. With output_format='hmmibd_table' it FUSES the table conversion into this task: the filtered BCF is converted in-place to the hmmIBD genotype table (dominant-allele/first-ploidy) and the BCF is deleted, so the (often enormous) BCF is never delocalized to GCS or shipped to a separate conversion task. hmmibd-rs computes allele frequencies from the table itself, so no frequency file is produced."
+        description: "Pre-filter a VCF for IBD inference: mask low-depth genotypes (FMT/DP < min_depth), optionally preserve the original allele-frequency annotations, recompute AN/AC/AF (optionally per population), and drop alleles/sites that are no longer represented. With output_format='bcf' (default) emits a compressed BCF ready for hmmibd-rs --from-bcf. With output_format='hmmibd_table' it FUSES the table conversion into this task: the filtered BCF is converted in-place to the hmmIBD genotype table with bcf2hmmibd (hmmibd-rs's own conversion code, byte-identical to --from-bcf; dominant-allele/first-ploidy) and the BCF is deleted, so the (often enormous) BCF is never delocalized to GCS or shipped to a separate conversion task. hmmibd-rs computes allele frequencies from the table itself, so no frequency file is produced."
 
         tool:          "bcftools"
         tool_version:  "1.22"
@@ -255,95 +255,64 @@ task FilterVcfForHmmIBD {
                 echo "variant cap: retained $(bcftools index -n ~{prefix}.filtered.bcf) variants (stride ${STRIDE})"
             fi
         fi
-        # Fused table generation (output_format=hmmibd_table): convert the LOCAL filtered BCF to the
-        # hmmIBD genotype table (+ freq) here and DELETE the BCF, so the enormous file is never
-        # delocalized or shipped to a second task. The conversion (bcftools query over samples x sites
-        # + per-sample call/prune) was the run's real bottleneck, so it is (a) a SINGLE awk pass
-        # that computes the call [dominant-allele | first-ploidy] and applies the min_maf/min_site_nonmissing
-        # site prune (was 3 passes + a temp file), and (b) run in PARALLEL
-        # across NUM_CPUS genomic windows (rows are independent). The stitch re-sorts, so window order is
-        # not load-bearing.
+        # Table generation (output_format=hmmibd_table): convert the LOCAL filtered BCF to the hmmIBD
+        # genotype table with bcf2hmmibd and DELETE the BCF, so the enormous file is never delocalized
+        # or shipped to a second task. bcf2hmmibd is hmmibd-rs's OWN conversion code
+        # (BcfGenotype::new_from_processing_bcf -> into_genotype_siteinfo -- the exact path
+        # `hmmibd-rs --from-bcf` runs), so the per-shard table is byte-identical to what --from-bcf
+        # would build from this BCF under the same filter config. See
+        # docker/lr-hmmibd-rs/bcf2hmmibd/README.md for the equivalence proof.
         if [[ "~{output_format}" == "hmmibd_table" ]]; then
             GT="~{prefix}.sample_gt.txt"
             BCF="~{prefix}.filtered.bcf"
-            export BCF
-            export MODE="~{gt_mode}"
-            export MD=~{dom_min_depth} MR=~{dom_min_ratio} MRR=~{dom_min_r1_r2} MM=~{min_maf} MSN=~{min_site_nonmissing} MAXALL=~{max_all}
 
-            # header: chrom  pos  <samples...>
-            { printf 'chrom\tpos'; bcftools query -l "${BCF}" | awk '{printf "\t%s", $0}'; printf '\n'; } > "${GT}"
-
-            # Split each contig into NUM_CPUS windows for parallel conversion (bare contig id when the
-            # header lacks a length; __ALL__ = whole file when no usable ##contig lines exist).
-            bcftools view -h "${BCF}" | awk -v n="${NUM_CPUS}" -F'[<>,=]' '
-                /^##contig/ { id=""; len=0; for(i=1;i<=NF;i++){ if($i=="ID")id=$(i+1); if($i=="length")len=$(i+1)+0 }
-                    if(id!=""){ if(len>0){ step=int((len+n-1)/n); if(step<1)step=1; for(s=1;s<=len;s+=step){ e=s+step-1; if(e>len)e=len; print id":"s"-"e } } else { print id } } }' > regions.txt
-            if [[ ! -s regions.txt ]]; then echo "__ALL__" > regions.txt ; fi
-
-            # Single-pass per-region converter: call + prune + inline freq. Reads params from the
-            # exported env; writes reg_<idx>.gt and reg_<idx>.frq. (heredoc quoted -> written verbatim)
-            cat > convert_region.sh <<'CONV'
-#!/usr/bin/env bash
-set -euo pipefail
-region="$1"; idx="$2"
-# Query ALT (field 3) so the site's allele count is robust (per-sample AD can be '.'); samples from 4.
-if [[ "${MODE}" == "dominant-allele" ]]; then Q='%CHROM\t%POS\t%ALT[\t%AD]\n'; else Q='%CHROM\t%POS\t%ALT[\t%GT]\n'; fi
-if [[ "${region}" == "__ALL__" ]]; then RFLAG=(); else RFLAG=(-r "${region}"); fi
-bcftools query "${RFLAG[@]}" -f "${Q}" "${BCF}" \
-| awk -v MODE="${MODE}" -v md="${MD}" -v mr="${MR}" -v mrr="${MRR}" -v mm="${MM}" -v msn="${MSN}" -v maxall="${MAXALL}" -v gt="reg_${idx}.gt" '
-BEGIN{ FS=OFS="\t"; inv=1.0/mrr }
-{
-    c=$1; sub(/^Pf3D7_/,"",c); sub(/_v[0-9]+$/,"",c); if (c !~ /^[0-9]+$/) next
-    nA=split($3,alt,",")+1                                 # alleles at the site = ref + ALTs
-    if (nA>maxall) next                                    # drop the whole over-cap site (never truncate)
-    ns=NF-3; nm=0; delete cnt; for(k=0;k<nA;k++) cnt[k]=0
-    row=(c+0) "\t" $2
-    for (i=4;i<=NF;i++){
-        g=-1
-        if (MODE=="dominant-allele"){
-            # argmax over ALL alleles (matches hmmibd-rs read_dom): major=max-depth (lower index on tie),
-            # minor=2nd depth; accept iff total>md & major/total>=mr & minor/major<1/mrr.
-            if ($i!="." && $i!=""){
-                m=split($i,a,","); tot=0; maxd=-1; maxi=-1; secd=-1
-                for(k=1;k<=m;k++){ d=(a[k]=="."?0:a[k]+0); tot+=d
-                    if(d>maxd){ secd=maxd; maxd=d; maxi=k-1 } else if(d>secd){ secd=d } }
-                if (maxi>=0 && tot>md && maxd/tot>=mr && (secd<=0?0:secd/maxd)<inv) g=maxi
-            }
-        } else { np=split($i,a,/[\/|]/); gg=a[1]; if (gg=="."||gg=="") g=-1; else g=gg+0 }
-        if (g>=0){ cnt[g]++; nm++ }
-        row=row "\t" g
-    }
-    if (ns<=0 || nm==0) next
-    if ((nm/ns) < msn) next
-    maxf=0; for(k=0;k<nA;k++){ f=cnt[k]/nm; if(f>maxf) maxf=f }   # MAF = 1 - major-allele freq
-    if ((1-maxf) < mm) next
-    print row > gt
-}'
-echo "converted ${region}"     # completion signal (one line/window) for the optional progress bar
-CONV
-            chmod +x convert_region.sh
-
-            # Number the regions and run NUM_CPUS at a time; concat in numeric order.
-            : > jobs.txt; ridx=0
-            while IFS= read -r r; do printf '%s %s\n' "$r" "${ridx}" >> jobs.txt; ridx=$((ridx+1)); done < regions.txt
-            NREG=$(wc -l < regions.txt)
-            # Optional conversion progress bar (percent + rate + ETA) over the NREG windows: each
-            # completed window prints one line, counted by pv against the known total (pv ships in
-            # lr-basic:0.1.4). Falls back to plain xargs when emit_progress is off or pv is missing.
-            if [[ "~{emit_progress}" == "true" ]] && command -v pv >/dev/null 2>&1 ; then
-                xargs -P "${NUM_CPUS}" -L1 -a jobs.txt bash convert_region.sh \
-                  | pv -f -l -s "${NREG}" -N convert -p -e -t -r -i 5 >/dev/null
-            else
-                xargs -P "${NUM_CPUS}" -L1 -a jobs.txt bash convert_region.sh >/dev/null
+            # Allele-width cap (matches the old conversion's nA>max_all drop): hmmibd-rs stores each
+            # call as i8 and sizes its per-site frequency matrix by --max-all, so a site with more than
+            # max_all alleles must not reach it. Drop those sites here (N_ALT = nA-1, so nA>max_all means
+            # N_ALT>=max_all). This is a filtration choice on the BCF, so bcf2hmmibd stays byte-identical
+            # to `hmmibd-rs --from-bcf` run on the SAME (capped) BCF.
+            if [[ ~{max_all} -gt 0 ]]; then
+                bcftools view -e "N_ALT >= ~{max_all}" "${BCF}" -Ob --threads "${NUM_CPUS}" -o "${BCF}.capped"
+                mv "${BCF}.capped" "${BCF}"
             fi
-            for (( j=0; j<NREG; j++ )); do
-                [[ -f "reg_${j}.gt"  ]] && cat "reg_${j}.gt"  >> "${GT}"
-            done
-            rm -f regions.txt jobs.txt convert_region.sh reg_*.gt
+
+            # Map the WDL filter knobs to a BcfFilterArgs TOML (read_dom AD gates + per-site filters).
+            # nonmissing_rates is deliberately EMPTY: that iterative site+SAMPLE missingness refinement
+            # needs whole-callset missingness, which is unavailable when the callset is sharded across
+            # input VCFs (a sample dropped in one shard but not another would desync the per-shard
+            # sample columns and break the stitch). The per-SITE filters (PASS, nallele>1,
+            # min_site_nonmissing, min_maf) are computed over ALL samples present in each shard, so they
+            # ARE shard-consistent and stay on. filter_column_pass_only=true applies the PASS-only site
+            # filter that --from-bcf applies (the old awk conversion omitted it).
+            cat > bcf_filter.toml <<TOML
+min_depth = ~{dom_min_depth}
+min_ratio = ~{dom_min_ratio}
+min_r1_r2 = ~{dom_min_r1_r2}
+min_maf = ~{min_maf}
+min_site_nonmissing = ~{min_site_nonmissing}
+filter_column_pass_only = true
+major_minor_alleles_must_be_snps = true
+nonmissing_rates = []
+TOML
+
+            # --from-bcf is a required no-op flag here (hmmibd-rs's shared CLI demands it whenever
+            # --bcf-filter-config is given; bcf2hmmibd always converts regardless of it). --min-snp-sep 1
+            # keeps the per-shard table maximally dense (drops only exact-duplicate positions); the
+            # MAF-prioritized spacing/density thinning runs once on the COMBINED callset in
+            # StitchHmmIBDTables, and hmmibd-rs re-applies --min-snp-sep at IBD time. chrom is emitted as
+            # the BCF contig NAME (hmmibd-rs reads string chrom; the stitch version-sorts it).
+            bcf2hmmibd \
+                --from-bcf \
+                -i "${BCF}" \
+                -o "${GT}" \
+                --bcf-read-mode "~{gt_mode}" \
+                --bcf-filter-config bcf_filter.toml \
+                --min-snp-sep 1
+            rm -f bcf_filter.toml
 
             # Delete the BCF (never delocalized) unless the caller asked to keep it as an output.
             if [[ "~{keep_filtered_bcf}" != "true" ]]; then rm -f ~{prefix}.filtered.bcf ~{prefix}.filtered.bcf.csi ; fi
-            echo "fused table (parallel x${NUM_CPUS}): variants=$(( $(wc -l < "${GT}") - 1 )); samples=$(( $(head -1 "${GT}" | awk '{print NF}') - 2 )); mode=${MODE}; keep_bcf=~{keep_filtered_bcf}"
+            echo "hmmIBD table (bcf2hmmibd): variants=$(( $(wc -l < "${GT}") - 1 )); samples=$(( $(head -1 "${GT}" | awk '{print NF}') - 2 )); mode=~{gt_mode}; keep_bcf=~{keep_filtered_bcf}"
         fi
     >>>
 
@@ -373,7 +342,7 @@ CONV
         boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-basic:0.1.4"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-hmmibd-rs:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -659,7 +628,7 @@ task HmmIBDrs {
         boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-hmmibd-rs:0.1.7"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-hmmibd-rs:0.1.8"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -886,7 +855,7 @@ task BcfToSampleTable {
 task StitchHmmIBDTables {
 
     meta {
-        description: "Combine many per-region hmmIBD genotype tables (one per input VCF, as produced by BcfToSampleTable) into a SINGLE hmmIBD genotype table for hmmibd-rs. This is the scalable combine step: each huge input VCF is first reduced to its compact integer genotype table, and only these small tables are stitched here — a merged multi-hundred-GB BCF is never materialized. Assumes every input table carries the SAME samples in the SAME column order (i.e. the input VCFs are disjoint regions of ONE joint call, split across files); the sample headers are verified identical and the task aborts if they differ. Rows (sites) from all tables are concatenated and coordinate-sorted by integer chrom then pos (hmmibd-rs assumes sorted input); closely spaced / linked variants are then thinned (keep at most thin_max_per_window sites per thin_window_bp window and enforce thin_min_snp_sep bp minimum spacing, prioritizing higher minor-allele frequency) because hmmIBD assumes markers are ~independent given IBD state and over-dense linked SNPs inflate IBD. hmmibd-rs computes allele frequencies from the combined table itself, so no frequency file is produced. An optional max_variants cap is applied after thinning to the combined, genome-wide callset (even stride, not truncated). Input regions are expected to be non-overlapping."
+        description: "Combine many per-region hmmIBD genotype tables (one per input VCF, as produced by BcfToSampleTable) into a SINGLE hmmIBD genotype table for hmmibd-rs. This is the scalable combine step: each huge input VCF is first reduced to its compact integer genotype table, and only these small tables are stitched here — a merged multi-hundred-GB BCF is never materialized. Assumes every input table carries the SAME samples in the SAME column order (i.e. the input VCFs are disjoint regions of ONE joint call, split across files); the sample headers are verified identical and the task aborts if they differ. Rows (sites) from all tables are concatenated and coordinate-sorted by chrom (version-sorted, so integer or contig-name chrom both order correctly) then pos (hmmibd-rs assumes sorted input); closely spaced / linked variants are then thinned (keep at most thin_max_per_window sites per thin_window_bp window and enforce thin_min_snp_sep bp minimum spacing, prioritizing higher minor-allele frequency) because hmmIBD assumes markers are ~independent given IBD state and over-dense linked SNPs inflate IBD. hmmibd-rs computes allele frequencies from the combined table itself, so no frequency file is produced. An optional max_variants cap is applied after thinning to the combined, genome-wide callset (even stride, not truncated). Input regions are expected to be non-overlapping."
 
         tool:          "bcftools"
         tool_version:  "1.22"
@@ -944,7 +913,7 @@ task StitchHmmIBDTables {
         # Concatenate all bodies (drop each header) and coordinate-sort by integer chrom then pos.
         # External sort (-T .) keeps temp files on the task disk, so this scales past RAM.
         for t in "${TABLES[@]}"; do tail -n +2 "$t"; done \
-            | sort -T . -k1,1n -k2,2n > body_sorted.txt
+            | sort -T . -k1,1V -k2,2n > body_sorted.txt
 
         # Thin closely spaced / linked variants (default on): enforce a minimum thin_min_snp_sep bp
         # spacing and keep at most thin_max_per_window sites per SLIDING thin_window_bp window,
@@ -968,7 +937,7 @@ task StitchHmmIBDTables {
             # Minimum spacing: greedy by MAF descending; drop a site if a higher-MAF kept site is
             # within thin_min_snp_sep bp (checked against its own +/- S-block neighbors).
             if [[ ~{thin_min_snp_sep} -gt 0 ]]; then
-                sort -T . -k1,1n -k3,3gr -k2,2n site_maf.txt \
+                sort -T . -k1,1V -k3,3gr -k2,2n site_maf.txt \
                 | awk -v S=~{thin_min_snp_sep} 'BEGIN{FS=OFS="\t"}
                   { chrom=$1; pos=$2+0; reject=0; sb=int(pos/S)
                     for(d=-1;d<=1;d++){ akey=chrom SUBSEP (sb+d)
@@ -985,9 +954,9 @@ task StitchHmmIBDTables {
             if [[ ~{thin_max_per_window} -gt 0 ]]; then
                 { echo '##fileformat=VCFv4.2'
                   echo '##INFO=<ID=MAF,Number=A,Type=Float,Description="minor allele frequency">'
-                  cut -f1 site_maf.txt | sort -un | awk '{print "##contig=<ID=" $0 ">"}'
+                  cut -f1 site_maf.txt | sort -uV | awk '{print "##contig=<ID=" $0 ">"}'
                   printf '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
-                  sort -k1,1n -k2,2n site_maf.txt | awk 'BEGIN{FS=OFS="\t"}{ printf "%s\t%s\t.\tN\tA\t.\t.\tMAF=%s\n",$1,$2,$3 }'
+                  sort -k1,1V -k2,2n site_maf.txt | awk 'BEGIN{FS=OFS="\t"}{ printf "%s\t%s\t.\tN\tA\t.\t.\tMAF=%s\n",$1,$2,$3 }'
                 } > sites.vcf
                 bcftools +prune -w ~{thin_window_bp}bp -n ~{thin_max_per_window} --AF-tag MAF -N maxAF sites.vcf -Ov \
                   | awk 'BEGIN{FS=OFS="\t"} !/^#/ { print $1,$2 }' > kept.txt
