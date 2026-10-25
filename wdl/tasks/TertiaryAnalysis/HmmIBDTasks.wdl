@@ -342,7 +342,7 @@ TOML
         boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-hmmibd-rs:0.1.8"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-hmmibd-rs:0.1.7"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -628,7 +628,7 @@ task HmmIBDrs {
         boot_disk_gb:       25,
         preemptible_tries:  0,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-hmmibd-rs:0.1.8"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-hmmibd-rs:0.1.7"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
