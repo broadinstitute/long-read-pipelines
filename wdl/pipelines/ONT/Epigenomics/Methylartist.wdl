@@ -183,7 +183,7 @@ task Methylartist{
     >>>
 
     output{
-        Array[File] output_files = glob("*.png")
+        Array[File] output_files = glob("*")
     }
 
     Int disk_size = 100 + ceil(2 * (size(bams, "GiB")))
