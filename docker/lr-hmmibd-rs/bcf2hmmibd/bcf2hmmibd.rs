@@ -34,10 +34,17 @@ fn main() -> Result<()> {
 
     // Build BCF filter args exactly as InputData::from_args does for --from-bcf:
     // an explicit --bcf-filter-config TOML if given, else the built-in defaults.
-    let bcf_filter_args = match args.bcf_filter_config.as_ref() {
+    let mut bcf_filter_args = match args.bcf_filter_config.as_ref() {
         Some(path) => BcfFilterArgs::new_from_toml_file(path)?,
         None => BcfFilterArgs::new_from_builtin()?,
     };
+    // The CLI --absent-ad-as flag wins over the filter-config value (mirrors
+    // InputData::from_args). Controls how a genotype with no FORMAT/AD AND no
+    // FORMAT/GT is called (missing vs ref); absent-AD genotypes that DO have GT
+    // are resolved from GT regardless of this.
+    if let Some(absent_ad_as) = args.absent_ad_as {
+        bcf_filter_args.absent_ad_as = absent_ad_as;
+    }
 
     // Authoritative conversion: per-mode read (dominant/first/each-ploidy) +
     // iterative missingness filtering over nonmissing_rates + consolidation.

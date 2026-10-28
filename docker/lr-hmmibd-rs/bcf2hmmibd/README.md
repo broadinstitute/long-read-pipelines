@@ -40,9 +40,20 @@ patch, and `cargo build --release` builds `bcf2hmmibd` alongside `hmmibd-rs`.
 bcf2hmmibd -i <input.bcf> -o <table.txt>
            [--bcf-read-mode dominant-allele|first-ploidy|each-ploidy]   # default dominant-allele
            [--bcf-filter-config <config.toml>]   # default: built-in filters
+           [--absent-ad-as missing|ref]          # default missing (also as absent_ad_as in the config)
            [--min-snp-sep <bp>]                  # default 5 (same as --from-bcf)
            [-b <bad-samples.txt>]                # samples to exclude, one per line
 ```
+
+`--absent-ad-as` (dominant-allele mode): how to call a genotype whose FORMAT/AD is
+entirely absent. If the genotype carries FORMAT/GT it is resolved from GT regardless
+(`./.`→missing, hom→that allele, het→missing); `--absent-ad-as` only decides
+genotypes with neither AD nor GT — `missing` (-1, default) or `ref` (allele 0).
+`ref` fabricates calls and is only for callsets whose convention is "no AD means
+reference"; GATK joint callsets carry real AD on covered hom-refs (absent AD = no
+coverage → `missing`). The CLI flag overrides `absent_ad_as` in the filter-config
+TOML. (Without this fix the reader aborted on absent-AD genotypes — the crash the
+Gambia/Pf8 run hit.)
 
 Output: header `chrom<TAB>pos<TAB>sample...`, one data row per site
 `chrname<TAB>pos<TAB>call...`, `-1` = missing. chrom is the BCF contig NAME

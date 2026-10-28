@@ -56,6 +56,7 @@ workflow HmmIBD {
         dom_min_r1_r2:        "dominant-allele table gate: accept only if minor/major < 1/dom_min_r1_r2. Matches hmmibd-rs min_r1_r2. (default: 3.0)"
         min_maf:              "Site prune: drop sites whose minor-allele frequency among non-missing FINAL calls is below this (matches hmmibd-rs min_maf, so the table and --from-bcf paths keep the same sites); >0 also drops monomorphic / no-alt-expressed sites. Set 0 to keep rare-variant sites. (default: 0.01)"
         min_site_nonmissing:  "Site prune: drop sites where the fraction of samples with a non-missing call is below this (matches hmmibd-rs min_site_nonmissing). (default: 0.3)"
+        absent_ad_as:         "hmmibd_table + dominant-allele only: how to call a genotype with no FORMAT/AD AND no FORMAT/GT: 'missing' (-1) or 'ref' (allele 0). Absent-AD genotypes that carry GT are resolved from GT regardless (./. -> missing, hom -> that allele). Use 'missing' for GATK joint callsets (the Gambia/Pf8 callset is GATK 4.6.x, post-GATK-#8715: covered hom-refs carry real AD and no-coverage is ./., so GT is honest); 'ref' only when the convention is 'no AD means reference'. (default: missing)"
         keep_filtered_bcf:    "Also emit the per-input filtered BCFs (filtered_bcfs) instead of deleting them after the fused table build; only meaningful with run_filtration=true. (default: false)"
         max_iter:             "Max EM iterations (-m). (default: 5)"
         k_rec_max:            "Cap on inferred generations (-n). (default: none; hmmibd-rs uses Inf = no cap)"
@@ -124,6 +125,7 @@ workflow HmmIBD {
         Float dom_min_r1_r2 = 3.0
         Float min_maf = 0.01
         Float min_site_nonmissing = 0.3
+        String absent_ad_as = "missing"
         Boolean keep_filtered_bcf = false
 
         Int max_iter = 5
@@ -192,6 +194,7 @@ workflow HmmIBD {
                 min_maf             = min_maf,
                 min_site_nonmissing = min_site_nonmissing,
                 max_all             = max_all,
+                absent_ad_as        = absent_ad_as,
                 keep_filtered_bcf   = keep_filtered_bcf
         }
     }

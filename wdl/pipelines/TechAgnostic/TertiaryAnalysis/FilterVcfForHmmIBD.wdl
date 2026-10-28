@@ -42,6 +42,7 @@ workflow FilterVcfForHmmIBD {
         min_maf:             "output_format='hmmibd_table' only: drop sites whose minor-allele frequency among non-missing FINAL calls is below this (matches hmmibd-rs min_maf); >0 also drops monomorphic / no-alt-expressed sites. Set 0 to keep rare-variant sites. (default: 0.01)"
         min_site_nonmissing: "output_format='hmmibd_table' only: drop sites where the fraction of samples with a non-missing call is below this (matches hmmibd-rs min_site_nonmissing). (default: 0.3)"
         max_all:             "output_format='hmmibd_table' only: sites with more than this many alleles are dropped whole (never truncated) during conversion; must equal hmmibd-rs --max-all. (default: 64)"
+        absent_ad_as:        "hmmibd_table + dominant-allele only: how to call a genotype with no FORMAT/AD AND no FORMAT/GT: 'missing' (-1) or 'ref' (allele 0). Absent-AD genotypes that carry GT are resolved from GT regardless. Use 'missing' for GATK joint callsets; 'ref' only when the convention is 'no AD means reference'. (default: missing)"
         keep_filtered_bcf:   "output_format='hmmibd_table' only: also emit the per-input filtered BCFs (filtered_bcfs) instead of deleting them after the table is built. (default: false)"
         mask_gq0_genotypes:  "Also set GQ0 genotypes to missing (beyond the DP < min_depth mask). Reproduces the GATK GQ0-hom-ref fix (issue #7792 / PR #8741) for VCFs from pre-4.6.0.0 GenotypeGVCFs or GnarlyGenotyper, where no-/low-confidence hom-refs are 0/0:GQ=0 instead of ./. — the DP mask alone misses GQ0 calls with DP >= min_depth. Conservative: drops all GQ0 hom-refs (use a GVCF cross-reference to keep well-covered ones). Masks GT only: affects the first-ploidy table (and AC/AF/site selection); the dominant-allele table ignores GT (reads AD), so it is a no-op there — the dom_* AD gates handle GQ0 hom-refs instead. (default: false)"
         populations_file:    "Optional sample-to-population file for per-population AN/AC/AF. (default: none)"
@@ -86,6 +87,7 @@ workflow FilterVcfForHmmIBD {
         Float min_maf = 0.01
         Float min_site_nonmissing = 0.3
         Int max_all = 64
+        String absent_ad_as = "missing"
         Boolean keep_filtered_bcf = false
 
         RuntimeAttr? filter_runtime_attr_override
@@ -130,6 +132,7 @@ workflow FilterVcfForHmmIBD {
                 min_maf             = min_maf,
                 min_site_nonmissing = min_site_nonmissing,
                 max_all             = max_all,
+                absent_ad_as        = absent_ad_as,
                 keep_filtered_bcf   = keep_filtered_bcf,
                 runtime_attr_override = filter_runtime_attr_override
         }

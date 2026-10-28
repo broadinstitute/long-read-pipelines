@@ -44,6 +44,7 @@ task FilterVcfForHmmIBD {
         min_maf:               "hmmibd_table site prune: drop sites with minor-allele freq (of final calls) below this; >0 also drops monomorphic sites. (default: 0.01)"
         min_site_nonmissing:   "hmmibd_table site prune: drop sites with non-missing-call fraction below this. (default: 0.3)"
         max_all:               "hmmibd_table only: sites with more than this many alleles are DROPPED during conversion (whole site, never truncated) — must match hmmibd-rs --max-all so the table never exceeds what it can read (i8 call storage, hard ceiling 127). (default: 64)"
+        absent_ad_as:          "hmmibd_table + dominant-allele only: how to call a genotype whose FORMAT/AD is ENTIRELY ABSENT and whose FORMAT/GT is ALSO absent: 'missing' (-1) or 'ref' (homozygous reference = allele 0). Absent-AD genotypes that DO carry GT are resolved from GT regardless (./. -> missing, hom -> that allele), so this only bites genotypes with neither AD nor GT. Use 'missing' for GATK joint callsets (covered hom-refs carry real AD, so absent AD = no coverage); 'ref' only for callsets whose convention is 'no AD means reference'. Fed to bcf2hmmibd via the generated filter config. (default: missing)"
         keep_filtered_bcf:     "hmmibd_table only: also keep and delocalize the filtered BCF (+ index) instead of deleting it after the table is built. (default: false)"
         emit_progress:         "Write progress bars (percent, rate, elapsed, ETA) to stderr via pv: a byte-based bar over the input during filtration, and a windows-done bar over the parallel table conversion (output_format=hmmibd_table). pv ships in lr-basic:0.1.4 (installed at runtime if missing). Off by default. (default: false)"
         runtime_attr_override: "Override the default runtime attributes. (default: none)"
@@ -80,6 +81,7 @@ task FilterVcfForHmmIBD {
         Float min_maf = 0.01
         Float min_site_nonmissing = 0.3
         Int max_all = 64
+        String absent_ad_as = "missing"
         Boolean keep_filtered_bcf = false
 
         RuntimeAttr? runtime_attr_override
@@ -284,6 +286,9 @@ task FilterVcfForHmmIBD {
             # min_site_nonmissing, min_maf) are computed over ALL samples present in each shard, so they
             # ARE shard-consistent and stay on. filter_column_pass_only=true applies the PASS-only site
             # filter that --from-bcf applies (the old awk conversion omitted it).
+            AAD="~{absent_ad_as}"   # assign first so shellcheck sees a variable (not a constant) in case
+            case "${AAD}" in missing|ref) ;; *) echo "ERROR: absent_ad_as must be 'missing' or 'ref'" >&2; exit 1 ;; esac
+
             cat > bcf_filter.toml <<TOML
 min_depth = ~{dom_min_depth}
 min_ratio = ~{dom_min_ratio}
@@ -292,6 +297,7 @@ min_maf = ~{min_maf}
 min_site_nonmissing = ~{min_site_nonmissing}
 filter_column_pass_only = true
 major_minor_alleles_must_be_snps = true
+absent_ad_as = "~{absent_ad_as}"
 nonmissing_rates = []
 TOML
 
