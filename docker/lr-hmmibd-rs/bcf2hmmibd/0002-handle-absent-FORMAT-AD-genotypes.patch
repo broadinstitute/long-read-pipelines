@@ -1,0 +1,435 @@
+From 8046808eb9397f88b275bf826d2533bc7f5b6fe1 Mon Sep 17 00:00:00 2001
+From: Jonn Smith <jonn@broad.mit.edu>
+Date: Tue, 27 Oct 2026 12:33:30 +0000
+Subject: [PATCH] fix: don't abort on genotypes with no FORMAT/AD in
+ dominant-allele mode
+
+The dominant-allele BCF reader hard-errored (NumericaValueEmptyInt) when
+a sample had no AD data, aborting whole-cohort conversions where any
+sample lacks coverage at any site. "No AD" is ambiguous (no coverage vs
+hom-ref), so:
+
+* AD values entirely absent: consult FORMAT/GT, the honest signal
+  (./. -> missing, hom call -> that allele, het/partial -> missing).
+* GT absent too: new --absent-ad-as {missing|ref} flag decides, default
+  missing. "ref" fabricates calls and is only for callsets whose
+  convention is "no AD means reference" (not GATK joint callsets, where
+  covered hom-refs carry real AD). Also settable as absent_ad_as in the
+  --bcf-filter-config toml (serde default: missing), so the in-tree
+  bcf2hmmibd converter gains it without driver changes.
+* AD present but all zero (e.g. 0,0): missing, as before (previously
+  fell out of the NaN ratio compare), GT not consulted since AD
+  explicitly says zero reads.
+* Guard the latent indv_ad[0]/[1] panics and the 0/0 NaN ratio.
+
+A missing value inside an otherwise present AD vector counts as 0 reads.
+GT-resolved calls count toward min_site_nonmissing like AD-based calls.
+
+Note: --bcf-to-bin-file output is not byte-compatible across this change
+(BcfFilterArgs gained a field); regenerate bin files rather than mixing
+versions. On AD-complete data output is unchanged: full-run hmm.txt and
+hmm_fract.txt on testdata/pf7_data are identical to v0.1.7's.
+
+Fixture testdata/absent_ad/absent_ad.bcf (generator script alongside)
+covers all branches; old binary reproduces the abort on it.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+---
+ README.md                               |  10 ++
+ src/args.rs                             |  35 +++++
+ src/bcf.rs                              | 171 ++++++++++++++++++++++--
+ src/data.rs                             |   6 +-
+ testdata/absent_ad/absent_ad.bcf        | Bin 0 -> 473 bytes
+ testdata/absent_ad/gen_absent_ad_bcf.sh |  20 +++
+ 6 files changed, 227 insertions(+), 15 deletions(-)
+ create mode 100644 testdata/absent_ad/absent_ad.bcf
+ create mode 100755 testdata/absent_ad/gen_absent_ad_bcf.sh
+
+diff --git a/README.md b/README.md
+index 07081b9..f5985f4 100644
+--- a/README.md
++++ b/README.md
+@@ -120,6 +120,16 @@ input data options:
+           a built-in filtering criteria will be used, and a temporary
+           configuration file consistent with the built-in criteria named
+           "tmp_bcf_filter_config.toml" will be generated in the current folder
++      --absent-ad-as <ABSENT_AD_AS>
++          Optional: in --bcf-read-mode dominant-allele, how to call a genotype
++          whose FORMAT/AD values are entirely absent when FORMAT/GT cannot
++          disambiguate it either (GT absent). "missing" treats it as missing
++          data (-1); "ref" treats it as homozygous reference (allele 0). "ref"
++          fabricates calls and is appropriate only for callsets whose convention
++          is "no AD means reference"; for joint callsets where covered hom-refs
++          carry real AD, absent AD means no coverage, so use "missing". When
++          set, this overrides the `absent_ad_as` value from --bcf-filter-config
++          [possible values: missing, ref]
+ 
+ output data:
+   -o, --output <OUTPUT>  Optional: output prefix. If not specified, the prefix
+diff --git a/src/args.rs b/src/args.rs
+index 17dd625..e810253 100644
+--- a/src/args.rs
++++ b/src/args.rs
+@@ -103,6 +103,23 @@ pub struct Arguments {
+     #[arg(long, requires = "grp_from_bcf", help_heading = "input data options")]
+     pub bcf_filter_config: Option<String>,
+ 
++    /// Optional: in --bcf-read-mode dominant-allele, how to call a genotype
++    /// whose FORMAT/AD values are entirely absent when FORMAT/GT cannot
++    /// disambiguate it either (GT absent). "missing" treats it as missing
++    /// data (-1); "ref" treats it as homozygous reference (allele 0).
++    /// "ref" fabricates calls and is appropriate only for callsets whose
++    /// convention is "no AD means reference"; for joint callsets where
++    /// covered hom-refs carry real AD, absent AD means no coverage, so use
++    /// "missing". When set, this overrides the `absent_ad_as` value from
++    /// --bcf-filter-config.
++    #[arg(
++        long,
++        value_enum,
++        requires = "grp_from_bcf",
++        help_heading = "input data options"
++    )]
++    pub absent_ad_as: Option<AbsentAdAs>,
++
+     /// Optional: output prefix. If not specified, the prefix from the `-i`
+     /// option will be used. Note: When reading genotype from stdin, this option
+     /// must be specified.
+@@ -261,6 +278,22 @@ pub enum BcfReadMode {
+     EachPloidy,
+ }
+ 
++/// How dominant-allele mode calls a genotype that has no FORMAT/AD data and
++/// whose FORMAT/GT is absent as well.
++#[derive(
++    Default, Debug, ValueEnum, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize,
++)]
++#[serde(rename_all = "kebab-case")]
++pub enum AbsentAdAs {
++    /// treat as missing data (-1); conservative, the sample is dropped at
++    /// that site
++    #[default]
++    Missing,
++    /// treat as homozygous reference (allele 0); fabricates a call, use only
++    /// when the callset's convention is "no AD means reference"
++    Ref,
++}
++
+ impl Arguments {
+     pub fn new_for_test() -> Self {
+         Self {
+@@ -269,6 +302,7 @@ impl Arguments {
+             from_bcf: false,
+             from_bin: false,
+             bcf_filter_config: None,
++            absent_ad_as: None,
+             freq_file1: Some(String::from("c/samp_data/freqs_pf3k_Cambodia_13.txt")),
+             freq_file2: Some(String::from("c/samp_data/freqs_pf3k_Ghana_13.txt")),
+             max_iter: 5,
+@@ -311,6 +345,7 @@ impl Arguments {
+             from_bcf: true,
+             from_bin: false,
+             bcf_filter_config: Some(String::from("testdata/pf7_data/dom_gt_config.toml")),
++            absent_ad_as: None,
+             freq_file1: None,
+             freq_file2: None,
+             max_iter: 5,
+diff --git a/src/bcf.rs b/src/bcf.rs
+index 4889326..db9080b 100644
+--- a/src/bcf.rs
++++ b/src/bcf.rs
+@@ -7,6 +7,7 @@ use std::{
+ };
+ 
+ use crate::{
++    args::AbsentAdAs,
+     matrix::{Matrix, MatrixBuilder},
+     samples::Samples,
+     sites::SiteInfoRaw,
+@@ -23,6 +24,11 @@ pub struct BcfFilterArgs {
+     pub min_site_nonmissing: f32,
+     pub nonmissing_rates: Vec<(f32, f32)>,
+     pub target_samples: Option<std::path::PathBuf>,
++    /// how to call a genotype with no FORMAT/AD data when FORMAT/GT cannot
++    /// disambiguate it either; defaults to Missing when absent from the
++    /// filter-config file
++    #[serde(default)]
++    pub absent_ad_as: AbsentAdAs,
+ }
+ 
+ pub type Result<T> = std::result::Result<T, Error>;
+@@ -136,6 +142,10 @@ impl BcfGenotype {
+         let ad_key = header
+             .get_idx_from_dictionary_str("FORMAT", "AD")
+             .ok_or(Error::BcfMissingFormatADField)?;
++        // GT is optional here: it is only consulted to disambiguate
++        // missing-vs-ref for genotypes that carry no AD data
++        let gt_key = header.get_idx_from_dictionary_str("FORMAT", "GT");
++        let nsam = header.get_samples().len();
+         let mut chrname_map = HashMap::<String, usize>::new();
+         for (id, dict) in header.dict_contigs().iter() {
+             let chrname = dict["ID"].to_owned();
+@@ -177,34 +187,66 @@ impl BcfGenotype {
+             }
+ 
+             let mut site_nonmiss_counter = 0;
++            // per-sample GT calls, decoded lazily for sites where at least
++            // one sample has no AD data; empty when the record carries no GT
++            let mut gt_hom_calls: Option<Vec<i8>> = None;
+             let chunks = record.fmt_field(ad_key).chunks(record.n_allele() as usize);
+-            for (mut nv_indv, _) in chunks
++            for ((isam, mut nv_indv), _) in chunks
+                 .into_iter()
++                .enumerate()
+                 .zip(is_sample_targeted.iter())
+                 .filter(|(_, is_target)| **is_target)
+             {
+                 indv_ad.clear();
++                let mut has_ad_data = false;
+                 nv_indv.try_for_each(|nv_res| -> Result<()> {
+-                    let val = nv_res?
+-                        .int_val()
+-                        .ok_or(bcf_reader::Error::NumericaValueEmptyInt)?;
+                     let idx = indv_ad.len();
++                    // a missing value within AD counts as 0 reads; a genotype
++                    // whose AD values are all missing is resolved below via
++                    // GT or args.absent_ad_as instead of aborting the run
++                    let val = match nv_res?.int_val() {
++                        Some(val) => {
++                            has_ad_data = true;
++                            val
++                        }
++                        None => 0,
++                    };
+                     indv_ad.push((idx, val));
+                     Ok(())
+                 })?;
+-                // indv_ad.extend(nv_indv.map(|nv| nv?.int_val().unwrap()).enumerate());
+                 indv_ad.sort_by_key(|x| u32::MAX - x.1);
+                 let mut dom_allele = -1i8;
+                 let total = indv_ad.iter().map(|x| x.1).sum::<u32>();
+-                let major = indv_ad[0].1;
+-                let minor = indv_ad[1].1;
+-                let r1 = major as f32 / total as f32;
+-                let r2_r1 = minor as f32 / major as f32;
+-                if (total > self.args.min_depth)
+-                    & (r1 >= self.args.min_ratio)
+-                    & (r2_r1 < 1.0 / self.args.min_r1_r2)
+-                {
+-                    dom_allele = indv_ad[0].0 as i8;
++                if has_ad_data {
++                    // total == 0 means explicit zero coverage: leave missing
++                    // (and skip the ratio math, which would be 0/0 = NaN)
++                    if total > 0 {
++                        let major = indv_ad[0].1;
++                        let minor = if indv_ad.len() > 1 { indv_ad[1].1 } else { 0 };
++                        let r1 = major as f32 / total as f32;
++                        let r2_r1 = minor as f32 / major as f32;
++                        if (total > self.args.min_depth)
++                            & (r1 >= self.args.min_ratio)
++                            & (r2_r1 < 1.0 / self.args.min_r1_r2)
++                        {
++                            dom_allele = indv_ad[0].0 as i8;
++                        }
++                    }
++                } else {
++                    // no AD data at all: GT is the honest signal (`./.` is
++                    // missing, a hom call is a real call); fall back to the
++                    // absent_ad_as policy only when GT is absent too
++                    let calls = gt_hom_calls
++                        .get_or_insert_with(|| decode_gt_hom_calls(&record, gt_key, nsam));
++                    dom_allele = match calls.get(isam) {
++                        Some(call) => *call,
++                        None => match self.args.absent_ad_as {
++                            AbsentAdAs::Missing => -1,
++                            AbsentAdAs::Ref => 0,
++                        },
++                    };
++                }
++                if dom_allele != -1 {
+                     site_nonmiss_counter += 1;
+                 }
+                 self.gt_vec.push(dom_allele);
+@@ -839,6 +881,46 @@ fn get_maf_and_sorted_allele_count(
+     maf
+ }
+ 
++/// Decode each sample's GT into a single call usable as a dominant allele:
++/// the allele index when all called ploids agree (haploid or homozygous), or
++/// -1 when any ploid is "." or the ploids disagree (het). Returns an empty
++/// vector when the record carries no GT field.
++fn decode_gt_hom_calls(record: &bcf_reader::Record, gt_key: Option<usize>, nsam: usize) -> Vec<i8> {
++    let Some(gt_key) = gt_key else {
++        return vec![];
++    };
++    let nval = record.fmt_field(gt_key).count();
++    if (nval == 0) || (nsam == 0) {
++        return vec![];
++    }
++    let nploidy = nval / nsam;
++    let mut calls = Vec::with_capacity(nsam);
++    for ploids in &record.fmt_field(gt_key).chunks(nploidy) {
++        let mut call = -1i8;
++        let mut unresolved = false;
++        for nv_res in ploids {
++            let (noploidy, dot, _phased, allele) = match nv_res {
++                Ok(nv) => nv.gt_val(),
++                Err(_) => {
++                    unresolved = true;
++                    break;
++                }
++            };
++            if noploidy {
++                // padding for samples with fewer ploids than the maximum
++                continue;
++            }
++            if dot || (allele > i8::MAX as u32) || ((call != -1) && (call != allele as i8)) {
++                unresolved = true;
++                break;
++            }
++            call = allele as i8;
++        }
++        calls.push(if unresolved { -1 } else { call });
++    }
++    calls
++}
++
+ fn is_major_and_minor_allele_snps(
+     record: &bcf_reader::Record,
+     allele_counts: &[(usize, u32)],
+@@ -887,3 +969,64 @@ fn is_variant_pass_in_filter_columns(
+ 
+     Ok(pass)
+ }
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    fn relaxed_filter_args(absent_ad_as: AbsentAdAs) -> BcfFilterArgs {
++        BcfFilterArgs {
++            min_depth: 5,
++            min_ratio: 0.7,
++            min_maf: 0.0,
++            min_r1_r2: 3.0,
++            filter_column_pass_only: false,
++            major_minor_alleles_must_be_snps: false,
++            min_site_nonmissing: 0.0,
++            nonmissing_rates: vec![],
++            target_samples: None,
++            absent_ad_as,
++        }
++    }
++
++    fn read_dom_gt_vec(absent_ad_as: AbsentAdAs) -> Vec<i8> {
++        let mut bcf_gt = BcfGenotype::new(&relaxed_filter_args(absent_ad_as));
++        bcf_gt.read_dom("testdata/absent_ad/absent_ad.bcf").unwrap();
++        assert_eq!(bcf_gt.pos_vec, vec![99, 199, 299]); // all 3 sites kept (0-based)
++        bcf_gt.gt_vec
++    }
++
++    /// See testdata/absent_ad/gen_absent_ad_bcf.sh for the fixture layout.
++    /// 5 samples x 3 sites; -1 is missing.
++    #[test]
++    fn dominant_allele_read_with_absent_ad_as_missing() {
++        let gt = read_dom_gt_vec(AbsentAdAs::Missing);
++        assert_eq!(
++            gt,
++            vec![
++                // site 100 (GT+AD): normal calls; AD=. with GT=./. -> -1;
++                // AD=. with GT=1/1 -> 1; het with balanced AD -> -1
++                0, -1, 1, 1, -1,
++                // site 200 (AD only, no GT): absent AD falls back to the
++                // absent-ad-as policy (missing)
++                0, -1, 0, -1, 1,
++                // site 300: explicit AD=0,0 stays missing despite GT=0/0;
++                // AD=. with GT=0/0 -> 0; AD=. with het GT -> -1
++                0, -1, 1, 0, -1,
++            ]
++        );
++    }
++
++    #[test]
++    fn dominant_allele_read_with_absent_ad_as_ref() {
++        let gt = read_dom_gt_vec(AbsentAdAs::Ref);
++        assert_eq!(
++            gt,
++            vec![
++                // sites with GT are unaffected by the policy
++                0, -1, 1, 1, -1, // site 200 (no GT): absent AD now called as hom-ref
++                0, 0, 0, 0, 1, 0, -1, 1, 0, -1,
++            ]
++        );
++    }
++}
+diff --git a/src/data.rs b/src/data.rs
+index ec2738a..5f9978b 100644
+--- a/src/data.rs
++++ b/src/data.rs
+@@ -229,7 +229,7 @@ impl InputData {
+         let bcf_gt = if args.from_bin {
+             Some(BcfGenotype::load_from_file(&args.data_file1)?)
+         } else if args.from_bcf {
+-            let bcf_filter_args = match args.bcf_filter_config.as_ref() {
++            let mut bcf_filter_args = match args.bcf_filter_config.as_ref() {
+                 Some(dom_gt_config_path) => BcfFilterArgs::new_from_toml_file(dom_gt_config_path),
+                 None => {
+                     let config = BcfFilterArgs::new_from_builtin()?;
+@@ -245,6 +245,10 @@ impl InputData {
+                     Ok(config)
+                 }
+             }?;
++            // the command-line flag wins over the filter-config value
++            if let Some(absent_ad_as) = args.absent_ad_as {
++                bcf_filter_args.absent_ad_as = absent_ad_as;
++            }
+             let bcf_gt = BcfGenotype::new_from_processing_bcf(
+                 &args.bcf_read_mode,
+                 &bcf_filter_args,
+diff --git a/testdata/absent_ad/absent_ad.bcf b/testdata/absent_ad/absent_ad.bcf
+new file mode 100644
+index 0000000000000000000000000000000000000000..44c97d4e52ac92cdfca8797cdfda7dc9afec2627
+GIT binary patch
+literal 473
+zcmV;~0Ve(*iwFb&00000{{{d;LjnN20d0|8OT#b}hSQ)(23|~rqKIbh(r&Ev3qK;%
+z*3QDT+EwvR+AiA)T|1hncxCsy`~m(g(^XM751eoy@B6$t<lL|ze3t;I*ZWaS`)M}v
+zIk`8i=e?#@sn;#L<6XGq)HcbD-t8(TWnmVLd6Xt(TaRNbT%2YMkA22yZ(Fg=2hutd
+z&M-}QG?+TWVWuiEO$K~O)K*bHGRtwVbZ;tad&>3GD4-cp74LOSNtb6)GWeU>rb)`h
+zWtpVTAawH^;g$$H;dDT=xp&hz3UQB)`H+<)tsn(qpQmZe9-kxnaxc~@<Z4qr*coyb
+zM?s^QXLUw88u>|&6f<r(0dAz&4;W4Oqu*-^DQ=u#)8~|UPZT>L$J!xQwPWq*c>e%v
+zElm)OOV_zVH%=GXCUP$<q<1`Yd#86$`2onjwj5M0ikOO+hS)A*dx-5<z!m^t9h4P{
+zmZqJ*0RX|GIF@8x_Nt&N)gT05K@?o5!rCUtCtxj~R4N5v`3vwd50IARwrmIhtgQ;q
+znrOK4J9J0-FVv9ruTTg@B%FqB6#C74l21MX`>4N@dIA6dABzYC000000RIL6LPG)o
+P8vp|U0000000000%X`ls
+
+literal 0
+HcmV?d00001
+
+diff --git a/testdata/absent_ad/gen_absent_ad_bcf.sh b/testdata/absent_ad/gen_absent_ad_bcf.sh
+new file mode 100755
+index 0000000..d75d926
+--- /dev/null
++++ b/testdata/absent_ad/gen_absent_ad_bcf.sh
+@@ -0,0 +1,20 @@
++#!/usr/bin/env bash
++# Regenerates absent_ad.bcf, the fixture for the dominant-allele reader's
++# handling of genotypes without FORMAT/AD data (see src/bcf.rs tests).
++# Site 100: GT+AD present; s2 has AD=. with GT=./. (no coverage), s4 has
++#           AD=. with GT=1/1 (GT resolves the call).
++# Site 200: AD only, no GT; absent AD falls through to the absent-ad-as flag.
++# Site 300: s2 has explicit AD=0,0 with GT=0/0 (stays missing: zero reads);
++#           s4 AD=. GT=0/0 (ref via GT); s5 AD=. GT=0/1 (het: missing).
++set -euo pipefail
++cd "$(dirname "$0")"
++bcftools view -Ob -o absent_ad.bcf - << 'VCF'
++##fileformat=VCFv4.2
++##contig=<ID=chr1,length=100000>
++##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
++##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">
++#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	s1	s2	s3	s4	s5
++chr1	100	.	A	T	.	PASS	.	GT:AD	0/0:30,0	./.:.	1/1:0,25	1/1:.	0/1:10,10
++chr1	200	.	G	C	.	PASS	.	AD	20,0	.	25,0	.	2,18
++chr1	300	.	C	A	.	PASS	.	GT:AD	0/0:28,0	0/0:0,0	1/1:0,30	0/0:.	0/1:.
++VCF
+-- 
+2.39.5
+

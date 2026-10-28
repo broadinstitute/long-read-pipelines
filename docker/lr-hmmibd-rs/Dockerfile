@@ -31,8 +31,10 @@ RUN git clone https://github.com/bguo068/hmmibd-rs.git . && \
 # tiny patch exposing three getters on SiteInfoRaw so a separate bin target can
 # read the site info back out. See bcf2hmmibd/README.md for the equivalence proof.
 COPY bcf2hmmibd/bcf2hmmibd.rs src/bin/bcf2hmmibd.rs
-COPY bcf2hmmibd/0001-expose-SiteInfoRaw-getters.patch /tmp/bcf2hmmibd.patch
-RUN git apply /tmp/bcf2hmmibd.patch
+COPY bcf2hmmibd/0001-expose-SiteInfoRaw-getters.patch /tmp/0001-expose-SiteInfoRaw-getters.patch
+COPY bcf2hmmibd/0002-handle-absent-FORMAT-AD-genotypes.patch /tmp/0002-handle-absent-FORMAT-AD-genotypes.patch
+RUN git apply /tmp/0001-expose-SiteInfoRaw-getters.patch
+RUN git apply /tmp/0002-handle-absent-FORMAT-AD-genotypes.patch
 
 # build hmmibd-rs AND bcf2hmmibd (the bcf_reader crate is pure-Rust + zlib, so no htslib/system libs needed)
 RUN cargo build --release
