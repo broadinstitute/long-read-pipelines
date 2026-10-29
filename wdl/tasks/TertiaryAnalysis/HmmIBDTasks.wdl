@@ -425,7 +425,7 @@ task HmmIBDrs {
         bcf_decompression_factor: "When from_bcf=true the input is a compressed BCF; multiply its file size by this to estimate the uncompressed genotype volume the output scales with. Ignored when from_bcf=false (text table already uncompressed). (default: 8.0)"
         ibd_core_seconds_per_gb2: "CPU auto-sizing calibration: hmmibd-rs core-seconds per (uncompressed genotype GB)^2 for the O(N^2) pair sweep. From a Gambia run (8 cores, 2.68 GB table, ~18.9 days). cpu_cores is derived so the run finishes within ibd_target_runtime_hours. (default: 1.82e6)"
         ibd_target_runtime_hours: "CPU auto-sizing target wall-clock (hours). cpu_cores = smallest power of two (<= ibd_max_cores) that finishes the estimated work within this time. (default: 48)"
-        ibd_max_cores: "Cap on auto-sized cpu_cores (power of two). Above ~3.5 GB genotype volume even this cannot hit the target (O(N^2) output) -> pair-shard. (default: 128)"
+        ibd_max_cores: "Cap on auto-sized cpu_cores. Default 96 is the N1 *custom* machine-type vCPU ceiling that Cromwell can request (cpu=128 builds an invalid custom-128-* machine -> GCE CODE_GCE_BAD_REQUEST). Above ~3.5 GB genotype volume even 96 cores cannot hit the target (O(N^2) output) -> pair-shard. Do not raise above 96 unless the backend is configured for predefined n2 machines. (default: 96)"
 
         extra_args:            "Additional command-line args appended verbatim to the hmmibd-rs invocation. (default: empty)"
         emit_progress:         "Pass hmmibd-rs --print-progress so it periodically reports progress during the O(N^2) pair sweep. Each PROGRESS line is reformatted on stderr to prepend a wall-clock UTC timestamp and append an estimated-time-remaining column, e.g. `[14:03:27 UTC] PROGRESS 43.7%  pairs=1830412  elapsed=00:10:12  ETA=00:13:08` (ETA = elapsed*(1-frac)/frac, linear extrapolation). (default: false)"
@@ -481,7 +481,7 @@ task HmmIBDrs {
         # within ibd_target_runtime_hours, rounded UP to a power of two and capped at ibd_max_cores.
         Float ibd_core_seconds_per_gb2 = 1820000.0
         Int ibd_target_runtime_hours = 48
-        Int ibd_max_cores = 128
+        Int ibd_max_cores = 96
 
         String extra_args = ""
         Boolean emit_progress = false
@@ -510,15 +510,17 @@ task HmmIBDrs {
     # genome-wide density, so total core-seconds scale ~ with the (uncompressed) table size SQUARED.
     # Calibrated on a Gambia run: 8 cores, 2.68 GB table, ~526M pairs, ~18.9 days => ~13.1M
     # core-seconds => ~1.82e6 core-sec / GB^2. cores_needed = core_sec / target_seconds; round UP to a
-    # power of two, clamp to [8, ibd_max_cores]. NOTE: output is O(N^2), so above ~3.5 GB even 128
-    # cores cannot hit 2 days -> pair-shard the run, or raise ibd_target_runtime_hours / ibd_max_cores.
+    # power of two, clamp to [8, ibd_max_cores]. ibd_max_cores defaults to 96, the N1 *custom*
+    # machine vCPU ceiling Cromwell can request: cpu=128 would build an invalid `custom-128-*` type
+    # (GCE CODE_GCE_BAD_REQUEST). NOTE: output is O(N^2), so above ~3.5 GB even 96 cores cannot hit
+    # 2 days -> pair-shard the run, or raise ibd_target_runtime_hours (not ibd_max_cores past 96).
     Float ibd_core_seconds = ibd_core_seconds_per_gb2 * genotype_vol_gb * genotype_vol_gb
     Float ibd_raw_cores    = ibd_core_seconds / (ibd_target_runtime_hours * 3600)
     Int ibd_pow2_cores = if      ibd_raw_cores <= 8.0  then 8
                          else if ibd_raw_cores <= 16.0 then 16
                          else if ibd_raw_cores <= 32.0 then 32
                          else if ibd_raw_cores <= 64.0 then 64
-                         else 128
+                         else 96
     Int ibd_cpu_cores = if ibd_pow2_cores < ibd_max_cores then ibd_pow2_cores else ibd_max_cores
     # keep the GCP custom-machine mem/CPU ratio valid (>= 0.9 GB/vCPU): ~1 GB/core, floor 16.
     Int ibd_mem_gb = if ibd_cpu_cores < 16 then 16 else ibd_cpu_cores
