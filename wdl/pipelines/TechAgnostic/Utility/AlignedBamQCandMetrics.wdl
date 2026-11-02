@@ -238,16 +238,6 @@ workflow Work {
                                           NoMissingBeans.methyl_tag_simple_stats['files_holding_reads_without_tags']}
     }
 
-    ###################################################################################
-    # save results
-    ###################################################################################
-    call SAVE.SaveFilestoDestination as FF { input:
-        instructions = select_all([a, b, c]),
-        already_finalized = select_all([methyl_out]),
-        key_file = select_first(select_all([MosDepthWGS.summary_txt,
-                                            NanoPlotFromBam.stats,
-                                            fingerprint.fingerprint_summary,]))
-    }
 }
 
 # if you want to call me as sub-workflow in a standard run
