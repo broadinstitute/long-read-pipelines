@@ -116,7 +116,6 @@ workflow Work {
         Map[String, String]? methyl_tag_simple_stats = NoMissingBeans.methyl_tag_simple_stats
 
         # file-based outputs all packed into a finalization map
-        Map[String, String] aBAM_metrics_files = FF.result
     }
 
     String workflow_name = "AlignedBamQCandMetrics"
