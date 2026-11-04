@@ -104,8 +104,20 @@ task ListFast5s {
     String indir = sub(gcs_fast5_dir, "/$", "")
 
     command <<<
-        gsutil ls "~{indir}/**.fast5" > fast5_files.txt
-        gsutil ls "~{indir}/**.pod5" >> fast5_files.txt
+        set -euo pipefail
+
+        # List both fast5 and pod5 signal files. `gsutil ls` exits 1 ("matched no
+        # objects") for whichever type is absent, so each is made non-fatal with
+        # `|| true`; the task fails only if NEITHER type is found. Without this a
+        # fast5-only (or pod5-only) run aborted on the empty-type listing.
+        : > fast5_files.txt
+        gsutil ls "~{indir}/**.fast5" >> fast5_files.txt || true
+        gsutil ls "~{indir}/**.pod5"  >> fast5_files.txt || true
+
+        if [[ ! -s fast5_files.txt ]]; then
+            echo "ERROR: no .fast5 or .pod5 files found under ~{indir}" >&2
+            exit 1
+        fi
     >>>
 
     output {
