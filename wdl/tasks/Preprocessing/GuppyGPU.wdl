@@ -142,7 +142,7 @@ task Basecall {
         String? barcode_kit
         Int index = 0
 
-        String gpu_type = "nvidia-tesla-p100"
+        String gpu_type = "nvidia-tesla-t4"
         Int gpu_count = 1
         String nvidia_driver_version = "418.152.00"
         Array[String] gcp_zones = ["us-central1-c", "us-central1-f", "us-central1-a", "us-central1-b"]
