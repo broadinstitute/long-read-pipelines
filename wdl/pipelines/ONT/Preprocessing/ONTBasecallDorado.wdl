@@ -51,9 +51,22 @@ workflow Dorado {
     call ONT.PartitionManifest as PartitionFast5Manifest { input: manifest = ListFast5s.manifest, N = ns }
 
     scatter (chunk_index in range(length(PartitionFast5Manifest.manifest_chunks))) {
+        Array[File] chunk_signal_files = read_lines(PartitionFast5Manifest.manifest_chunks[chunk_index])
+
+        # Dorado >=1.0 basecalls only POD5. Convert fast5 shards to pod5 first; pod5 inputs
+        # pass straight through. Keyed off ListFast5s.has_fast5 so pure-pod5 datasets skip it.
+        if (ListFast5s.has_fast5) {
+            call ConvertFast5ToPod5 {
+                input:
+                    signal_files = chunk_signal_files,
+                    index        = chunk_index,
+            }
+        }
+        Array[File] basecall_files = select_first([ConvertFast5ToPod5.pod5_files, chunk_signal_files])
+
         call Basecall {
             input:
-                fast5_files  = read_lines(PartitionFast5Manifest.manifest_chunks[chunk_index]),
+                pod5_files   = basecall_files,
                 config       = config,
                 kit_name  = barcode_kit,
                 index        = chunk_index,
@@ -118,10 +131,15 @@ task ListFast5s {
             echo "ERROR: no .fast5 or .pod5 files found under ~{indir}" >&2
             exit 1
         fi
+
+        # Record whether any fast5 are present. Dorado >=1.0 basecalls only pod5, so the
+        # downstream ConvertFast5ToPod5 step keys off this to convert fast5 datasets.
+        if grep -q '\.fast5$' fast5_files.txt; then echo "true" > has_fast5.txt; else echo "false" > has_fast5.txt; fi
     >>>
 
     output {
         File manifest = "fast5_files.txt"
+        Boolean has_fast5 = read_boolean("has_fast5.txt")
     }
 
     #########################
@@ -146,9 +164,83 @@ task ListFast5s {
     }
 }
 
+task ConvertFast5ToPod5 {
+
+    meta {
+        description: "Convert ONT fast5 signal files to pod5 (required by Dorado >=1.0, which removed fast5 support). Any pod5 inputs are passed through unchanged, so mixed or pod5-only shards work too. Uses the `pod5` CLI shipped in the lr-dorado image."
+    }
+
+    parameter_meta {
+        signal_files:          "fast5 and/or pod5 files for one shard. fast5 are converted into a single merged pod5; existing pod5 are copied through."
+        index:                 "Shard index, used to name the merged pod5 uniquely across the scatter."
+        runtime_attr_override: "Override the default runtime attributes. (default: none)"
+    }
+
+    input {
+        Array[File] signal_files
+        Int index = 0
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 20 + 4 * ceil(size(signal_files, "GB"))
+
+    command <<<
+        set -euxo pipefail
+
+        NUM_CPUS=$(grep -c '^processor' /proc/cpuinfo)
+        mkdir -p pod5_out
+
+        # Split this shard's inputs by extension: fast5 are converted, existing pod5 pass through.
+        FAST5=()
+        for f in ~{sep=' ' signal_files}; do
+            case "$f" in
+                *.fast5) FAST5+=("$f") ;;
+                *.pod5)  cp "$f" "pod5_out/$(basename "$f")" ;;
+                *) echo "WARNING: ignoring unrecognized signal file (not .fast5/.pod5): $f" >&2 ;;
+            esac
+        done
+
+        # Dorado >=1.0 reads only pod5; merge this shard's fast5 into one pod5.
+        if [[ ${#FAST5[@]} -gt 0 ]]; then
+            pod5 convert fast5 "${FAST5[@]}" \
+                --output "pod5_out/converted.~{index}.pod5" \
+                --threads "${NUM_CPUS}" \
+                --force-overwrite
+        fi
+
+        ls -l pod5_out/
+    >>>
+
+    output {
+        Array[File] pod5_files = glob("pod5_out/*.pod5")
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          4,
+        mem_gb:             16,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  1,
+        max_retries:        1,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-dorado:1.4.0"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
 task Basecall {
     input {
-        Array[File] fast5_files
+        Array[File] pod5_files
         String config = "sup@latest"
         String? kit_name
         Int index = 0
@@ -160,7 +252,7 @@ task Basecall {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 10 * ceil(size(fast5_files, "GB")) + ceil(size(ref_fasta, "GB")) + ceil(size(ref_index, "GB")) + ceil(size(ref_fasta_dict, "GB"))
+    Int disk_size = 10 * ceil(size(pod5_files, "GB")) + ceil(size(ref_fasta, "GB")) + ceil(size(ref_index, "GB")) + ceil(size(ref_fasta_dict, "GB"))
 
     String ref_arg = if defined(ref_fasta) then "--reference " else ""
     String demux_arg = if defined(kit_name) then "--kit-name " + select_first([kit_name]) else "--no-classify"
