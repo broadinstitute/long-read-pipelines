@@ -21,6 +21,7 @@ RUN apt-get install -yq python3.8 python3.8-distutils curl && \
 
 RUN curl "https://bootstrap.pypa.io/pip/3.8/get-pip.py" -o "get-pip.py" && python get-pip.py
 # pod5: Dorado >=1.0 basecalls only POD5, so the pipeline converts fast5 -> pod5 with the `pod5`
-# CLI (the ConvertFast5ToPod5 task in ONTBasecallDorado.wdl). Pinned to 0.3.33, the last release
-# supporting this image's Python 3.8 (pod5 >=0.3.35 requires Python >=3.9).
-RUN pip install ont-guppy-duplex-pipeline pod5==0.3.33
+# CLI (the ConvertFast5ToPod5 task in ONTBasecallDorado.wdl). Pinned to 0.3.23: pod5 pins its
+# compiled core lib_pod5 to the same version, and lib_pod5 only publishes Python-3.8 wheels up to
+# 0.3.23, so that is the newest pod5 installable on this image's Python 3.8.
+RUN pip install ont-guppy-duplex-pipeline pod5==0.3.23

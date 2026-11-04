@@ -224,7 +224,7 @@ task ConvertFast5ToPod5 {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-dorado:1.4.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-dorado:1.4.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -359,7 +359,7 @@ task Basecall {
         boot_disk_gb:       50,
         preemptible_tries:  1,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-dorado:1.4.0"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-dorado:1.4.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
