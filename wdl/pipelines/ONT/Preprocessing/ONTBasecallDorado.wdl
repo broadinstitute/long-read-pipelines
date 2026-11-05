@@ -3,6 +3,7 @@ version 1.0
 
 import "../../../tasks/Utility/Utils.wdl" as Utils
 import "../../../tasks/Utility/ONTUtils.wdl" as ONT
+import "../../../tasks/Utility/TerraUtils.wdl" as Terra
 import "../../../structs/Structs.wdl"
 
 workflow Dorado {
@@ -19,7 +20,7 @@ workflow Dorado {
         flow_cell_id: "Optional. Flow cell ID used for sequencing. Default is 'unknown'."
         protocol_run_id: "Optional. Protocol run ID used for sequencing. Default is 'unknown'."
         num_shards: "Optional. Number of shards to use for parallelization. Default is 1 + ceil(length(read_lines(ListFast5s.manifest))/100)."
-        gcs_out_root_dir: "GCS path to a directory where the output will be written."
+        gcs_out_root_dir: "Optional. GCS path to a directory where the output will be written. When omitted, defaults to this run's Terra workspace bucket (auto-detected via GetWorkspaceMetadata), so no bucket need be supplied."
     }
 
     input {
@@ -37,13 +38,20 @@ workflow Dorado {
         File? RefFasta
         File? RefIndex
         File? RefFastaDict
-        String gcs_out_root_dir
+        String? gcs_out_root_dir
     }
 
     # Get a timestamp for our output dir:
     call Utils.GetCurrentTimestampString as GetCurrentTimestamp { input: }
 
-    String gcs_out_dir = gcs_out_root_dir + "/" + sample_name  + "/" + GetCurrentTimestamp.timestamp_string
+    # Resolve the output root: use the caller-provided path, else auto-detect this run's Terra
+    # workspace bucket (GetWorkspaceMetadata) so a bucket need not be supplied.
+    if (!defined(gcs_out_root_dir)) {
+        call Terra.GetWorkspaceMetadata as WorkspaceMetadata { input: }
+    }
+    String out_root = select_first([gcs_out_root_dir, WorkspaceMetadata.bucket])
+
+    String gcs_out_dir = out_root + "/" + sample_name  + "/" + GetCurrentTimestamp.timestamp_string
 
     call ListFast5s { input: gcs_fast5_dir = gcs_fast5_dir }
 
